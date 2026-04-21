@@ -1,0 +1,139 @@
+{
+  "LocoraServices": {
+    "Services": [
+      {
+        "Key": "nginx",
+        "DisplayName": "Nginx",
+        "Kind": "nginx",
+        "Version": "1.27.x",
+        "RelativeExecutablePath": "bin/nginx/current/nginx.exe",
+        "RelativeWorkingDirectory": "bin/nginx/current",
+        "Arguments": [
+          "-c",
+          "{config}/nginx/nginx.conf"
+        ],
+        "StopArguments": [
+          "-s",
+          "stop"
+        ],
+        "Port": 80,
+        "AutoStart": true,
+        "RestartOnCrash": true,
+        "RestartBackoffMs": 2000,
+        "MaxRestartAttempts": 3,
+        "RestartWindowMs": 60000,
+        "StartTimeoutMs": 5000,
+        "StopTimeoutMs": 3000
+      },
+      {
+        "Key": "mariadb",
+        "DisplayName": "MariaDB",
+        "Kind": "mariadb",
+        "Version": "11.x",
+        "RelativeExecutablePath": "bin/mariadb/current/bin/mysqld.exe",
+        "RelativeWorkingDirectory": "bin/mariadb/current/bin",
+        "Arguments": [
+          "--defaults-file={config}/mariadb/my.ini",
+          "--console"
+        ],
+        "StopArguments": [],
+        "Port": 3306,
+        "AutoStart": true,
+        "RestartOnCrash": true,
+        "RestartBackoffMs": 2000,
+        "MaxRestartAttempts": 3,
+        "RestartWindowMs": 60000,
+        "StartTimeoutMs": 8000,
+        "StopTimeoutMs": 5000
+      },
+      {
+        "Key": "postgresql",
+        "DisplayName": "PostgreSQL",
+        "Kind": "postgresql",
+        "Version": "18.x",
+        "RelativeExecutablePath": "bin/postgresql/current/bin/postgres.exe",
+        "RelativeStopExecutablePath": "bin/postgresql/current/bin/pg_ctl.exe",
+        "RelativeWorkingDirectory": "bin/postgresql/current/bin",
+        "Arguments": [
+          "-D",
+          "{data}/postgresql/data",
+          "-c",
+          "config_file={config}/postgresql/postgresql.conf"
+        ],
+        "StopArguments": [
+          "stop",
+          "-D",
+          "{data}/postgresql/data",
+          "-m",
+          "fast",
+          "-W",
+          "-t",
+          "15",
+          "-s"
+        ],
+        "Port": 5432,
+        "AutoStart": false,
+        "RestartOnCrash": true,
+        "RestartBackoffMs": 2000,
+        "MaxRestartAttempts": 3,
+        "RestartWindowMs": 60000,
+        "StartTimeoutMs": 10000,
+        "StopTimeoutMs": 8000
+      },
+      {
+        "Key": "redis",
+        "DisplayName": "Redis",
+        "Kind": "redis",
+        "Version": "7.x",
+        "RelativeExecutablePath": "bin/redis/current/redis-server.exe",
+        "RelativeStopExecutablePath": "bin/redis/current/redis-cli.exe",
+        "RelativeWorkingDirectory": "bin/redis/current",
+        "Arguments": [
+          "{config}/redis/redis.conf"
+        ],
+        "StopArguments": [
+          "-p",
+          "{port}",
+          "shutdown",
+          "nosave"
+        ],
+        "Port": 6379,
+        "AutoStart": false,
+        "RestartOnCrash": true,
+        "RestartBackoffMs": 2000,
+        "MaxRestartAttempts": 3,
+        "RestartWindowMs": 60000,
+        "StartTimeoutMs": 5000,
+        "StopTimeoutMs": 5000
+      },
+      {
+        "Key": "mailpit",
+        "DisplayName": "Mailpit",
+        "Kind": "mailpit",
+        "Version": "1.x",
+        "RelativeExecutablePath": "bin/mailpit/current/mailpit.exe",
+        "RelativeWorkingDirectory": "bin/mailpit/current",
+        "Arguments": [
+          "--smtp",
+          "127.0.0.1:{port}",
+          "--listen",
+          "127.0.0.1:8025",
+          "--database",
+          "{data}/mailpit/mailpit.db",
+          "--label",
+          "Locora Mailpit",
+          "--disable-version-check"
+        ],
+        "StopArguments": [],
+        "Port": 1025,
+        "AutoStart": false,
+        "RestartOnCrash": true,
+        "RestartBackoffMs": 2000,
+        "MaxRestartAttempts": 3,
+        "RestartWindowMs": 60000,
+        "StartTimeoutMs": 5000,
+        "StopTimeoutMs": 3000
+      }
+    ]
+  }
+}

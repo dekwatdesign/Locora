@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="Locora.App.Views.DomainsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:models="using:Locora.App.Models">
+    <ScrollViewer>
+        <StackPanel Padding="24" Spacing="16">
+            <TextBlock Text="Domains &amp; Hosts" Style="{StaticResource PageTitleTextStyle}" />
+            <TextBlock Text="Locora generates a hosts preview from discovered projects first. Applying writes only a managed Locora block and creates a rollback backup."
+                       TextWrapping="Wrap" />
+
+            <InfoBar IsOpen="True"
+                     Severity="Warning"
+                     Title="Requires administrator rights"
+                     Message="The Windows hosts file is protected. If Apply fails, restart Locora.Supervisor as administrator or use LOCORA_HOSTS_FILE to test against a safe file." />
+
+            <Border Padding="16"
+                    CornerRadius="12"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                <StackPanel Spacing="6">
+                    <TextBlock Text="Supervisor Privileges" Style="{StaticResource CardTitleTextStyle}" />
+                    <TextBlock Text="{x:Bind ViewModel.SupervisorPrivilegeLabel, Mode=OneWay}" />
+                    <TextBlock Text="{x:Bind ViewModel.SupervisorProcessLabel, Mode=OneWay}" Opacity="0.72" />
+                    <TextBlock Text="{x:Bind ViewModel.HostsAccessDiagnosticLabel, Mode=OneWay}" TextWrapping="Wrap" />
+                    <TextBlock Text="{x:Bind ViewModel.ElevationRestartDiagnosticLabel, Mode=OneWay}" TextWrapping="Wrap" Opacity="0.72" />
+                    <TextBlock Text="{x:Bind ViewModel.WorkspaceWriteAccessDiagnosticLabel, Mode=OneWay}" TextWrapping="Wrap" Opacity="0.72" />
+                </StackPanel>
+            </Border>
+
+            <Border Padding="16"
+                    CornerRadius="12"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Generated Preview" Style="{StaticResource CardTitleTextStyle}" />
+                    <TextBox Text="{x:Bind ViewModel.HostsPreviewPath, Mode=OneWay}" IsReadOnly="True" />
+
+                    <TextBlock Text="Windows Hosts File" Style="{StaticResource CardTitleTextStyle}" />
+                    <TextBox Text="{x:Bind ViewModel.WindowsHostsFilePath, Mode=OneWay}" IsReadOnly="True" />
+
+                    <TextBlock Text="Rollback Backups" Style="{StaticResource CardTitleTextStyle}" />
+                    <TextBox Text="{x:Bind ViewModel.HostsBackupRoot, Mode=OneWay}" IsReadOnly="True" />
+
+                    <StackPanel Spacing="8" Margin="0,8,0,0">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Content="Repair Runtime Configs"
+                                    Command="{x:Bind ViewModel.RepairRuntimeCommand}" />
+                            <Button Content="Restart Supervisor as Admin"
+                                    Command="{x:Bind ViewModel.RestartSupervisorElevatedCommand}" />
+                            <Button Content="Validate Nginx Config"
+                                    Command="{x:Bind ViewModel.ValidateNginxConfigCommand}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Content="Generate Local SSL"
+                                    Command="{x:Bind ViewModel.GenerateLocalSslCommand}" />
+                            <Button Content="Repair Local SSL"
+                                    Command="{x:Bind ViewModel.RepairLocalSslCommand}" />
+                            <Button Content="Trust Local CA"
+                                    Command="{x:Bind ViewModel.TrustLocalSslCaCommand}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Content="Remove Local CA Trust"
+                                    Command="{x:Bind ViewModel.RollbackLocalSslTrustCommand}" />
+                            <Button Content="Apply Preview"
+                                    Command="{x:Bind ViewModel.ApplyHostsPreviewCommand}" />
+                            <Button Content="Rollback Latest"
+                                    Command="{x:Bind ViewModel.RollbackHostsCommand}" />
+                            <Button Content="Refresh"
+                                    Command="{x:Bind ViewModel.RefreshCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Padding="16"
+                    CornerRadius="12"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Local SSL" Style="{StaticResource CardTitleTextStyle}" />
+                    <TextBlock Text="{x:Bind ViewModel.SslSummary, Mode=OneWay}" />
+                    <TextBlock Text="{x:Bind ViewModel.SslDetails, Mode=OneWay}" TextWrapping="Wrap" Opacity="0.72" />
+                    <TextBlock Text="{x:Bind ViewModel.SslTrustLabel, Mode=OneWay}" />
+                    <TextBlock Text="{x:Bind ViewModel.SslTrustAccessDiagnosticLabel, Mode=OneWay}" TextWrapping="Wrap" Opacity="0.72" />
+                    <TextBlock Text="{x:Bind ViewModel.SslProjectCertificateLabel, Mode=OneWay}" Opacity="0.72" />
+                    <TextBlock Text="{x:Bind ViewModel.SslLastGeneratedLabel, Mode=OneWay}" Opacity="0.72" />
+                    <TextBlock Text="{x:Bind ViewModel.SslCaExpirationLabel, Mode=OneWay}" Opacity="0.72" />
+                    <TextBlock Text="{x:Bind ViewModel.SslRepairLabel, Mode=OneWay}" TextWrapping="Wrap" Opacity="0.72" />
+
+                    <TextBlock Text="CA Certificate" Style="{StaticResource CardTitleTextStyle}" />
+                    <TextBox Text="{x:Bind ViewModel.SslAuthorityPath, Mode=OneWay}" IsReadOnly="True" />
+
+                    <TextBlock Text="Project Certificates" Style="{StaticResource CardTitleTextStyle}" />
+                    <TextBox Text="{x:Bind ViewModel.SslCertificatesRoot, Mode=OneWay}" IsReadOnly="True" />
+                </StackPanel>
+            </Border>
+
+            <Border Padding="16"
+                    CornerRadius="12"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Config Validation" Style="{StaticResource CardTitleTextStyle}" />
+                    <TextBlock Text="Run this before restarting Nginx. Locora also blocks Nginx startup when validation fails."
+                               TextWrapping="Wrap"
+                               Opacity="0.72" />
+                    <ItemsControl ItemsSource="{x:Bind ViewModel.ValidationResults, Mode=OneWay}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="models:ValidationResultCard">
+                                <StackPanel Spacing="6" Margin="0,0,0,12">
+                                    <TextBlock Text="{x:Bind Name}" Style="{StaticResource CardTitleTextStyle}" />
+                                    <TextBlock Text="{x:Bind State}" />
+                                    <TextBlock Text="{x:Bind Summary}" TextWrapping="Wrap" />
+                                    <TextBlock Text="{x:Bind Details}" TextWrapping="Wrap" Opacity="0.72" />
+                                    <TextBlock Text="{x:Bind CheckedAt}" Opacity="0.72" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

@@ -1,0 +1,21 @@
+{
+  "LocoraProjects": {
+    "EnableAutoDiscovery": true,
+    "GenerateNginxVHosts": true,
+    "GenerateHostsPreview": true,
+    "DomainSuffix": "locora.test",
+    "DefaultScheme": "http",
+    "IndexFileNames": [
+      "index.php",
+      "index.html",
+      "index.htm"
+    ],
+    "IgnoredDirectoryNames": [
+      ".git",
+      ".idea",
+      ".vscode",
+      "node_modules",
+      "vendor"
+    ]
+  }
+}

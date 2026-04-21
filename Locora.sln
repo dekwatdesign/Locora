@@ -1,0 +1,51 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31912.275
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Locora.App", "src\Locora.App\Locora.App.csproj", "{3A4B9047-627A-47C4-95F5-19A3A9C5C9D8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Locora.App.Contracts", "src\Locora.App.Contracts\Locora.App.Contracts.csproj", "{B9E52D20-FA9E-4D10-9B56-25F6198F7E31}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Locora.Domain", "src\Locora.Domain\Locora.Domain.csproj", "{6A8ED3B0-D9C5-4695-A9A1-1649EF58BFD4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Locora.Application", "src\Locora.Application\Locora.Application.csproj", "{6D8B06BD-53E3-465B-87F9-D40F74E64B33}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Locora.Infrastructure", "src\Locora.Infrastructure\Locora.Infrastructure.csproj", "{8E4ED8A7-712D-4EAF-89F0-3EF86E808D14}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Locora.Supervisor", "src\Locora.Supervisor\Locora.Supervisor.csproj", "{E1C1D84E-8B7A-4B0E-8B77-D1622C4D60E8}"
+EndProject
+Global
+  GlobalSection(SolutionConfigurationPlatforms) = preSolution
+    Debug|x64 = Debug|x64
+    Release|x64 = Release|x64
+  EndGlobalSection
+  GlobalSection(ProjectConfigurationPlatforms) = postSolution
+    {3A4B9047-627A-47C4-95F5-19A3A9C5C9D8}.Debug|x64.ActiveCfg = Debug|x64
+    {3A4B9047-627A-47C4-95F5-19A3A9C5C9D8}.Debug|x64.Build.0 = Debug|x64
+    {3A4B9047-627A-47C4-95F5-19A3A9C5C9D8}.Release|x64.ActiveCfg = Release|x64
+    {3A4B9047-627A-47C4-95F5-19A3A9C5C9D8}.Release|x64.Build.0 = Release|x64
+    {B9E52D20-FA9E-4D10-9B56-25F6198F7E31}.Debug|x64.ActiveCfg = Debug|Any CPU
+    {B9E52D20-FA9E-4D10-9B56-25F6198F7E31}.Debug|x64.Build.0 = Debug|Any CPU
+    {B9E52D20-FA9E-4D10-9B56-25F6198F7E31}.Release|x64.ActiveCfg = Release|Any CPU
+    {B9E52D20-FA9E-4D10-9B56-25F6198F7E31}.Release|x64.Build.0 = Release|Any CPU
+    {6A8ED3B0-D9C5-4695-A9A1-1649EF58BFD4}.Debug|x64.ActiveCfg = Debug|Any CPU
+    {6A8ED3B0-D9C5-4695-A9A1-1649EF58BFD4}.Debug|x64.Build.0 = Debug|Any CPU
+    {6A8ED3B0-D9C5-4695-A9A1-1649EF58BFD4}.Release|x64.ActiveCfg = Release|Any CPU
+    {6A8ED3B0-D9C5-4695-A9A1-1649EF58BFD4}.Release|x64.Build.0 = Release|Any CPU
+    {6D8B06BD-53E3-465B-87F9-D40F74E64B33}.Debug|x64.ActiveCfg = Debug|Any CPU
+    {6D8B06BD-53E3-465B-87F9-D40F74E64B33}.Debug|x64.Build.0 = Debug|Any CPU
+    {6D8B06BD-53E3-465B-87F9-D40F74E64B33}.Release|x64.ActiveCfg = Release|Any CPU
+    {6D8B06BD-53E3-465B-87F9-D40F74E64B33}.Release|x64.Build.0 = Release|Any CPU
+    {8E4ED8A7-712D-4EAF-89F0-3EF86E808D14}.Debug|x64.ActiveCfg = Debug|Any CPU
+    {8E4ED8A7-712D-4EAF-89F0-3EF86E808D14}.Debug|x64.Build.0 = Debug|Any CPU
+    {8E4ED8A7-712D-4EAF-89F0-3EF86E808D14}.Release|x64.ActiveCfg = Release|Any CPU
+    {8E4ED8A7-712D-4EAF-89F0-3EF86E808D14}.Release|x64.Build.0 = Release|Any CPU
+    {E1C1D84E-8B7A-4B0E-8B77-D1622C4D60E8}.Debug|x64.ActiveCfg = Debug|x64
+    {E1C1D84E-8B7A-4B0E-8B77-D1622C4D60E8}.Debug|x64.Build.0 = Debug|x64
+    {E1C1D84E-8B7A-4B0E-8B77-D1622C4D60E8}.Release|x64.ActiveCfg = Release|x64
+    {E1C1D84E-8B7A-4B0E-8B77-D1622C4D60E8}.Release|x64.Build.0 = Release|x64
+  EndGlobalSection
+  GlobalSection(SolutionProperties) = preSolution
+    HideSolutionNode = FALSE
+  EndGlobalSection
+EndGlobal
