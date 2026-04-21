@@ -1,0 +1,8 @@
+{
+  "LocoraSupervisor": {
+    "AutoStartServices": [
+      "nginx",
+      "mariadb"
+    ]
+  }
+}

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="Locora.App.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:models="using:Locora.App.Models">
+    <ScrollViewer>
+        <StackPanel Padding="24" Spacing="16">
+            <TextBlock Text="Settings" Style="{StaticResource PageTitleTextStyle}" />
+            <TextBlock Text="This page exposes the portable root, project root, logs path, supervisor pipe name, and permission diagnostics for protected operations."
+                       TextWrapping="Wrap" />
+
+            <Border Padding="16"
+                    CornerRadius="12"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Tray Quick Actions" Style="{StaticResource CardTitleTextStyle}" />
+                    <TextBlock Text="Closing Locora now hides the shell to the Windows notification area. Use the tray icon to reopen the shell, jump to diagnostics, refresh status, start all services, stop all services, or exit cleanly."
+                               TextWrapping="Wrap"
+                               Opacity="0.72" />
+                    <TextBlock Text="{x:Bind ViewModel.ConnectionStatus, Mode=OneWay}" />
+                </StackPanel>
+            </Border>
+
+            <Border Padding="16"
+                    CornerRadius="12"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Permission &amp; Elevation Diagnostics" Style="{StaticResource CardTitleTextStyle}" />
+                    <TextBlock Text="{x:Bind ViewModel.PermissionDiagnosticsSummary, Mode=OneWay}" />
+                    <TextBlock Text="Locora checks whether the current supervisor can write to its portable workspace, update hosts targets safely, relaunch through UAC, and manage CurrentUser SSL trust."
+                               TextWrapping="Wrap"
+                               Opacity="0.72" />
+                    <Button Content="Restart Supervisor as Admin"
+                            Command="{x:Bind ViewModel.RestartSupervisorElevatedCommand}"
+                            HorizontalAlignment="Left" />
+
+                    <ItemsControl ItemsSource="{x:Bind ViewModel.PermissionDiagnostics, Mode=OneWay}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="models:PermissionDiagnosticCard">
+                                <Border Padding="12"
+                                        Margin="0,0,0,8"
+                                        CornerRadius="10"
+                                        Background="{ThemeResource CardBackgroundFillColorTertiaryBrush}">
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Text="{x:Bind Name}" Style="{StaticResource CardTitleTextStyle}" />
+                                        <TextBlock Text="{x:Bind StateLabel}" />
+                                        <TextBlock Text="{x:Bind Summary}" TextWrapping="Wrap" />
+                                        <TextBlock Text="{x:Bind Details}" TextWrapping="Wrap" Opacity="0.72" />
+                                        <TextBlock Text="{x:Bind SuggestedAction}" TextWrapping="Wrap" Opacity="0.72" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <Border Padding="16"
+                    CornerRadius="12"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Diagnostic Report" Style="{StaticResource CardTitleTextStyle}" />
+                    <TextBlock Text="Copy or export a Markdown snapshot with services, health issues, validation results, port diagnostics, permission checks, SSL certificate diagnostics, projects, and key paths."
+                               TextWrapping="Wrap"
+                               Opacity="0.72" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="Copy Diagnostic Report"
+                                Command="{x:Bind ViewModel.CopyDiagnosticReportCommand}" />
+                        <Button Content="Export Markdown Report"
+                                Command="{x:Bind ViewModel.ExportDiagnosticReportCommand}" />
+                    </StackPanel>
+                    <TextBox Header="Last exported report"
+                             Text="{x:Bind ViewModel.DiagnosticReportPath, Mode=OneWay}"
+                             IsReadOnly="True" />
+                </StackPanel>
+            </Border>
+
+            <Border Padding="16"
+                    CornerRadius="12"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Portable Root" Style="{StaticResource CardTitleTextStyle}" />
+                    <TextBox Text="{x:Bind ViewModel.EnvironmentRoot, Mode=OneWay}" IsReadOnly="True" />
+
+                    <TextBlock Text="Projects Root" Style="{StaticResource CardTitleTextStyle}" />
+                    <TextBox Text="{x:Bind ViewModel.ProjectRoot, Mode=OneWay}" IsReadOnly="True" />
+
+                    <TextBlock Text="Logs Root" Style="{StaticResource CardTitleTextStyle}" />
+                    <TextBox Text="{x:Bind ViewModel.LogsRoot, Mode=OneWay}" IsReadOnly="True" />
+
+                    <TextBlock Text="Supervisor Pipe" Style="{StaticResource CardTitleTextStyle}" />
+                    <TextBox Text="{x:Bind ViewModel.PipeName, Mode=OneWay}" IsReadOnly="True" />
+
+                    <TextBlock Text="Preferred Toolchain" Style="{StaticResource CardTitleTextStyle}" />
+                    <TextBox Text="{x:Bind ViewModel.PreferredToolchainSummary, Mode=OneWay}" IsReadOnly="True" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>
