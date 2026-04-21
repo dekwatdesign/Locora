@@ -49,6 +49,9 @@ public sealed class ServiceConfigurationWriter
             case "nginx":
                 await GenerateNginxConfigAsync(definition, cancellationToken);
                 return true;
+            case "apache":
+                await GenerateApacheConfigAsync(definition, cancellationToken);
+                return true;
             case "mariadb":
             case "mysql":
                 await GenerateMariaDbConfigAsync(definition, cancellationToken);
@@ -59,6 +62,9 @@ public sealed class ServiceConfigurationWriter
                 return true;
             case "redis":
                 await GenerateRedisConfigAsync(definition, cancellationToken);
+                return true;
+            case "memcached":
+                await GenerateMemcachedArtifactsAsync(definition, cancellationToken);
                 return true;
             case "mailpit":
                 await GenerateMailpitArtifactsAsync(definition, cancellationToken);
@@ -136,6 +142,56 @@ public sealed class ServiceConfigurationWriter
 
         await File.WriteAllTextAsync(configPath, content, cancellationToken);
         _logger.LogInformation("Generated Nginx config at {Path}", configPath);
+    }
+
+    private async Task GenerateApacheConfigAsync(ManagedServiceDefinition definition, CancellationToken cancellationToken)
+    {
+        var apacheExecutable = ResolvePath(definition.RelativeExecutablePath);
+        var binDirectory = Path.GetDirectoryName(apacheExecutable) ?? Path.Combine(_paths.BinRoot, "apache", "current", "bin");
+        var serverRoot = Directory.GetParent(binDirectory)?.FullName ?? Path.Combine(_paths.BinRoot, "apache", "current");
+        var modulesRoot = Path.Combine(serverRoot, "modules");
+        var bundledConfigRoot = Path.Combine(serverRoot, "conf");
+        var configRoot = Path.Combine(_paths.ConfigRoot, "apache");
+        var tempRoot = Path.Combine(_paths.TempRoot, "apache");
+
+        Directory.CreateDirectory(configRoot);
+        Directory.CreateDirectory(tempRoot);
+
+        var configPath = Path.Combine(configRoot, "httpd.conf");
+        var mimeTypesPath = Path.Combine(bundledConfigRoot, "mime.types");
+        var moduleLines = BuildApacheLoadModuleLines(modulesRoot);
+        var mimeTypesDirective = File.Exists(mimeTypesPath)
+            ? $"    TypesConfig \"{ToApachePath(mimeTypesPath)}\""
+            : "    # mime.types not found in the Apache package";
+
+        var content = $$"""
+        ServerRoot "{{ToApachePath(serverRoot)}}"
+        Listen {{definition.Port ?? 8080}}
+        ServerName localhost:{{definition.Port ?? 8080}}
+        PidFile "{{ToApachePath(Path.Combine(tempRoot, "httpd.pid"))}}"
+        ErrorLog "{{ToApachePath(_paths.GetServiceErrorLogPath(definition.Key))}}"
+
+        {{moduleLines}}
+
+        <IfModule mime_module>
+        {{mimeTypesDirective}}
+        </IfModule>
+
+        DocumentRoot "{{ToApachePath(_paths.ProjectRoot)}}"
+        <Directory "{{ToApachePath(_paths.ProjectRoot)}}">
+            Options FollowSymLinks
+            AllowOverride None
+            Require all granted
+            DirectoryIndex index.html index.htm
+        </Directory>
+
+        <FilesMatch "\.php$">
+            Require all denied
+        </FilesMatch>
+        """;
+
+        await File.WriteAllTextAsync(configPath, content, cancellationToken);
+        _logger.LogInformation("Generated Apache config at {Path}", configPath);
     }
 
     private async Task GenerateMariaDbConfigAsync(ManagedServiceDefinition definition, CancellationToken cancellationToken)
@@ -267,6 +323,46 @@ public sealed class ServiceConfigurationWriter
         _logger.LogInformation("Generated Redis config at {Path}", configPath);
     }
 
+    private async Task GenerateMemcachedArtifactsAsync(ManagedServiceDefinition definition, CancellationToken cancellationToken)
+    {
+        var configRoot = Path.Combine(_paths.ConfigRoot, "memcached");
+        var tempRoot = Path.Combine(_paths.TempRoot, "memcached");
+
+        Directory.CreateDirectory(configRoot);
+        Directory.CreateDirectory(tempRoot);
+
+        var bindHost = NormalizeLoopbackHost(ExpandToken(TryGetArgumentValue(definition.Arguments, "-l") ?? "127.0.0.1", definition));
+        var tcpPort = definition.Port ?? ExtractIntValue(TryGetArgumentValue(definition.Arguments, "-p"), 11211);
+        var udpPort = ExtractIntValue(TryGetArgumentValue(definition.Arguments, "-U"), 0);
+        var memoryLimitMb = ExtractIntValue(TryGetArgumentValue(definition.Arguments, "-m"), 64);
+        var maxConnections = ExtractIntValue(TryGetArgumentValue(definition.Arguments, "-c"), 1024);
+        var executablePath = ResolvePath(definition.RelativeExecutablePath, definition);
+        var startupArgumentsPath = Path.Combine(configRoot, "startup-arguments.txt");
+        var connectionDetailsPath = Path.Combine(configRoot, "connection-details.md");
+
+        var startupArguments = string.Join(
+            Environment.NewLine,
+            definition.Arguments.Select(argument => ExpandToken(argument, definition)));
+
+        var connectionDetails = $$"""
+        # Locora Memcached
+
+        Host: {{bindHost}}
+        Port: {{tcpPort}}
+        UDP port: {{(udpPort == 0 ? "disabled" : udpPort.ToString())}}
+        Memory limit: {{memoryLimitMb}} MB
+        Max connections: {{maxConnections}}
+        Binary: {{executablePath}}
+        Startup arguments file: {{startupArgumentsPath}}
+        Service stdout log: {{_paths.GetServiceOutputLogPath(definition.Key)}}
+        Service stderr log: {{_paths.GetServiceErrorLogPath(definition.Key)}}
+        """;
+
+        await File.WriteAllTextAsync(startupArgumentsPath, startupArguments + Environment.NewLine, cancellationToken);
+        await File.WriteAllTextAsync(connectionDetailsPath, connectionDetails, cancellationToken);
+        _logger.LogInformation("Generated Memcached connection details at {Path}", connectionDetailsPath);
+    }
+
     private async Task GenerateMailpitArtifactsAsync(ManagedServiceDefinition definition, CancellationToken cancellationToken)
     {
         var configRoot = Path.Combine(_paths.ConfigRoot, "mailpit");
@@ -374,6 +470,40 @@ public sealed class ServiceConfigurationWriter
             ? port
             : fallbackPort;
     }
+
+    private static int ExtractIntValue(string? value, int fallback)
+    {
+        return int.TryParse(value, out var parsed) && parsed >= 0
+            ? parsed
+            : fallback;
+    }
+
+    private static string NormalizeLoopbackHost(string host)
+    {
+        return host.Equals("0.0.0.0", StringComparison.OrdinalIgnoreCase)
+            ? "127.0.0.1"
+            : host;
+    }
+
+    private static string BuildApacheLoadModuleLines(string modulesRoot)
+    {
+        var moduleMap = new (string ModuleName, string FileName)[]
+        {
+            ("mpm_winnt_module", "mod_mpm_winnt.so"),
+            ("authz_core_module", "mod_authz_core.so"),
+            ("authz_host_module", "mod_authz_host.so"),
+            ("dir_module", "mod_dir.so"),
+            ("mime_module", "mod_mime.so")
+        };
+
+        return string.Join(
+            Environment.NewLine,
+            moduleMap
+                .Where(module => File.Exists(Path.Combine(modulesRoot, module.FileName)))
+                .Select(module => $"LoadModule {module.ModuleName} modules/{module.FileName}"));
+    }
+
+    private static string ToApachePath(string path) => path.Replace('\\', '/');
 
     private static string ToPostgresPath(string path) => path.Replace('\\', '/').Replace("'", "''");
 

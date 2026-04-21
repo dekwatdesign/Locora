@@ -91,6 +91,25 @@ public sealed class AppDataBootstrapper : IHostedService
                             },
                             new
                             {
+                                Key = "apache",
+                                DisplayName = "Apache",
+                                Kind = "apache",
+                                Version = "2.4.x",
+                                RelativeExecutablePath = "bin/apache/current/bin/httpd.exe",
+                                RelativeWorkingDirectory = "bin/apache/current/bin",
+                                Arguments = new[] { "-f", "{config}/apache/httpd.conf" },
+                                StopArguments = new[] { "-k", "stop", "-f", "{config}/apache/httpd.conf" },
+                                Port = 8080,
+                                AutoStart = false,
+                                RestartOnCrash = true,
+                                RestartBackoffMs = 2000,
+                                MaxRestartAttempts = 3,
+                                RestartWindowMs = 60000,
+                                StartTimeoutMs = 5000,
+                                StopTimeoutMs = 3000
+                            },
+                            new
+                            {
                                 Key = "mariadb",
                                 DisplayName = "MariaDB",
                                 Kind = "mariadb",
@@ -166,6 +185,31 @@ public sealed class AppDataBootstrapper : IHostedService
                                 },
                                 StopArguments = Array.Empty<string>(),
                                 Port = 1025,
+                                AutoStart = false,
+                                RestartOnCrash = true,
+                                RestartBackoffMs = 2000,
+                                MaxRestartAttempts = 3,
+                                RestartWindowMs = 60000,
+                                StartTimeoutMs = 5000,
+                                StopTimeoutMs = 3000
+                            },
+                            new
+                            {
+                                Key = "memcached",
+                                DisplayName = "Memcached",
+                                Kind = "memcached",
+                                Version = "1.6.x",
+                                RelativeExecutablePath = "bin/memcached/current/memcached.exe",
+                                RelativeWorkingDirectory = "bin/memcached/current",
+                                Arguments = new[]
+                                {
+                                    "-l", "127.0.0.1",
+                                    "-p", "{port}",
+                                    "-U", "0",
+                                    "-m", "64"
+                                },
+                                StopArguments = Array.Empty<string>(),
+                                Port = 11211,
                                 AutoStart = false,
                                 RestartOnCrash = true,
                                 RestartBackoffMs = 2000,

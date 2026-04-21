@@ -13,9 +13,9 @@ Laragon-like Windows local development manager built around `Microsoft.UI.Xaml` 
 - Portable workspace layout under `usr/`, `www/`, `bin/`, `data/`, and `temp/`
 - Named-pipe IPC skeleton between UI and supervisor
 - Runtime-backed supervisor slice with config-driven managed services in `usr/config/services.json`
-- Supervisor now generates starter configs for `Nginx` and `MariaDB` under `usr/config/nginx` and `usr/config/mariadb`
+- Supervisor now generates starter configs for `Nginx`, `Apache`, and `MariaDB` under `usr/config/nginx`, `usr/config/apache`, and `usr/config/mariadb`
 - Supervisor now scaffolds optional `PostgreSQL` with generated `postgresql.conf`, `pg_hba.conf`, connection details, and first-start cluster initialization via `initdb`
-- Supervisor now scaffolds optional `Redis` and `Mailpit` services, generates `redis.conf`, and writes Mailpit SMTP/UI connection details under `usr/config/mailpit`
+- Supervisor now scaffolds optional `Redis`, `Memcached`, and `Mailpit` services, generates `redis.conf`, and writes connection details under `usr/config/memcached` and `usr/config/mailpit`
 - Services page supports per-service start/stop actions through the supervisor
 - Supervisor discovers projects under `www/`, generates local URLs, writes Nginx vhosts, and produces a safe hosts-file preview
 - Dashboard project cards can open the local URL, folder, terminal, and preferred editor directly

@@ -173,9 +173,11 @@ public sealed class WorkbenchService : IWorkbenchService
             Services:
             [
                 new ServiceDescriptor("nginx", "Nginx", "1.27.x", 80, ServiceState.Unknown, true, "Supervisor not connected yet"),
+                new ServiceDescriptor("apache", "Apache", "2.4.x", 8080, ServiceState.Unknown, false, "Optional alternate web server"),
                 new ServiceDescriptor("mariadb", "MariaDB", "11.x", 3306, ServiceState.Unknown, true, "Waiting for first supervisor handshake"),
                 new ServiceDescriptor("postgresql", "PostgreSQL", "18.x", 5432, ServiceState.Unknown, false, "Optional database service with local trust auth"),
                 new ServiceDescriptor("redis", "Redis", "7.x", 6379, ServiceState.Unknown, false, "Optional cache service"),
+                new ServiceDescriptor("memcached", "Memcached", "1.6.x", 11211, ServiceState.Unknown, false, "Optional in-memory cache service"),
                 new ServiceDescriptor("mailpit", "Mailpit", "1.x", 1025, ServiceState.Unknown, false, "SMTP catcher with web inbox on http://127.0.0.1:8025/")
             ],
             Projects:

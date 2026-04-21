@@ -15,10 +15,12 @@ public sealed record ServiceStatusCard(
 
     public bool SupportsRepair =>
         Key.Equals("nginx", StringComparison.OrdinalIgnoreCase) ||
+        Key.Equals("apache", StringComparison.OrdinalIgnoreCase) ||
         Key.Equals("mariadb", StringComparison.OrdinalIgnoreCase) ||
         Key.Equals("mysql", StringComparison.OrdinalIgnoreCase) ||
         Key.Equals("postgresql", StringComparison.OrdinalIgnoreCase) ||
         Key.Equals("postgres", StringComparison.OrdinalIgnoreCase) ||
         Key.Equals("redis", StringComparison.OrdinalIgnoreCase) ||
+        Key.Equals("memcached", StringComparison.OrdinalIgnoreCase) ||
         Key.Equals("mailpit", StringComparison.OrdinalIgnoreCase);
 }

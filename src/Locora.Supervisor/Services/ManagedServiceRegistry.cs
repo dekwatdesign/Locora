@@ -7,6 +7,7 @@ namespace Locora.Supervisor.Services;
 public sealed class ManagedServiceRegistry
 {
     private readonly IReadOnlyDictionary<string, IManagedService> _services;
+    private readonly IManagedService[] _serviceList;
     private readonly NginxConfigValidator _nginxConfigValidator;
     private readonly ILogger<ManagedServiceRegistry> _logger;
 
@@ -19,22 +20,23 @@ public sealed class ManagedServiceRegistry
         _services = options.Value.Services
             .Where(definition => !string.IsNullOrWhiteSpace(definition.Key))
             .ToDictionary(definition => definition.Key, factory.Create, StringComparer.OrdinalIgnoreCase);
+        _serviceList = _services.Values.ToArray();
 
         _nginxConfigValidator = nginxConfigValidator;
         _logger = logger;
     }
 
-    public IReadOnlyCollection<IManagedService> Services => _services.Values;
+    public IReadOnlyCollection<IManagedService> Services => _serviceList;
 
     public async Task<IReadOnlyList<ManagedServiceStatus>> GetStatusesAsync(CancellationToken cancellationToken = default)
     {
-        var tasks = _services.Values.Select(service => service.GetStatusAsync(cancellationToken));
+        var tasks = _serviceList.Select(service => service.GetStatusAsync(cancellationToken));
         return await Task.WhenAll(tasks);
     }
 
     public async Task StartAllAsync(CancellationToken cancellationToken = default)
     {
-        foreach (var service in _services.Values)
+        foreach (var service in _serviceList)
         {
             await StartWithPreflightAsync(service, cancellationToken);
         }
@@ -42,9 +44,9 @@ public sealed class ManagedServiceRegistry
 
     public async Task StopAllAsync(CancellationToken cancellationToken = default)
     {
-        foreach (var service in _services.Values.Reverse())
+        for (var index = _serviceList.Length - 1; index >= 0; index--)
         {
-            await service.StopAsync(cancellationToken);
+            await _serviceList[index].StopAsync(cancellationToken);
         }
     }
 
@@ -64,7 +66,7 @@ public sealed class ManagedServiceRegistry
 
     public async Task StartAutoStartAsync(CancellationToken cancellationToken = default)
     {
-        foreach (var service in _services.Values.Where(service => service.Definition.AutoStart))
+        foreach (var service in _serviceList.Where(service => service.Definition.AutoStart))
         {
             _logger.LogInformation("Auto-starting {Service}", service.Definition.DisplayName);
             await StartWithPreflightAsync(service, cancellationToken);

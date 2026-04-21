@@ -547,7 +547,7 @@ public abstract class ManagedServiceBase : IManagedService
         return lastNote ?? (Definition.AutoStart ? "Configured to auto-start." : "Ready to start.");
     }
 
-    private void OnTrackedProcessExited(object? sender, EventArgs _)
+    private void OnTrackedProcessExited(object? sender, EventArgs args)
     {
         if (sender is Process process)
         {
@@ -617,9 +617,9 @@ public abstract class ManagedServiceBase : IManagedService
         var now = DateTimeOffset.UtcNow;
         var restartWindow = TimeSpan.FromMilliseconds(Math.Max(Definition.RestartWindowMs, 1000));
         var allowedAttempts = Math.Max(Definition.MaxRestartAttempts, 1);
-        DateTimeOffset restartAt;
+        DateTimeOffset restartAt = default;
         TimeSpan delay;
-        int restartPlanVersion;
+        int restartPlanVersion = 0;
         int attempt;
         bool recoverySuspended;
 

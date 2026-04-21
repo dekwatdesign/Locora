@@ -166,7 +166,7 @@ public sealed class SupervisorStateStore
                     "Warning",
                     "No services configured",
                     "No managed services were loaded from usr/config/services.json.",
-                    "Add service definitions for Nginx, MariaDB, PostgreSQL, Redis, Mailpit, and related tools."));
+                    "Add service definitions for Nginx, Apache, MariaDB, PostgreSQL, Redis, Memcached, Mailpit, and related tools."));
             return issues;
         }
 

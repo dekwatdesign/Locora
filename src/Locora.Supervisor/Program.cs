@@ -3,6 +3,7 @@ using Locora.Infrastructure.Services;
 using Locora.Supervisor.Configuration;
 using Locora.Supervisor.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 using var singleInstanceLease = SingleInstanceLease.Acquire("Locora.Supervisor", TimeSpan.FromSeconds(15));
 if (!singleInstanceLease.OwnsMutex)

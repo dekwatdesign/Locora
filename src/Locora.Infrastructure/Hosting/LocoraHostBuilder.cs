@@ -154,6 +154,32 @@ public static class LocoraHostBuilder
                     "StopTimeoutMs": 3000
                   },
                   {
+                    "Key": "apache",
+                    "DisplayName": "Apache",
+                    "Kind": "apache",
+                    "Version": "2.4.x",
+                    "RelativeExecutablePath": "bin/apache/current/bin/httpd.exe",
+                    "RelativeWorkingDirectory": "bin/apache/current/bin",
+                    "Arguments": [
+                      "-f",
+                      "{config}/apache/httpd.conf"
+                    ],
+                    "StopArguments": [
+                      "-k",
+                      "stop",
+                      "-f",
+                      "{config}/apache/httpd.conf"
+                    ],
+                    "Port": 8080,
+                    "AutoStart": false,
+                    "RestartOnCrash": true,
+                    "RestartBackoffMs": 2000,
+                    "MaxRestartAttempts": 3,
+                    "RestartWindowMs": 60000,
+                    "StartTimeoutMs": 5000,
+                    "StopTimeoutMs": 3000
+                  },
+                  {
                     "Key": "mariadb",
                     "DisplayName": "MariaDB",
                     "Kind": "mariadb",
@@ -252,6 +278,32 @@ public static class LocoraHostBuilder
                       "--disable-version-check"
                     ],
                     "Port": 1025,
+                    "AutoStart": false,
+                    "RestartOnCrash": true,
+                    "RestartBackoffMs": 2000,
+                    "MaxRestartAttempts": 3,
+                    "RestartWindowMs": 60000,
+                    "StartTimeoutMs": 5000,
+                    "StopTimeoutMs": 3000
+                  },
+                  {
+                    "Key": "memcached",
+                    "DisplayName": "Memcached",
+                    "Kind": "memcached",
+                    "Version": "1.6.x",
+                    "RelativeExecutablePath": "bin/memcached/current/memcached.exe",
+                    "RelativeWorkingDirectory": "bin/memcached/current",
+                    "Arguments": [
+                      "-l",
+                      "127.0.0.1",
+                      "-p",
+                      "{port}",
+                      "-U",
+                      "0",
+                      "-m",
+                      "64"
+                    ],
+                    "Port": 11211,
                     "AutoStart": false,
                     "RestartOnCrash": true,
                     "RestartBackoffMs": 2000,

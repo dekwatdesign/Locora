@@ -25,9 +25,11 @@ public sealed class ManagedServiceFactory
         return definition.Kind.ToLowerInvariant() switch
         {
             "nginx" => new NginxManagedService(definition, _paths, _portProbe, _loggerFactory.CreateLogger<NginxManagedService>()),
+            "apache" => new ApacheManagedService(definition, _paths, _portProbe, _loggerFactory.CreateLogger<ApacheManagedService>()),
             "mariadb" or "mysql" => new MariaDbManagedService(definition, _paths, _portProbe, _loggerFactory.CreateLogger<MariaDbManagedService>()),
             "postgresql" or "postgres" => new PostgreSqlManagedService(definition, _paths, _portProbe, _loggerFactory.CreateLogger<PostgreSqlManagedService>()),
             "redis" => new RedisManagedService(definition, _paths, _portProbe, _loggerFactory.CreateLogger<RedisManagedService>()),
+            "memcached" => new MemcachedManagedService(definition, _paths, _portProbe, _loggerFactory.CreateLogger<MemcachedManagedService>()),
             "mailpit" => new MailpitManagedService(definition, _paths, _portProbe, _loggerFactory.CreateLogger<MailpitManagedService>()),
             _ => new GenericManagedService(definition, _paths, _portProbe, _loggerFactory.CreateLogger<GenericManagedService>())
         };

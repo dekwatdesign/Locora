@@ -63,11 +63,11 @@ Legend:
 ## 4. Web Servers and Databases
 
 - [x] Nginx real adapter
-- [ ] Apache real adapter
+- [x] Apache real adapter
 - [x] MariaDB / MySQL real adapter
 - [x] PostgreSQL adapter
 - [x] Redis adapter
-- [ ] Memcached adapter
+- [x] Memcached adapter
 - [x] Mailpit / mail catcher adapter
 - [~] Per-service config generation
 - [ ] Version-aware service registration
@@ -215,6 +215,8 @@ If building in the highest-value order, do these next:
 - [x] Add Mailpit inbox integration
 - [x] Add PostgreSQL adapter
 - [x] Add Redis and Mailpit adapters
+- [x] Add Memcached adapter
+- [x] Add Apache real adapter
 - [x] Add real tray icon and tray quick actions
 - [x] Add privileged hosts-file apply flow with preview and rollback
 - [x] Add an elevation broker / restart-supervisor-as-admin flow
@@ -235,4 +237,4 @@ If building in the highest-value order, do these next:
 
 ## Next Highest-Value Slice
 
-- [ ] Add Memcached adapter
+- [ ] Add Apache vhost template generation

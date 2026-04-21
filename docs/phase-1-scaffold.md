@@ -18,8 +18,9 @@ This scaffold turns the repo into a real multi-project Windows desktop solution 
 - JSON-lines logging under `usr/logs/*.log.jsonl`
 - Named-pipe IPC contract between shell and supervisor
 - Config-driven managed services from `usr/config/services.json`
+- Optional Apache service definition with generated `httpd.conf`
 - Optional PostgreSQL service definition with generated `postgresql.conf` / `pg_hba.conf` and first-start cluster initialization
-- Optional Redis and Mailpit service definitions with generated Redis config and Mailpit connection details
+- Optional Redis, Memcached, and Mailpit service definitions with generated Redis config plus Memcached and Mailpit connection details
 - Runtime probing for executable presence, port responsiveness, and tracked process state
 - Port conflict diagnostics for duplicate configured ports and external TCP listeners, including PID/process hints on Windows
 - Stdout/stderr log streaming into `usr/logs/<service>.stdout.log` and `usr/logs/<service>.stderr.log`
@@ -46,7 +47,7 @@ This scaffold turns the repo into a real multi-project Windows desktop solution 
 ## What is intentionally still stubbed
 
 - Production-ready repair for generated service configs
-- Additional adapters for Apache, Memcached, and other tools
+- Additional adapters for other tools
 - Terminal hosting
 - Package management
 - Import from existing Laragon installs
@@ -64,4 +65,4 @@ This scaffold turns the repo into a real multi-project Windows desktop solution 
 
 Build on the new runtime-backed supervisor slice:
 
-- Add Memcached adapter
+- Add Apache vhost template generation

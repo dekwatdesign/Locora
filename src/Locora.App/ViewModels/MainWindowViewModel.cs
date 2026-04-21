@@ -546,13 +546,7 @@ public sealed class MainWindowViewModel : ObservableObject
             return false;
         }
 
-        return service.Key.Equals("nginx", StringComparison.OrdinalIgnoreCase) ||
-            service.Key.Equals("mariadb", StringComparison.OrdinalIgnoreCase) ||
-            service.Key.Equals("mysql", StringComparison.OrdinalIgnoreCase) ||
-            service.Key.Equals("postgresql", StringComparison.OrdinalIgnoreCase) ||
-            service.Key.Equals("postgres", StringComparison.OrdinalIgnoreCase) ||
-            service.Key.Equals("redis", StringComparison.OrdinalIgnoreCase) ||
-            service.Key.Equals("mailpit", StringComparison.OrdinalIgnoreCase);
+        return service.SupportsRepair;
     }
 
     private static bool CanUseProject(ProjectCard? project) => project is not null;
