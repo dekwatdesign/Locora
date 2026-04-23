@@ -42,6 +42,30 @@ public sealed class ManagedServiceRegistry
         }
     }
 
+    public async Task StartServicesAsync(IEnumerable<string> serviceKeys, CancellationToken cancellationToken = default)
+    {
+        var requestedKeys = serviceKeys
+            .Where(key => !string.IsNullOrWhiteSpace(key))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        if (requestedKeys.Length == 0)
+        {
+            await StartAllAsync(cancellationToken);
+            return;
+        }
+
+        foreach (var serviceKey in requestedKeys)
+        {
+            if (!_services.TryGetValue(serviceKey, out var service))
+            {
+                _logger.LogWarning("Profile requested service {ServiceKey}, but it is not configured.", serviceKey);
+                continue;
+            }
+
+            await StartWithPreflightAsync(service, cancellationToken);
+        }
+    }
+
     public async Task StopAllAsync(CancellationToken cancellationToken = default)
     {
         for (var index = _serviceList.Length - 1; index >= 0; index--)

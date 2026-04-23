@@ -5,4 +5,6 @@ public sealed record ProjectDescriptor(
     string Path,
     string Url,
     string Runtime,
+    string Description,
+    IReadOnlyList<string> Tags,
     bool UsesHttps);

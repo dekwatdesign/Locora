@@ -17,6 +17,8 @@ public sealed class ManagedServiceDefinition
 
     public string Version { get; init; } = "unknown";
 
+    public string? VersionResolutionNote { get; init; }
+
     public string RelativeExecutablePath { get; init; } = string.Empty;
 
     public string? RelativeStopExecutablePath { get; init; }

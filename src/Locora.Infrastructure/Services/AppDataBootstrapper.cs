@@ -36,7 +36,8 @@ public sealed class AppDataBootstrapper : IHostedService
         Directory.CreateDirectory(_environmentPaths.BinRoot);
         Directory.CreateDirectory(_environmentPaths.TempRoot);
         Directory.CreateDirectory(Path.Combine(_environmentPaths.UserRoot, "profiles"));
-        Directory.CreateDirectory(Path.Combine(_environmentPaths.UserRoot, "aliases"));
+        Directory.CreateDirectory(_environmentPaths.AliasesRoot);
+        Directory.CreateDirectory(_environmentPaths.ShellIntegrationRoot);
         Directory.CreateDirectory(Path.Combine(_environmentPaths.UserRoot, "templates"));
         Directory.CreateDirectory(Path.Combine(_environmentPaths.UserRoot, "cache"));
         EnsureWelcomeProject();
@@ -234,6 +235,7 @@ public sealed class AppDataBootstrapper : IHostedService
                     {
                         EnableAutoDiscovery = true,
                         GenerateNginxVHosts = true,
+                        GenerateApacheVHosts = true,
                         GenerateHostsPreview = true,
                         DomainSuffix = "locora.test",
                         DefaultScheme = "http",
@@ -244,10 +246,187 @@ public sealed class AppDataBootstrapper : IHostedService
                 cancellationToken);
         }
 
+        if (!File.Exists(_environmentPaths.ProfilesSettingsFile))
+        {
+            await _jsonFileStore.WriteAsync(
+                _environmentPaths.ProfilesSettingsFile,
+                new
+                {
+                    LocoraProfiles = new
+                    {
+                        SchemaVersion = 1,
+                        ActiveProfileKey = "full-stack",
+                        Profiles = CreateDefaultProfiles()
+                    }
+                },
+                cancellationToken);
+        }
+
+        if (!File.Exists(_environmentPaths.TerminalCommandsSettingsFile))
+        {
+            await _jsonFileStore.WriteAsync(
+                _environmentPaths.TerminalCommandsSettingsFile,
+                new
+                {
+                    LocoraTerminal = new
+                    {
+                        Commands = new object[]
+                        {
+                            new
+                            {
+                                Key = "git-status",
+                                DisplayName = "Git status",
+                                Alias = "gst",
+                                Description = "Inspect the selected terminal workspace before making changes.",
+                                CommandText = "git status",
+                                Scope = "any",
+                                Tags = new[] { "git", "status", "workspace" }
+                            },
+                            new
+                            {
+                                Key = "php-version",
+                                DisplayName = "PHP version",
+                                Alias = "phpv",
+                                Description = "Print the active PHP runtime version from the injected PATH.",
+                                CommandText = "php -v",
+                                Scope = "any",
+                                Tags = new[] { "php", "runtime", "version" }
+                            },
+                            new
+                            {
+                                Key = "node-version",
+                                DisplayName = "Node.js version",
+                                Alias = "nodev",
+                                Description = "Print the active Node.js runtime version from the injected PATH.",
+                                CommandText = "node --version",
+                                Scope = "any",
+                                Tags = new[] { "node", "nodejs", "runtime", "version" }
+                            },
+                            new
+                            {
+                                Key = "python-version",
+                                DisplayName = "Python version",
+                                Alias = "pyv",
+                                Description = "Print the active Python runtime version from the injected PATH.",
+                                CommandText = "python --version",
+                                Scope = "any",
+                                Tags = new[] { "python", "runtime", "version" }
+                            },
+                            new
+                            {
+                                Key = "java-version",
+                                DisplayName = "Java version",
+                                Alias = "javav",
+                                Description = "Print the active Java runtime version from the injected PATH.",
+                                CommandText = "java -version",
+                                Scope = "any",
+                                Tags = new[] { "java", "runtime", "version" }
+                            },
+                            new
+                            {
+                                Key = "composer-version",
+                                DisplayName = "Composer version",
+                                Alias = "compv",
+                                Description = "Print the active Composer tool version from the injected PATH.",
+                                CommandText = "composer --version",
+                                Scope = "any",
+                                Tags = new[] { "composer", "tool", "version" }
+                            },
+                            new
+                            {
+                                Key = "composer-install",
+                                DisplayName = "Composer install",
+                                Alias = "cinst",
+                                Description = "Install PHP project dependencies in the selected project terminal tab.",
+                                CommandText = "composer install",
+                                Scope = "project",
+                                Tags = new[] { "composer", "php", "dependencies", "project" }
+                            },
+                            new
+                            {
+                                Key = "npm-install",
+                                DisplayName = "NPM install",
+                                Alias = "npmi",
+                                Description = "Install Node.js project dependencies in the selected project terminal tab.",
+                                CommandText = "npm install",
+                                Scope = "project",
+                                Tags = new[] { "npm", "node", "dependencies", "project" }
+                            },
+                            new
+                            {
+                                Key = "npm-dev",
+                                DisplayName = "NPM dev server",
+                                Alias = "npmdev",
+                                Description = "Start the common npm development server in the selected project terminal tab.",
+                                CommandText = "npm run dev",
+                                Scope = "project",
+                                Tags = new[] { "npm", "node", "dev", "project" }
+                            }
+                        }
+                    }
+                },
+                cancellationToken);
+        }
+
         _logger.LogInformation("Portable workspace root prepared at {Root}", _environmentPaths.AppRoot);
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    private static object[] CreateDefaultProfiles()
+    {
+        return
+        [
+            new
+            {
+                Key = "full-stack",
+                DisplayName = "Full Stack",
+                Description = "Nginx, MariaDB, Mailpit, PHP, Node.js, Python, and Java selections for general local development.",
+                ServiceKeys = new[] { "nginx", "mariadb", "mailpit" },
+                PackageSelections = new Dictionary<string, string>
+                {
+                    ["nginx"] = "1.27.x",
+                    ["mariadb"] = "11.x",
+                    ["mailpit"] = "1.x",
+                    ["php"] = "8.3.x",
+                    ["nodejs"] = "22.x",
+                    ["python"] = "3.12.x",
+                    ["java"] = "21.x"
+                },
+                Tags = new[] { "web", "php", "node", "database", "mail" }
+            },
+            new
+            {
+                Key = "php-mariadb",
+                DisplayName = "PHP + MariaDB",
+                Description = "Lean PHP stack with Nginx, MariaDB, Mailpit, and Composer-ready tooling.",
+                ServiceKeys = new[] { "nginx", "mariadb", "mailpit" },
+                PackageSelections = new Dictionary<string, string>
+                {
+                    ["nginx"] = "1.27.x",
+                    ["mariadb"] = "11.x",
+                    ["mailpit"] = "1.x",
+                    ["php"] = "8.3.x"
+                },
+                Tags = new[] { "php", "mysql", "laravel", "wordpress" }
+            },
+            new
+            {
+                Key = "node-postgres",
+                DisplayName = "Node.js + PostgreSQL",
+                Description = "Node.js app stack with PostgreSQL and Mailpit for API and full-stack JavaScript work.",
+                ServiceKeys = new[] { "nginx", "postgresql", "mailpit" },
+                PackageSelections = new Dictionary<string, string>
+                {
+                    ["nginx"] = "1.27.x",
+                    ["postgresql"] = "18.x",
+                    ["mailpit"] = "1.x",
+                    ["nodejs"] = "22.x"
+                },
+                Tags = new[] { "node", "postgres", "api" }
+            }
+        ];
+    }
 
     private void EnsureWelcomeProject()
     {

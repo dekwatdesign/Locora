@@ -5,6 +5,32 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:models="using:Locora.App.Models">
     <ScrollViewer>
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup>
+                <VisualState x:Name="NarrowDiagnostics" />
+                <VisualState x:Name="WideDiagnostics">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="1000" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="DiagnosticsSummaryColumn2.Width" Value="*" />
+                        <Setter Target="DiagnosticsSummaryColumn3.Width" Value="*" />
+                        <Setter Target="DiagnosticsSummaryColumn4.Width" Value="*" />
+                        <Setter Target="ConfigChecksSummary.(Grid.Row)" Value="0" />
+                        <Setter Target="ConfigChecksSummary.(Grid.Column)" Value="1" />
+                        <Setter Target="PortsSummary.(Grid.Row)" Value="0" />
+                        <Setter Target="PortsSummary.(Grid.Column)" Value="2" />
+                        <Setter Target="PermissionsSummary.(Grid.Row)" Value="0" />
+                        <Setter Target="PermissionsSummary.(Grid.Column)" Value="3" />
+                        <Setter Target="DiagnosticsDetailColumn2.Width" Value="*" />
+                        <Setter Target="DiagnosticsRightColumn.(Grid.Row)" Value="0" />
+                        <Setter Target="DiagnosticsRightColumn.(Grid.Column)" Value="1" />
+                        <Setter Target="DiagnosticsPrimaryActions.Orientation" Value="Horizontal" />
+                        <Setter Target="DiagnosticsSecondaryActions.Orientation" Value="Horizontal" />
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
         <StackPanel Padding="24" Spacing="18">
             <TextBlock Text="Diagnostics" Style="{StaticResource PageTitleTextStyle}" />
             <TextBlock Text="One place to understand what is broken, run safe repair actions, and export a support-ready report."
@@ -16,15 +42,23 @@
                      Title="Supervisor not connected"
                      Message="Diagnostics are showing the latest offline snapshot until Locora.Supervisor responds again." />
 
-            <Grid ColumnSpacing="16" RowSpacing="16">
+            <Grid x:Name="DiagnosticsSummaryGrid" ColumnSpacing="16" RowSpacing="16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition x:Name="DiagnosticsSummaryColumn2" Width="0" />
+                    <ColumnDefinition x:Name="DiagnosticsSummaryColumn3" Width="0" />
+                    <ColumnDefinition x:Name="DiagnosticsSummaryColumn4" Width="0" />
                 </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-                <Border Grid.Column="0"
+                <Border x:Name="OverallStatusSummary"
+                        Grid.Row="0"
+                        Grid.Column="0"
                         Padding="20"
                         CornerRadius="12"
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
@@ -39,7 +73,9 @@
                     </StackPanel>
                 </Border>
 
-                <Border Grid.Column="1"
+                <Border x:Name="ConfigChecksSummary"
+                        Grid.Row="1"
+                        Grid.Column="0"
                         Padding="20"
                         CornerRadius="12"
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
@@ -54,7 +90,9 @@
                     </StackPanel>
                 </Border>
 
-                <Border Grid.Column="2"
+                <Border x:Name="PortsSummary"
+                        Grid.Row="2"
+                        Grid.Column="0"
                         Padding="20"
                         CornerRadius="12"
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
@@ -69,7 +107,9 @@
                     </StackPanel>
                 </Border>
 
-                <Border Grid.Column="3"
+                <Border x:Name="PermissionsSummary"
+                        Grid.Row="3"
+                        Grid.Column="0"
                         Padding="20"
                         CornerRadius="12"
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
@@ -94,27 +134,51 @@
                                TextWrapping="Wrap"
                                Opacity="0.72" />
 
-                    <StackPanel Orientation="Horizontal" Spacing="8">
+                    <StackPanel x:Name="DiagnosticsPrimaryActions" Orientation="Vertical" Spacing="8">
                         <Button Content="Refresh Snapshot"
+                                AccessKey="R"
+                                AutomationProperties.HelpText="Refresh the latest diagnostics snapshot from the supervisor."
+                                ToolTipService.ToolTip="Refresh diagnostics snapshot"
                                 Command="{x:Bind ViewModel.RefreshCommand}" />
                         <Button Content="Validate Nginx Config"
+                                AccessKey="V"
+                                AutomationProperties.HelpText="Validate generated Nginx configuration before service startup."
+                                ToolTipService.ToolTip="Validate generated Nginx configuration"
                                 Command="{x:Bind ViewModel.ValidateNginxConfigCommand}" />
+                        <Button Content="Repair Hosts &amp; VHosts"
+                                AutomationProperties.HelpText="Regenerate hosts preview, Nginx vhosts, and Apache vhosts."
+                                ToolTipService.ToolTip="Regenerate hosts and vhost artifacts"
+                                Command="{x:Bind ViewModel.RepairDomainsCommand}" />
                         <Button Content="Repair Runtime Configs"
+                                AutomationProperties.HelpText="Regenerate common service runtime configuration."
+                                ToolTipService.ToolTip="Repair runtime configuration"
                                 Command="{x:Bind ViewModel.RepairRuntimeCommand}" />
                         <Button Content="Restart as Admin"
+                                AutomationProperties.HelpText="Restart the supervisor with administrator rights for protected operations."
+                                ToolTipService.ToolTip="Restart supervisor as administrator"
                                 Command="{x:Bind ViewModel.RestartSupervisorElevatedCommand}" />
                     </StackPanel>
 
-                    <StackPanel Orientation="Horizontal" Spacing="8">
+                    <StackPanel x:Name="DiagnosticsSecondaryActions" Orientation="Vertical" Spacing="8">
                         <Button Content="Generate Local SSL"
+                                AutomationProperties.HelpText="Generate the Locora local CA and project certificates."
+                                ToolTipService.ToolTip="Generate local SSL certificates"
                                 Command="{x:Bind ViewModel.GenerateLocalSslCommand}" />
                         <Button Content="Repair Local SSL"
+                                AutomationProperties.HelpText="Repair missing, expired, invalid, or stale local SSL certificates."
+                                ToolTipService.ToolTip="Repair local SSL certificates"
                                 Command="{x:Bind ViewModel.RepairLocalSslCommand}" />
                         <Button Content="Trust Local CA"
+                                AutomationProperties.HelpText="Trust the Locora local CA for the current Windows user."
+                                ToolTipService.ToolTip="Trust local certificate authority"
                                 Command="{x:Bind ViewModel.TrustLocalSslCaCommand}" />
                         <Button Content="Copy Report"
+                                AutomationProperties.HelpText="Copy the diagnostic report to the clipboard."
+                                ToolTipService.ToolTip="Copy diagnostic report to clipboard"
                                 Command="{x:Bind ViewModel.CopyDiagnosticReportCommand}" />
                         <Button Content="Export Report"
+                                AutomationProperties.HelpText="Export the diagnostic report as a Markdown file."
+                                ToolTipService.ToolTip="Export diagnostic report as Markdown"
                                 Command="{x:Bind ViewModel.ExportDiagnosticReportCommand}" />
                     </StackPanel>
 
@@ -124,18 +188,43 @@
                 </StackPanel>
             </Border>
 
-            <Grid ColumnSpacing="18">
+            <Grid x:Name="DiagnosticsDetailsGrid" ColumnSpacing="18" RowSpacing="18">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition x:Name="DiagnosticsDetailColumn2" Width="0" />
                 </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-                <StackPanel Grid.Column="0" Spacing="14">
+                <StackPanel Grid.Row="0" Grid.Column="0" Spacing="14">
                     <Border Padding="16"
                             CornerRadius="12"
                             Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
                         <StackPanel Spacing="12">
                             <TextBlock Text="Health Issues" Style="{StaticResource SectionTitleTextStyle}" />
+                            <Border x:Load="{x:Bind ViewModel.ShowHealthIssuesEmptyState, Mode=OneWay}"
+                                    Padding="12"
+                                    CornerRadius="10"
+                                    Background="{ThemeResource CardBackgroundFillColorTertiaryBrush}">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Text="No health issues reported" Style="{StaticResource CardTitleTextStyle}" />
+                                    <TextBlock Text="Refresh when something looks off, or export a report to capture this clean baseline."
+                                               TextWrapping="Wrap"
+                                               Opacity="0.72" />
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Button Content="Refresh Snapshot"
+                                                AutomationProperties.HelpText="Refresh health issues from the supervisor."
+                                                ToolTipService.ToolTip="Refresh health issues"
+                                                Command="{x:Bind ViewModel.RefreshCommand}" />
+                                        <Button Content="Export Report"
+                                                AutomationProperties.HelpText="Export the current clean diagnostics baseline as Markdown."
+                                                ToolTipService.ToolTip="Export diagnostic report"
+                                                Command="{x:Bind ViewModel.ExportDiagnosticReportCommand}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
                             <ItemsControl ItemsSource="{x:Bind ViewModel.HealthIssues, Mode=OneWay}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="models:HealthIssueCard">
@@ -164,6 +253,27 @@
                             <TextBlock Text="{x:Bind ViewModel.ConfigValidationSummary, Mode=OneWay}"
                                        TextWrapping="Wrap"
                                        Opacity="0.72" />
+                            <Border x:Load="{x:Bind ViewModel.ShowValidationResultsEmptyState, Mode=OneWay}"
+                                    Padding="12"
+                                    CornerRadius="10"
+                                    Background="{ThemeResource CardBackgroundFillColorTertiaryBrush}">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Text="No validation results yet" Style="{StaticResource CardTitleTextStyle}" />
+                                    <TextBlock Text="Run validation before restarting Nginx so broken generated config is caught early."
+                                               TextWrapping="Wrap"
+                                               Opacity="0.72" />
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Button Content="Validate Nginx Config"
+                                                AutomationProperties.HelpText="Validate generated Nginx configuration."
+                                                ToolTipService.ToolTip="Validate generated Nginx configuration"
+                                                Command="{x:Bind ViewModel.ValidateNginxConfigCommand}" />
+                                        <Button Content="Repair Runtime Configs"
+                                                AutomationProperties.HelpText="Regenerate common service runtime configuration."
+                                                ToolTipService.ToolTip="Repair runtime configuration"
+                                                Command="{x:Bind ViewModel.RepairRuntimeCommand}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
                             <ItemsControl ItemsSource="{x:Bind ViewModel.ValidationResults, Mode=OneWay}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="models:ValidationResultCard">
@@ -186,7 +296,7 @@
                     </Border>
                 </StackPanel>
 
-                <StackPanel Grid.Column="1" Spacing="14">
+                <StackPanel x:Name="DiagnosticsRightColumn" Grid.Row="1" Grid.Column="0" Spacing="14">
                     <Border Padding="16"
                             CornerRadius="12"
                             Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
@@ -195,6 +305,27 @@
                             <TextBlock Text="{x:Bind ViewModel.PortDiagnosticsSummary, Mode=OneWay}"
                                        TextWrapping="Wrap"
                                        Opacity="0.72" />
+                            <Border x:Load="{x:Bind ViewModel.ShowPortDiagnosticsEmptyState, Mode=OneWay}"
+                                    Padding="12"
+                                    CornerRadius="10"
+                                    Background="{ThemeResource CardBackgroundFillColorTertiaryBrush}">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Text="No port diagnostics available" Style="{StaticResource CardTitleTextStyle}" />
+                                    <TextBlock Text="Refresh the snapshot or regenerate runtime configs so Locora can inspect expected service ports again."
+                                               TextWrapping="Wrap"
+                                               Opacity="0.72" />
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Button Content="Refresh Snapshot"
+                                                AutomationProperties.HelpText="Refresh port diagnostics from the supervisor."
+                                                ToolTipService.ToolTip="Refresh port diagnostics"
+                                                Command="{x:Bind ViewModel.RefreshCommand}" />
+                                        <Button Content="Repair Runtime Configs"
+                                                AutomationProperties.HelpText="Regenerate common service runtime configuration."
+                                                ToolTipService.ToolTip="Repair runtime configuration"
+                                                Command="{x:Bind ViewModel.RepairRuntimeCommand}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
                             <ItemsControl ItemsSource="{x:Bind ViewModel.PortDiagnostics, Mode=OneWay}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="models:PortDiagnosticCard">
@@ -226,6 +357,27 @@
                             <TextBlock Text="{x:Bind ViewModel.PermissionDiagnosticsSummary, Mode=OneWay}"
                                        TextWrapping="Wrap"
                                        Opacity="0.72" />
+                            <Border x:Load="{x:Bind ViewModel.ShowPermissionDiagnosticsEmptyState, Mode=OneWay}"
+                                    Padding="12"
+                                    CornerRadius="10"
+                                    Background="{ThemeResource CardBackgroundFillColorTertiaryBrush}">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Text="No permission diagnostics available" Style="{StaticResource CardTitleTextStyle}" />
+                                    <TextBlock Text="Refresh to ask the supervisor for permission checks, or restart elevated when protected Windows resources need writes."
+                                               TextWrapping="Wrap"
+                                               Opacity="0.72" />
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Button Content="Refresh Snapshot"
+                                                AutomationProperties.HelpText="Refresh permission diagnostics from the supervisor."
+                                                ToolTipService.ToolTip="Refresh permission diagnostics"
+                                                Command="{x:Bind ViewModel.RefreshCommand}" />
+                                        <Button Content="Restart as Admin"
+                                                AutomationProperties.HelpText="Restart the supervisor with administrator rights."
+                                                ToolTipService.ToolTip="Restart supervisor as administrator"
+                                                Command="{x:Bind ViewModel.RestartSupervisorElevatedCommand}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
                             <ItemsControl ItemsSource="{x:Bind ViewModel.PermissionDiagnostics, Mode=OneWay}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="models:PermissionDiagnosticCard">
@@ -261,6 +413,27 @@
                             <TextBlock Text="{x:Bind ViewModel.SslCaExpirationLabel, Mode=OneWay}" Opacity="0.72" />
                             <TextBlock Text="{x:Bind ViewModel.SslRepairLabel, Mode=OneWay}" TextWrapping="Wrap" Opacity="0.72" />
 
+                            <Border x:Load="{x:Bind ViewModel.ShowSslCertificateDiagnosticsEmptyState, Mode=OneWay}"
+                                    Padding="12"
+                                    CornerRadius="10"
+                                    Background="{ThemeResource CardBackgroundFillColorTertiaryBrush}">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Text="No SSL certificate diagnostics yet" Style="{StaticResource CardTitleTextStyle}" />
+                                    <TextBlock Text="Generate local SSL to create project certificates, or run repair to renew missing and expired certs."
+                                               TextWrapping="Wrap"
+                                               Opacity="0.72" />
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Button Content="Generate Local SSL"
+                                                AutomationProperties.HelpText="Generate the Locora local CA and project certificates."
+                                                ToolTipService.ToolTip="Generate local SSL certificates"
+                                                Command="{x:Bind ViewModel.GenerateLocalSslCommand}" />
+                                        <Button Content="Repair Local SSL"
+                                                AutomationProperties.HelpText="Repair missing, expired, invalid, or stale local SSL certificates."
+                                                ToolTipService.ToolTip="Repair local SSL certificates"
+                                                Command="{x:Bind ViewModel.RepairLocalSslCommand}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
                             <ItemsControl ItemsSource="{x:Bind ViewModel.SslCertificateDiagnostics, Mode=OneWay}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="models:SslCertificateDiagnosticCard">

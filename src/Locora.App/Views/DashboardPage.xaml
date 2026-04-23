@@ -5,20 +5,216 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:models="using:Locora.App.Models">
     <ScrollViewer>
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup>
+                <VisualState x:Name="NarrowDashboard" />
+                <VisualState x:Name="WideDashboard">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="980" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="FirstRunStepColumn2.Width" Value="*" />
+                        <Setter Target="FirstRunStep2.(Grid.Row)" Value="0" />
+                        <Setter Target="FirstRunStep2.(Grid.Column)" Value="1" />
+                        <Setter Target="FirstRunStep3.(Grid.Row)" Value="1" />
+                        <Setter Target="FirstRunStep4.(Grid.Row)" Value="1" />
+                        <Setter Target="FirstRunStep4.(Grid.Column)" Value="1" />
+                        <Setter Target="FirstRunStep5.(Grid.Row)" Value="2" />
+                        <Setter Target="FirstRunStep5.(Grid.ColumnSpan)" Value="2" />
+                        <Setter Target="DashboardMetricColumn2.Width" Value="*" />
+                        <Setter Target="DashboardMetricColumn3.Width" Value="*" />
+                        <Setter Target="ActiveProfileMetric.(Grid.Row)" Value="0" />
+                        <Setter Target="ActiveProfileMetric.(Grid.Column)" Value="1" />
+                        <Setter Target="PortableRootMetric.(Grid.Row)" Value="0" />
+                        <Setter Target="PortableRootMetric.(Grid.Column)" Value="2" />
+                        <Setter Target="DashboardSideColumn.Width" Value="*" />
+                        <Setter Target="DashboardSidePanel.(Grid.Row)" Value="0" />
+                        <Setter Target="DashboardSidePanel.(Grid.Column)" Value="1" />
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
         <StackPanel Padding="24" Spacing="24">
             <InfoBar IsOpen="{x:Bind ViewModel.ShowSupervisorWarning, Mode=OneWay}"
                      Severity="Warning"
                      Title="Supervisor not connected"
                      Message="The shell is running, but Locora.Supervisor has not answered yet. You can still review the portable structure and UI." />
 
-            <Grid ColumnSpacing="16">
+            <Border x:Load="{x:Bind ViewModel.ShowFirstRunOnboarding, Mode=OneWay}"
+                    Padding="20"
+                    CornerRadius="16"
+                    AutomationProperties.Name="First-run setup guide"
+                    AutomationProperties.HelpText="Guided setup checklist for connecting the supervisor, seeding services, adding projects, enabling SSL, and validating generated config."
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+                <StackPanel Spacing="14">
+                    <Grid ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="First-run setup" Style="{StaticResource SectionTitleTextStyle}" />
+                            <TextBlock Text="{x:Bind ViewModel.FirstRunProgressLabel, Mode=OneWay}"
+                                       TextWrapping="Wrap"
+                                       Opacity="0.72" />
+                        </StackPanel>
+
+                        <Button Grid.Column="1"
+                                Content="Hide Guide"
+                                AccessKey="H"
+                                AutomationProperties.HelpText="Hide the first-run setup guide. You can show it again from Settings."
+                                ToolTipService.ToolTip="Hide the setup guide"
+                                Command="{x:Bind ViewModel.DismissFirstRunOnboardingCommand}" />
+                    </Grid>
+
+                    <TextBlock Text="Use these steps to get from a fresh portable folder to a working local development stack."
+                               TextWrapping="Wrap"
+                               Opacity="0.82" />
+
+                    <Grid x:Name="FirstRunStepsGrid" ColumnSpacing="12" RowSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition x:Name="FirstRunStepColumn2" Width="0" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Border x:Name="FirstRunStep1"
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                Padding="12"
+                                CornerRadius="10"
+                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="1. Connect supervisor" Style="{StaticResource CardTitleTextStyle}" />
+                                <TextBlock Text="{x:Bind ViewModel.FirstRunSupervisorStepLabel, Mode=OneWay}"
+                                           TextWrapping="Wrap"
+                                           Opacity="0.72" />
+                                <Button Content="Refresh Snapshot"
+                                        AccessKey="R"
+                                        AutomationProperties.HelpText="Refresh the supervisor snapshot for setup step 1."
+                                        ToolTipService.ToolTip="Refresh the supervisor snapshot"
+                                        Command="{x:Bind ViewModel.RefreshCommand}"
+                                        HorizontalAlignment="Left" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border x:Name="FirstRunStep2"
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                Padding="12"
+                                CornerRadius="10"
+                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="2. Seed services" Style="{StaticResource CardTitleTextStyle}" />
+                                <TextBlock Text="{x:Bind ViewModel.FirstRunServicesStepLabel, Mode=OneWay}"
+                                           TextWrapping="Wrap"
+                                           Opacity="0.72" />
+                                <Button Content="Repair Runtime Configs"
+                                        AccessKey="C"
+                                        AutomationProperties.HelpText="Regenerate runtime service configuration for setup step 2."
+                                        ToolTipService.ToolTip="Repair runtime service configuration"
+                                        Command="{x:Bind ViewModel.RepairRuntimeCommand}"
+                                        HorizontalAlignment="Left" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border x:Name="FirstRunStep3"
+                                Grid.Row="2"
+                                Grid.Column="0"
+                                Padding="12"
+                                CornerRadius="10"
+                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="3. Add projects" Style="{StaticResource CardTitleTextStyle}" />
+                                <TextBlock Text="{x:Bind ViewModel.FirstRunProjectsStepLabel, Mode=OneWay}"
+                                           TextWrapping="Wrap"
+                                           Opacity="0.72" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button Content="Open Projects Root"
+                                            AutomationProperties.HelpText="Open the projects root folder for setup step 3."
+                                            ToolTipService.ToolTip="Open projects root folder"
+                                            Command="{x:Bind ViewModel.OpenProjectRootCommand}" />
+                                    <Button Content="Refresh"
+                                            AutomationProperties.HelpText="Refresh project discovery for setup step 3."
+                                            ToolTipService.ToolTip="Refresh project discovery"
+                                            Command="{x:Bind ViewModel.RefreshCommand}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border x:Name="FirstRunStep4"
+                                Grid.Row="3"
+                                Grid.Column="0"
+                                Padding="12"
+                                CornerRadius="10"
+                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="4. Enable HTTPS" Style="{StaticResource CardTitleTextStyle}" />
+                                <TextBlock Text="{x:Bind ViewModel.FirstRunSslStepLabel, Mode=OneWay}"
+                                           TextWrapping="Wrap"
+                                           Opacity="0.72" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button Content="Generate Local SSL"
+                                            AutomationProperties.HelpText="Generate the local certificate authority and project certificates for setup step 4."
+                                            ToolTipService.ToolTip="Generate local SSL certificates"
+                                            Command="{x:Bind ViewModel.GenerateLocalSslCommand}" />
+                                    <Button Content="Trust Local CA"
+                                            AutomationProperties.HelpText="Trust the local certificate authority for the current Windows user."
+                                            ToolTipService.ToolTip="Trust the local certificate authority"
+                                            Command="{x:Bind ViewModel.TrustLocalSslCaCommand}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border x:Name="FirstRunStep5"
+                                Grid.Row="4"
+                                Grid.ColumnSpan="1"
+                                Padding="12"
+                                CornerRadius="10"
+                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="5. Validate generated config" Style="{StaticResource CardTitleTextStyle}" />
+                                <TextBlock Text="{x:Bind ViewModel.FirstRunValidationStepLabel, Mode=OneWay}"
+                                           TextWrapping="Wrap"
+                                           Opacity="0.72" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button Content="Validate Nginx Config"
+                                            AutomationProperties.HelpText="Run generated Nginx configuration validation for setup step 5."
+                                            ToolTipService.ToolTip="Validate generated Nginx configuration"
+                                            Command="{x:Bind ViewModel.ValidateNginxConfigCommand}" />
+                                    <Button Content="Repair Hosts &amp; VHosts"
+                                            AutomationProperties.HelpText="Regenerate hosts preview, Nginx vhosts, and Apache vhosts."
+                                            ToolTipService.ToolTip="Regenerate hosts and vhost artifacts"
+                                            Command="{x:Bind ViewModel.RepairDomainsCommand}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Grid x:Name="DashboardMetricsGrid" ColumnSpacing="16" RowSpacing="16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition x:Name="DashboardMetricColumn2" Width="0" />
+                    <ColumnDefinition x:Name="DashboardMetricColumn3" Width="0" />
                 </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-                <Border Grid.Column="0"
+                <Border x:Name="RunningServicesMetric"
+                        Grid.Row="0"
+                        Grid.Column="0"
                         Padding="20"
                         CornerRadius="12"
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
@@ -29,7 +225,9 @@
                     </StackPanel>
                 </Border>
 
-                <Border Grid.Column="1"
+                <Border x:Name="ActiveProfileMetric"
+                        Grid.Row="1"
+                        Grid.Column="0"
                         Padding="20"
                         CornerRadius="12"
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
@@ -40,7 +238,9 @@
                     </StackPanel>
                 </Border>
 
-                <Border Grid.Column="2"
+                <Border x:Name="PortableRootMetric"
+                        Grid.Row="2"
+                        Grid.Column="0"
                         Padding="20"
                         CornerRadius="12"
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
@@ -52,14 +252,39 @@
                 </Border>
             </Grid>
 
-            <Grid ColumnSpacing="24">
+            <Grid x:Name="DashboardContentGrid" ColumnSpacing="24" RowSpacing="24">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="2*" />
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition x:Name="DashboardSideColumn" Width="0" />
                 </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-                <StackPanel Grid.Column="0" Spacing="12">
+                <StackPanel Grid.Row="0" Grid.Column="0" Spacing="12">
                     <TextBlock Text="Service Overview" Style="{StaticResource SectionTitleTextStyle}" />
+                    <Border x:Load="{x:Bind ViewModel.ShowServicesEmptyState, Mode=OneWay}"
+                            Padding="16"
+                            CornerRadius="12"
+                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="No services reported yet" Style="{StaticResource CardTitleTextStyle}" />
+                            <TextBlock Text="Refresh the supervisor snapshot first. If services are still missing, regenerate the runtime configs from the portable defaults."
+                                       TextWrapping="Wrap"
+                                       Opacity="0.72" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button Content="Refresh Snapshot"
+                                        AutomationProperties.HelpText="Refresh the supervisor snapshot to reload services."
+                                        ToolTipService.ToolTip="Refresh service snapshot"
+                                        Command="{x:Bind ViewModel.RefreshCommand}" />
+                                <Button Content="Repair Runtime Configs"
+                                        AutomationProperties.HelpText="Regenerate runtime service configuration from bundled defaults."
+                                        ToolTipService.ToolTip="Repair runtime service configuration"
+                                        Command="{x:Bind ViewModel.RepairRuntimeCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
                     <ItemsControl ItemsSource="{x:Bind ViewModel.Services, Mode=OneWay}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="models:ServiceStatusCard">
@@ -98,8 +323,29 @@
                     </ItemsControl>
                 </StackPanel>
 
-                <StackPanel Grid.Column="1" Spacing="12">
+                <StackPanel x:Name="DashboardSidePanel" Grid.Row="1" Grid.Column="0" Spacing="12">
                     <TextBlock Text="Attention Needed" Style="{StaticResource SectionTitleTextStyle}" />
+                    <Border x:Load="{x:Bind ViewModel.ShowHealthIssuesEmptyState, Mode=OneWay}"
+                            Padding="16"
+                            CornerRadius="12"
+                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="No health issues in the latest snapshot" Style="{StaticResource CardTitleTextStyle}" />
+                            <TextBlock Text="Keep the snapshot fresh or run config validation before restarting web services."
+                                       TextWrapping="Wrap"
+                                       Opacity="0.72" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button Content="Refresh Snapshot"
+                                        AutomationProperties.HelpText="Refresh diagnostics and health issues."
+                                        ToolTipService.ToolTip="Refresh diagnostics snapshot"
+                                        Command="{x:Bind ViewModel.RefreshCommand}" />
+                                <Button Content="Validate Nginx Config"
+                                        AutomationProperties.HelpText="Validate generated Nginx configuration."
+                                        ToolTipService.ToolTip="Validate generated Nginx configuration"
+                                        Command="{x:Bind ViewModel.ValidateNginxConfigCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
                     <ItemsControl ItemsSource="{x:Bind ViewModel.HealthIssues, Mode=OneWay}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="models:HealthIssueCard">
@@ -117,7 +363,34 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <TextBlock Text="Recent Projects" Style="{StaticResource SectionTitleTextStyle}" Margin="0,12,0,0" />
+                    <TextBlock Text="Projects" Style="{StaticResource SectionTitleTextStyle}" Margin="0,12,0,0" />
+                    <TextBlock Text="Pinned projects stay at the top of this list."
+                               Opacity="0.72" />
+                    <Border x:Load="{x:Bind ViewModel.ShowProjectsEmptyState, Mode=OneWay}"
+                            Padding="16"
+                            CornerRadius="12"
+                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="No projects discovered yet" Style="{StaticResource CardTitleTextStyle}" />
+                            <TextBlock Text="Open the projects root to add an app, then refresh and regenerate hosts/vhosts when the folder is ready."
+                                       TextWrapping="Wrap"
+                                       Opacity="0.72" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button Content="Open Projects Root"
+                                        AutomationProperties.HelpText="Open the projects root folder in File Explorer."
+                                        ToolTipService.ToolTip="Open projects root folder"
+                                        Command="{x:Bind ViewModel.OpenProjectRootCommand}" />
+                                <Button Content="Refresh Snapshot"
+                                        AutomationProperties.HelpText="Refresh project discovery from the supervisor."
+                                        ToolTipService.ToolTip="Refresh project discovery"
+                                        Command="{x:Bind ViewModel.RefreshCommand}" />
+                                <Button Content="Repair Hosts &amp; VHosts"
+                                        AutomationProperties.HelpText="Regenerate hosts preview, Nginx vhosts, and Apache vhosts."
+                                        ToolTipService.ToolTip="Regenerate hosts and vhost artifacts"
+                                        Command="{x:Bind ViewModel.RepairDomainsCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
                     <ItemsControl ItemsSource="{x:Bind ViewModel.Projects, Mode=OneWay}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="models:ProjectCard">
@@ -125,10 +398,57 @@
                                         CornerRadius="12"
                                         Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
                                         Margin="0,0,0,12">
+                                    <Border.ContextFlyout>
+                                        <MenuFlyout>
+                                            <MenuFlyoutItem Text="Open Site"
+                                                            Command="{x:Bind OpenUrlCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            AutomationProperties.Name="{x:Bind OpenUrlAutomationName}" />
+                                            <MenuFlyoutItem Text="Open Folder"
+                                                            Command="{x:Bind OpenFolderCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            AutomationProperties.Name="{x:Bind OpenFolderAutomationName}" />
+                                            <MenuFlyoutItem Text="Reveal in Explorer"
+                                                            Command="{x:Bind RevealInExplorerCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            AutomationProperties.Name="{x:Bind RevealInExplorerAutomationName}" />
+                                            <MenuFlyoutItem Text="Copy Folder Path"
+                                                            Command="{x:Bind CopyFolderPathCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            AutomationProperties.Name="{x:Bind CopyFolderPathAutomationName}" />
+                                            <MenuFlyoutSeparator />
+                                            <MenuFlyoutItem Text="Terminal"
+                                                            Command="{x:Bind OpenTerminalCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            AutomationProperties.Name="{x:Bind OpenTerminalAutomationName}" />
+                                            <MenuFlyoutItem Text="Editor"
+                                                            Command="{x:Bind OpenEditorCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            AutomationProperties.Name="{x:Bind OpenEditorAutomationName}" />
+                                            <MenuFlyoutSeparator />
+                                            <MenuFlyoutItem Text="{x:Bind PinButtonLabel}"
+                                                            Command="{x:Bind TogglePinCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            AutomationProperties.Name="{x:Bind PinAutomationName}" />
+                                        </MenuFlyout>
+                                    </Border.ContextFlyout>
                                     <StackPanel Spacing="10">
-                                        <TextBlock Text="{x:Bind Name}" Style="{StaticResource CardTitleTextStyle}" />
+                                        <Grid ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{x:Bind Name}" Style="{StaticResource CardTitleTextStyle}" />
+                                            <Button Grid.Column="1"
+                                                    Content="{x:Bind PinButtonLabel}"
+                                                    Command="{x:Bind TogglePinCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    AutomationProperties.Name="{x:Bind PinAutomationName}" />
+                                        </Grid>
                                         <TextBlock Text="{x:Bind Url}" />
                                         <TextBlock Text="{x:Bind Runtime}" Opacity="0.72" />
+                                        <TextBlock Text="{x:Bind Description}" TextWrapping="Wrap" Opacity="0.82" />
+                                        <TextBlock Text="{x:Bind TagsLabel}" Opacity="0.72" />
                                         <TextBlock Text="{x:Bind Folder}" TextWrapping="Wrap" Opacity="0.72" />
 
                                         <Grid ColumnSpacing="8" RowSpacing="8">
@@ -145,22 +465,26 @@
                                                     Grid.Column="0"
                                                     Content="Open Site"
                                                     Command="{x:Bind OpenUrlCommand}"
-                                                    CommandParameter="{Binding}" />
+                                                    CommandParameter="{Binding}"
+                                                    AutomationProperties.Name="{x:Bind OpenUrlAutomationName}" />
                                             <Button Grid.Row="0"
                                                     Grid.Column="1"
                                                     Content="Open Folder"
                                                     Command="{x:Bind OpenFolderCommand}"
-                                                    CommandParameter="{Binding}" />
+                                                    CommandParameter="{Binding}"
+                                                    AutomationProperties.Name="{x:Bind OpenFolderAutomationName}" />
                                             <Button Grid.Row="1"
                                                     Grid.Column="0"
                                                     Content="Terminal"
                                                     Command="{x:Bind OpenTerminalCommand}"
-                                                    CommandParameter="{Binding}" />
+                                                    CommandParameter="{Binding}"
+                                                    AutomationProperties.Name="{x:Bind OpenTerminalAutomationName}" />
                                             <Button Grid.Row="1"
                                                     Grid.Column="1"
                                                     Content="Editor"
                                                     Command="{x:Bind OpenEditorCommand}"
-                                                    CommandParameter="{Binding}" />
+                                                    CommandParameter="{Binding}"
+                                                    AutomationProperties.Name="{x:Bind OpenEditorAutomationName}" />
                                         </Grid>
                                     </StackPanel>
                                 </Border>

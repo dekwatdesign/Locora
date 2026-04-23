@@ -1,0 +1,127 @@
+{
+  "LocoraTerminal": {
+    "Commands": [
+      {
+        "Key": "git-status",
+        "DisplayName": "Git status",
+        "Alias": "gst",
+        "Description": "Inspect the selected terminal workspace before making changes.",
+        "CommandText": "git status",
+        "Scope": "any",
+        "Tags": [
+          "git",
+          "status",
+          "workspace"
+        ]
+      },
+      {
+        "Key": "php-version",
+        "DisplayName": "PHP version",
+        "Alias": "phpv",
+        "Description": "Print the active PHP runtime version from the injected PATH.",
+        "CommandText": "php -v",
+        "Scope": "any",
+        "Tags": [
+          "php",
+          "runtime",
+          "version"
+        ]
+      },
+      {
+        "Key": "node-version",
+        "DisplayName": "Node.js version",
+        "Alias": "nodev",
+        "Description": "Print the active Node.js runtime version from the injected PATH.",
+        "CommandText": "node --version",
+        "Scope": "any",
+        "Tags": [
+          "node",
+          "nodejs",
+          "runtime",
+          "version"
+        ]
+      },
+      {
+        "Key": "python-version",
+        "DisplayName": "Python version",
+        "Alias": "pyv",
+        "Description": "Print the active Python runtime version from the injected PATH.",
+        "CommandText": "python --version",
+        "Scope": "any",
+        "Tags": [
+          "python",
+          "runtime",
+          "version"
+        ]
+      },
+      {
+        "Key": "java-version",
+        "DisplayName": "Java version",
+        "Alias": "javav",
+        "Description": "Print the active Java runtime version from the injected PATH.",
+        "CommandText": "java -version",
+        "Scope": "any",
+        "Tags": [
+          "java",
+          "runtime",
+          "version"
+        ]
+      },
+      {
+        "Key": "composer-version",
+        "DisplayName": "Composer version",
+        "Alias": "compv",
+        "Description": "Print the active Composer tool version from the injected PATH.",
+        "CommandText": "composer --version",
+        "Scope": "any",
+        "Tags": [
+          "composer",
+          "tool",
+          "version"
+        ]
+      },
+      {
+        "Key": "composer-install",
+        "DisplayName": "Composer install",
+        "Alias": "cinst",
+        "Description": "Install PHP project dependencies in the selected project terminal tab.",
+        "CommandText": "composer install",
+        "Scope": "project",
+        "Tags": [
+          "composer",
+          "php",
+          "dependencies",
+          "project"
+        ]
+      },
+      {
+        "Key": "npm-install",
+        "DisplayName": "NPM install",
+        "Alias": "npmi",
+        "Description": "Install Node.js project dependencies in the selected project terminal tab.",
+        "CommandText": "npm install",
+        "Scope": "project",
+        "Tags": [
+          "npm",
+          "node",
+          "dependencies",
+          "project"
+        ]
+      },
+      {
+        "Key": "npm-dev",
+        "DisplayName": "NPM dev server",
+        "Alias": "npmdev",
+        "Description": "Start the common npm development server in the selected project terminal tab.",
+        "CommandText": "npm run dev",
+        "Scope": "project",
+        "Tags": [
+          "npm",
+          "node",
+          "dev",
+          "project"
+        ]
+      }
+    ]
+  }
+}

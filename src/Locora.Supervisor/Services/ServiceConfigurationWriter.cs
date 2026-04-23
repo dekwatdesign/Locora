@@ -152,9 +152,11 @@ public sealed class ServiceConfigurationWriter
         var modulesRoot = Path.Combine(serverRoot, "modules");
         var bundledConfigRoot = Path.Combine(serverRoot, "conf");
         var configRoot = Path.Combine(_paths.ConfigRoot, "apache");
+        var vhostsRoot = Path.Combine(configRoot, "vhosts");
         var tempRoot = Path.Combine(_paths.TempRoot, "apache");
 
         Directory.CreateDirectory(configRoot);
+        Directory.CreateDirectory(vhostsRoot);
         Directory.CreateDirectory(tempRoot);
 
         var configPath = Path.Combine(configRoot, "httpd.conf");
@@ -188,6 +190,8 @@ public sealed class ServiceConfigurationWriter
         <FilesMatch "\.php$">
             Require all denied
         </FilesMatch>
+
+        IncludeOptional "{{ToApachePath(vhostsRoot)}}/*.conf"
         """;
 
         await File.WriteAllTextAsync(configPath, content, cancellationToken);
@@ -208,6 +212,7 @@ public sealed class ServiceConfigurationWriter
         Directory.CreateDirectory(tempRoot);
 
         var configPath = Path.Combine(configRoot, "my.ini");
+        var connectionDetailsPath = Path.Combine(configRoot, "connection-details.md");
         var content = $$"""
         [client]
         port={{definition.Port ?? 3306}}
@@ -228,8 +233,23 @@ public sealed class ServiceConfigurationWriter
         max_connections=100
         sql_mode=STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
         """;
+        var connectionDetails = $$"""
+        # Locora MariaDB
+
+        Host: 127.0.0.1
+        Port: {{definition.Port ?? 3306}}
+        Database: (choose your database)
+        Username: root
+        Password: (set by your local MariaDB initialization)
+        URL: mysql://127.0.0.1:{{definition.Port ?? 3306}}/
+        Config file: {{configPath}}
+        Data directory: {{dataRoot}}
+        Temp directory: {{tempRoot}}
+        Binary root: {{baseDirectory}}
+        """;
 
         await File.WriteAllTextAsync(configPath, content, cancellationToken);
+        await File.WriteAllTextAsync(connectionDetailsPath, connectionDetails, cancellationToken);
         _logger.LogInformation("Generated MariaDB config at {Path}", configPath);
     }
 
@@ -493,7 +513,8 @@ public sealed class ServiceConfigurationWriter
             ("authz_core_module", "mod_authz_core.so"),
             ("authz_host_module", "mod_authz_host.so"),
             ("dir_module", "mod_dir.so"),
-            ("mime_module", "mod_mime.so")
+            ("mime_module", "mod_mime.so"),
+            ("rewrite_module", "mod_rewrite.so")
         };
 
         return string.Join(

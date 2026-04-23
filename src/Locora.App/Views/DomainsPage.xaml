@@ -32,43 +32,155 @@
                     CornerRadius="12"
                     Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
                 <StackPanel Spacing="12">
+                    <TextBlock Text="Generated Domain Defaults" Style="{StaticResource CardTitleTextStyle}" />
+                    <TextBlock Text="Choose the suffix and default scheme for generated project URLs. HTTPS defaults work best after Local SSL has been generated and trusted."
+                               TextWrapping="Wrap"
+                               Opacity="0.72" />
+                    <TextBox Header="Domain suffix"
+                             AutomationProperties.HelpText="Domain suffix used for generated project hostnames."
+                             Text="{x:Bind ViewModel.GeneratedDomainSuffix, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             PlaceholderText="test or dev.local" />
+                    <ComboBox Header="Default scheme"
+                              AutomationProperties.HelpText="Default URL scheme for generated project URLs."
+                              ItemsSource="{x:Bind ViewModel.DomainSchemes, Mode=OneWay}"
+                              SelectedItem="{x:Bind ViewModel.GeneratedDomainScheme, Mode=TwoWay}" />
+                    <TextBlock Text="{x:Bind ViewModel.DomainSettingsPreview, Mode=OneWay}" />
+                    <TextBlock Text="{x:Bind ViewModel.DomainSettingsStatus, Mode=OneWay}"
+                               TextWrapping="Wrap"
+                               Opacity="0.72" />
+                    <TextBox Header="Project domain settings file"
+                             Text="{x:Bind ViewModel.ProjectsSettingsFilePath, Mode=OneWay}"
+                             IsReadOnly="True" />
+                    <Button Content="Save Domain Defaults"
+                            AccessKey="S"
+                            AutomationProperties.HelpText="Save generated domain suffix and default scheme to projects.json."
+                            ToolTipService.ToolTip="Save generated domain defaults"
+                            Command="{x:Bind ViewModel.SaveDomainSettingsCommand}"
+                            HorizontalAlignment="Left" />
+                </StackPanel>
+            </Border>
+
+            <Border Padding="16"
+                    CornerRadius="12"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                <StackPanel Spacing="12">
                     <TextBlock Text="Generated Preview" Style="{StaticResource CardTitleTextStyle}" />
-                    <TextBox Text="{x:Bind ViewModel.HostsPreviewPath, Mode=OneWay}" IsReadOnly="True" />
+                    <TextBox Header="Generated hosts preview file"
+                             Text="{x:Bind ViewModel.HostsPreviewPath, Mode=OneWay}"
+                             IsReadOnly="True" />
 
                     <TextBlock Text="Windows Hosts File" Style="{StaticResource CardTitleTextStyle}" />
-                    <TextBox Text="{x:Bind ViewModel.WindowsHostsFilePath, Mode=OneWay}" IsReadOnly="True" />
+                    <TextBox Header="Windows hosts target"
+                             Text="{x:Bind ViewModel.WindowsHostsFilePath, Mode=OneWay}"
+                             IsReadOnly="True" />
 
                     <TextBlock Text="Rollback Backups" Style="{StaticResource CardTitleTextStyle}" />
-                    <TextBox Text="{x:Bind ViewModel.HostsBackupRoot, Mode=OneWay}" IsReadOnly="True" />
+                    <TextBox Header="Hosts rollback backups folder"
+                             Text="{x:Bind ViewModel.HostsBackupRoot, Mode=OneWay}"
+                             IsReadOnly="True" />
 
                     <StackPanel Spacing="8" Margin="0,8,0,0">
                         <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Content="Repair Hosts &amp; VHosts"
+                                    AutomationProperties.HelpText="Regenerate hosts preview, Nginx vhosts, and Apache vhosts."
+                                    ToolTipService.ToolTip="Regenerate hosts and vhost artifacts"
+                                    Command="{x:Bind ViewModel.RepairDomainsCommand}" />
                             <Button Content="Repair Runtime Configs"
+                                    AutomationProperties.HelpText="Regenerate common service runtime configuration."
+                                    ToolTipService.ToolTip="Repair runtime configuration"
                                     Command="{x:Bind ViewModel.RepairRuntimeCommand}" />
                             <Button Content="Restart Supervisor as Admin"
+                                    AutomationProperties.HelpText="Restart the supervisor with administrator rights for protected hosts operations."
+                                    ToolTipService.ToolTip="Restart supervisor as administrator"
                                     Command="{x:Bind ViewModel.RestartSupervisorElevatedCommand}" />
                             <Button Content="Validate Nginx Config"
+                                    AutomationProperties.HelpText="Validate generated Nginx configuration before starting or restarting services."
+                                    ToolTipService.ToolTip="Validate generated Nginx configuration"
                                     Command="{x:Bind ViewModel.ValidateNginxConfigCommand}" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <Button Content="Generate Local SSL"
+                                    AutomationProperties.HelpText="Generate the Locora local CA and project certificates."
+                                    ToolTipService.ToolTip="Generate local SSL certificates"
                                     Command="{x:Bind ViewModel.GenerateLocalSslCommand}" />
                             <Button Content="Repair Local SSL"
+                                    AutomationProperties.HelpText="Repair missing, expired, invalid, or stale local SSL certificates."
+                                    ToolTipService.ToolTip="Repair local SSL certificates"
                                     Command="{x:Bind ViewModel.RepairLocalSslCommand}" />
                             <Button Content="Trust Local CA"
+                                    AutomationProperties.HelpText="Trust the Locora local CA for the current Windows user."
+                                    ToolTipService.ToolTip="Trust local certificate authority"
                                     Command="{x:Bind ViewModel.TrustLocalSslCaCommand}" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <Button Content="Remove Local CA Trust"
+                                    AutomationProperties.HelpText="Remove current-user trust for the Locora local CA."
+                                    ToolTipService.ToolTip="Remove local CA trust"
                                     Command="{x:Bind ViewModel.RollbackLocalSslTrustCommand}" />
                             <Button Content="Apply Preview"
+                                    AutomationProperties.HelpText="Apply the generated hosts preview as the managed Locora block."
+                                    ToolTipService.ToolTip="Apply generated hosts preview"
                                     Command="{x:Bind ViewModel.ApplyHostsPreviewCommand}" />
                             <Button Content="Rollback Latest"
+                                    AutomationProperties.HelpText="Restore the latest hosts-file rollback backup."
+                                    ToolTipService.ToolTip="Rollback latest hosts-file backup"
                                     Command="{x:Bind ViewModel.RollbackHostsCommand}" />
                             <Button Content="Refresh"
+                                    AutomationProperties.HelpText="Refresh the latest supervisor snapshot."
+                                    ToolTipService.ToolTip="Refresh domains snapshot"
                                     Command="{x:Bind ViewModel.RefreshCommand}" />
                         </StackPanel>
                     </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Padding="16"
+                    CornerRadius="12"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Project Domain Mappings" Style="{StaticResource CardTitleTextStyle}" />
+                    <TextBlock Text="Override a generated hostname and add dashboard metadata with a .locora.json file in the project root, for example &#123; &quot;domain&quot;: &quot;my-app.test&quot;, &quot;description&quot;: &quot;Customer portal&quot;, &quot;tags&quot;: [ &quot;php&quot;, &quot;api&quot; ] &#125;. Locora skips hosts and vhost generation when multiple projects claim the same hostname."
+                               TextWrapping="Wrap"
+                               Opacity="0.72" />
+                    <Border x:Load="{x:Bind ViewModel.ShowProjectsEmptyState, Mode=OneWay}"
+                            Padding="12"
+                            CornerRadius="10"
+                            Background="{ThemeResource CardBackgroundFillColorTertiaryBrush}">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="No project mappings to generate yet" Style="{StaticResource CardTitleTextStyle}" />
+                            <TextBlock Text="Add a project folder or .locora.json override in the projects root, refresh discovery, then repair hosts and vhosts."
+                                       TextWrapping="Wrap"
+                                       Opacity="0.72" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button Content="Open Projects Root"
+                                        AutomationProperties.HelpText="Open the projects root folder in File Explorer."
+                                        ToolTipService.ToolTip="Open projects root folder"
+                                        Command="{x:Bind ViewModel.OpenProjectRootCommand}" />
+                                <Button Content="Refresh Snapshot"
+                                        AutomationProperties.HelpText="Refresh project discovery from the supervisor."
+                                        ToolTipService.ToolTip="Refresh project discovery"
+                                        Command="{x:Bind ViewModel.RefreshCommand}" />
+                                <Button Content="Repair Hosts &amp; VHosts"
+                                        AutomationProperties.HelpText="Regenerate hosts preview, Nginx vhosts, and Apache vhosts."
+                                        ToolTipService.ToolTip="Regenerate hosts and vhost artifacts"
+                                        Command="{x:Bind ViewModel.RepairDomainsCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                    <ItemsControl ItemsSource="{x:Bind ViewModel.Projects, Mode=OneWay}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="models:ProjectCard">
+                                <StackPanel Spacing="4" Margin="0,0,0,12">
+                                    <TextBlock Text="{x:Bind Name}" Style="{StaticResource CardTitleTextStyle}" />
+                                    <TextBlock Text="{x:Bind Url}" />
+                                    <TextBlock Text="{x:Bind Runtime}" Opacity="0.72" />
+                                    <TextBlock Text="{x:Bind Description}" TextWrapping="Wrap" Opacity="0.82" />
+                                    <TextBlock Text="{x:Bind TagsLabel}" Opacity="0.72" />
+                                    <TextBlock Text="{x:Bind Folder}" TextWrapping="Wrap" Opacity="0.72" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </StackPanel>
             </Border>
 
@@ -87,10 +199,14 @@
                     <TextBlock Text="{x:Bind ViewModel.SslRepairLabel, Mode=OneWay}" TextWrapping="Wrap" Opacity="0.72" />
 
                     <TextBlock Text="CA Certificate" Style="{StaticResource CardTitleTextStyle}" />
-                    <TextBox Text="{x:Bind ViewModel.SslAuthorityPath, Mode=OneWay}" IsReadOnly="True" />
+                    <TextBox Header="CA certificate path"
+                             Text="{x:Bind ViewModel.SslAuthorityPath, Mode=OneWay}"
+                             IsReadOnly="True" />
 
                     <TextBlock Text="Project Certificates" Style="{StaticResource CardTitleTextStyle}" />
-                    <TextBox Text="{x:Bind ViewModel.SslCertificatesRoot, Mode=OneWay}" IsReadOnly="True" />
+                    <TextBox Header="Project certificates folder"
+                             Text="{x:Bind ViewModel.SslCertificatesRoot, Mode=OneWay}"
+                             IsReadOnly="True" />
                 </StackPanel>
             </Border>
 
@@ -102,6 +218,27 @@
                     <TextBlock Text="Run this before restarting Nginx. Locora also blocks Nginx startup when validation fails."
                                TextWrapping="Wrap"
                                Opacity="0.72" />
+                    <Border x:Load="{x:Bind ViewModel.ShowValidationResultsEmptyState, Mode=OneWay}"
+                            Padding="12"
+                            CornerRadius="10"
+                            Background="{ThemeResource CardBackgroundFillColorTertiaryBrush}">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="No config validation has run yet" Style="{StaticResource CardTitleTextStyle}" />
+                            <TextBlock Text="Validate generated configs now, or repair runtime configs first if the generated files are missing."
+                                       TextWrapping="Wrap"
+                                       Opacity="0.72" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button Content="Validate Nginx Config"
+                                        AutomationProperties.HelpText="Validate generated Nginx configuration before service startup."
+                                        ToolTipService.ToolTip="Validate generated Nginx configuration"
+                                        Command="{x:Bind ViewModel.ValidateNginxConfigCommand}" />
+                                <Button Content="Repair Runtime Configs"
+                                        AutomationProperties.HelpText="Regenerate common service runtime configuration."
+                                        ToolTipService.ToolTip="Repair runtime configuration"
+                                        Command="{x:Bind ViewModel.RepairRuntimeCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
                     <ItemsControl ItemsSource="{x:Bind ViewModel.ValidationResults, Mode=OneWay}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="models:ValidationResultCard">

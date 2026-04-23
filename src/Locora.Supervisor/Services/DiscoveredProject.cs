@@ -8,4 +8,6 @@ public sealed record DiscoveredProject(
     string Url,
     string Runtime,
     string Framework,
+    string Description,
+    IReadOnlyList<string> Tags,
     bool UsesHttps);

@@ -34,8 +34,7 @@ public sealed class RuntimeRepairService
     {
         _logger.LogInformation("Repairing common runtime configuration issues.");
         await _serviceConfigurationWriter.GenerateAllAsync(cancellationToken);
-        await RegenerateProjectArtifactsAsync(cancellationToken);
-        await _nginxConfigValidator.ValidateAsync(cancellationToken);
+        await RepairDomainsAsync(cancellationToken);
     }
 
     public async Task RepairServiceAsync(string serviceKey, CancellationToken cancellationToken = default)
@@ -60,6 +59,13 @@ public sealed class RuntimeRepairService
         }
 
         _logger.LogInformation("Repaired generated runtime artifacts for {Service}", service.Definition.DisplayName);
+    }
+
+    public async Task RepairDomainsAsync(CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Repairing generated hosts and vhost artifacts.");
+        await RegenerateProjectArtifactsAsync(cancellationToken);
+        await _nginxConfigValidator.ValidateAsync(cancellationToken);
     }
 
     private async Task RegenerateProjectArtifactsAsync(CancellationToken cancellationToken)

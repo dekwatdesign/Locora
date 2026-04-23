@@ -1,0 +1,77 @@
+{
+  "LocoraProfiles": {
+    "SchemaVersion": 1,
+    "ActiveProfileKey": "full-stack",
+    "Profiles": [
+      {
+        "Key": "full-stack",
+        "DisplayName": "Full Stack",
+        "Description": "Nginx, MariaDB, Mailpit, PHP, Node.js, Python, and Java selections for general local development.",
+        "ServiceKeys": [
+          "nginx",
+          "mariadb",
+          "mailpit"
+        ],
+        "PackageSelections": {
+          "nginx": "1.27.x",
+          "mariadb": "11.x",
+          "mailpit": "1.x",
+          "php": "8.3.x",
+          "nodejs": "22.x",
+          "python": "3.12.x",
+          "java": "21.x"
+        },
+        "Tags": [
+          "web",
+          "php",
+          "node",
+          "database",
+          "mail"
+        ]
+      },
+      {
+        "Key": "php-mariadb",
+        "DisplayName": "PHP + MariaDB",
+        "Description": "Lean PHP stack with Nginx, MariaDB, Mailpit, and Composer-ready tooling.",
+        "ServiceKeys": [
+          "nginx",
+          "mariadb",
+          "mailpit"
+        ],
+        "PackageSelections": {
+          "nginx": "1.27.x",
+          "mariadb": "11.x",
+          "mailpit": "1.x",
+          "php": "8.3.x"
+        },
+        "Tags": [
+          "php",
+          "mysql",
+          "laravel",
+          "wordpress"
+        ]
+      },
+      {
+        "Key": "node-postgres",
+        "DisplayName": "Node.js + PostgreSQL",
+        "Description": "Node.js app stack with PostgreSQL and Mailpit for API and full-stack JavaScript work.",
+        "ServiceKeys": [
+          "nginx",
+          "postgresql",
+          "mailpit"
+        ],
+        "PackageSelections": {
+          "nginx": "1.27.x",
+          "postgresql": "18.x",
+          "mailpit": "1.x",
+          "nodejs": "22.x"
+        },
+        "Tags": [
+          "node",
+          "postgres",
+          "api"
+        ]
+      }
+    ]
+  }
+}

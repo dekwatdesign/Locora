@@ -5,14 +5,36 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:models="using:Locora.App.Models">
     <ScrollViewer>
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup>
+                <VisualState x:Name="NarrowServices" />
+                <VisualState x:Name="WideServices">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="900" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="ServicesHeaderActions.Orientation" Value="Horizontal" />
+                        <Setter Target="MailpitDetailsColumn.Width" Value="*" />
+                        <Setter Target="MailpitConnectionPanel.(Grid.Row)" Value="0" />
+                        <Setter Target="MailpitConnectionPanel.(Grid.Column)" Value="1" />
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
         <StackPanel Padding="24" Spacing="16">
             <TextBlock Text="Services" Style="{StaticResource PageTitleTextStyle}" />
             <TextBlock Text="Manage configured services one by one. The supervisor starts processes from usr/config/services.json, streams logs, and reports executable/port health."
                        TextWrapping="Wrap" />
-            <StackPanel Orientation="Horizontal" Spacing="8">
+            <StackPanel x:Name="ServicesHeaderActions" Orientation="Vertical" Spacing="8">
                 <Button Content="Repair Runtime Configs"
+                        AccessKey="R"
+                        AutomationProperties.HelpText="Regenerate service runtime configuration from bundled defaults."
+                        ToolTipService.ToolTip="Repair service runtime configuration"
                         Command="{x:Bind ViewModel.RepairRuntimeCommand}" />
                 <Button Content="Refresh"
+                        AccessKey="F"
+                        AutomationProperties.HelpText="Refresh services and diagnostics from the supervisor."
+                        ToolTipService.ToolTip="Refresh service snapshot"
                         Command="{x:Bind ViewModel.RefreshCommand}" />
             </StackPanel>
 
@@ -29,11 +51,15 @@
                                TextWrapping="Wrap"
                                Opacity="0.72" />
 
-                    <Grid ColumnSpacing="16">
+                    <Grid ColumnSpacing="16" RowSpacing="12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition x:Name="MailpitDetailsColumn" Width="0" />
                         </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
 
                         <StackPanel Grid.Column="0" Spacing="4">
                             <TextBlock Text="{x:Bind ViewModel.MailpitServiceStateLabel, Mode=OneWay}" />
@@ -41,7 +67,7 @@
                             <TextBlock Text="{x:Bind ViewModel.MailpitInboxUrl, Mode=OneWay}" Opacity="0.72" />
                         </StackPanel>
 
-                        <StackPanel Grid.Column="1" Spacing="4">
+                        <StackPanel x:Name="MailpitConnectionPanel" Grid.Row="1" Grid.Column="0" Spacing="4">
                             <TextBlock Text="Connection details" />
                             <TextBlock Text="{x:Bind ViewModel.MailpitConnectionDetailsLabel, Mode=OneWay}" Opacity="0.72" />
                             <TextBlock Text="{x:Bind ViewModel.MailpitConnectionDetailsPath, Mode=OneWay}"
@@ -52,11 +78,43 @@
 
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Button Content="Open Inbox"
+                                AutomationProperties.HelpText="Open the Mailpit inbox in the default browser."
+                                ToolTipService.ToolTip="Open Mailpit inbox"
                                 Command="{x:Bind ViewModel.OpenMailpitInboxCommand}" />
                         <Button Content="Copy SMTP Config"
+                                AutomationProperties.HelpText="Copy Mailpit SMTP connection settings to the clipboard."
+                                ToolTipService.ToolTip="Copy Mailpit SMTP settings"
                                 Command="{x:Bind ViewModel.CopyMailpitSmtpConfigCommand}" />
                         <Button Content="Open Details"
+                                AutomationProperties.HelpText="Open the generated Mailpit connection details file."
+                                ToolTipService.ToolTip="Open Mailpit connection details"
                                 Command="{x:Bind ViewModel.OpenMailpitConnectionDetailsCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border x:Load="{x:Bind ViewModel.ShowServicesEmptyState, Mode=OneWay}"
+                    Padding="16"
+                    CornerRadius="12"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="No services are available yet" Style="{StaticResource CardTitleTextStyle}" />
+                    <TextBlock Text="Refresh the supervisor snapshot. If nothing appears, repair runtime configs so Locora can rewrite service definitions from the bundled defaults."
+                               TextWrapping="Wrap"
+                               Opacity="0.72" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="Refresh Snapshot"
+                                AutomationProperties.HelpText="Refresh services from the supervisor."
+                                ToolTipService.ToolTip="Refresh service snapshot"
+                                Command="{x:Bind ViewModel.RefreshCommand}" />
+                        <Button Content="Repair Runtime Configs"
+                                AutomationProperties.HelpText="Regenerate service runtime configuration from bundled defaults."
+                                ToolTipService.ToolTip="Repair service runtime configuration"
+                                Command="{x:Bind ViewModel.RepairRuntimeCommand}" />
+                        <Button Content="Open Portable Root"
+                                AutomationProperties.HelpText="Open the portable root folder in File Explorer."
+                                ToolTipService.ToolTip="Open portable root folder"
+                                Command="{x:Bind ViewModel.OpenEnvironmentRootCommand}" />
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -103,20 +161,56 @@
                                                 Spacing="8"
                                                 HorizontalAlignment="Right">
                                         <Button Content="Open Inbox"
+                                                AutomationProperties.Name="{x:Bind OpenMailpitInboxAutomationName}"
+                                                AutomationProperties.HelpText="Open the Mailpit inbox in the default browser."
+                                                ToolTipService.ToolTip="Open Mailpit inbox"
                                                 Click="OnOpenMailpitInboxClicked" />
                                         <Button Content="Copy SMTP"
+                                                AutomationProperties.Name="{x:Bind CopyMailpitSmtpAutomationName}"
+                                                AutomationProperties.HelpText="Copy Mailpit SMTP settings to the clipboard."
+                                                ToolTipService.ToolTip="Copy Mailpit SMTP settings"
                                                 Click="OnCopyMailpitSmtpClicked" />
+                                    </StackPanel>
+
+                                    <StackPanel x:Load="{x:Bind SupportsDatabaseAdminTool, Mode=OneWay}"
+                                                Orientation="Horizontal"
+                                                Spacing="8"
+                                                HorizontalAlignment="Right">
+                                        <Button Content="Open Admin"
+                                                AutomationProperties.Name="{x:Bind OpenDatabaseAdminAutomationName}"
+                                                AutomationProperties.HelpText="Launch a detected desktop database admin tool for this service."
+                                                ToolTipService.ToolTip="Open database admin tool"
+                                                Click="OnOpenDatabaseAdminClicked" />
+                                        <Button Content="Copy Connection"
+                                                AutomationProperties.Name="{x:Bind CopyDatabaseConnectionAutomationName}"
+                                                AutomationProperties.HelpText="Copy database host, port, URL, and credential hints to the clipboard."
+                                                ToolTipService.ToolTip="Copy database connection settings"
+                                                Click="OnCopyDatabaseConnectionClicked" />
+                                        <Button Content="Open Details"
+                                                AutomationProperties.Name="{x:Bind OpenDatabaseDetailsAutomationName}"
+                                                AutomationProperties.HelpText="Open the generated database connection details file or config folder."
+                                                ToolTipService.ToolTip="Open database connection details"
+                                                Click="OnOpenDatabaseDetailsClicked" />
                                     </StackPanel>
 
                                     <StackPanel Orientation="Horizontal"
                                                 Spacing="8"
                                                 HorizontalAlignment="Right">
                                         <Button Content="Repair"
+                                                AutomationProperties.Name="{x:Bind RepairAutomationName}"
+                                                AutomationProperties.HelpText="Regenerate service-specific configuration and refresh diagnostics."
+                                                ToolTipService.ToolTip="Repair this service configuration"
                                                 IsEnabled="{x:Bind SupportsRepair, Mode=OneWay}"
                                                 Click="OnRepairServiceClicked" />
                                         <Button Content="Start"
+                                                AutomationProperties.Name="{x:Bind StartAutomationName}"
+                                                AutomationProperties.HelpText="Start this managed service."
+                                                ToolTipService.ToolTip="Start this service"
                                                 Click="OnStartServiceClicked" />
                                         <Button Content="Stop"
+                                                AutomationProperties.Name="{x:Bind StopAutomationName}"
+                                                AutomationProperties.HelpText="Stop this managed service."
+                                                ToolTipService.ToolTip="Stop this service"
                                                 Click="OnStopServiceClicked" />
                                     </StackPanel>
                                 </StackPanel>

@@ -30,6 +30,11 @@ public sealed class DiagnosticReportService : IDiagnosticReportService
         AppendValidationResults(builder, snapshot);
         AppendPortDiagnostics(builder, snapshot);
         AppendPermissionDiagnostics(builder, snapshot);
+        AppendPackageSources(builder, snapshot);
+        AppendPackageDownloads(builder, snapshot);
+        AppendRuntimePackages(builder, snapshot);
+        AppendToolPackages(builder, snapshot);
+        AppendStackProfiles(builder, snapshot);
         AppendSslStatus(builder, snapshot);
         AppendProjects(builder, snapshot);
         AppendKeyPaths(builder);
@@ -231,6 +236,173 @@ public sealed class DiagnosticReportService : IDiagnosticReportService
         builder.AppendLine();
     }
 
+    private static void AppendPackageSources(StringBuilder builder, EnvironmentSnapshot snapshot)
+    {
+        AppendSection(builder, "Package Sources");
+        AppendField(builder, "Summary", snapshot.PackageRegistry.Summary);
+        AppendField(builder, "Details", snapshot.PackageRegistry.Details);
+        AppendField(builder, "Enabled sources", snapshot.PackageRegistry.EnabledSourceCount.ToString());
+        AppendField(builder, "Ready sources", snapshot.PackageRegistry.ReadySourceCount.ToString());
+        AppendField(builder, "Sources with errors", snapshot.PackageRegistry.ErrorSourceCount.ToString());
+        AppendField(builder, "Catalog packages", snapshot.PackageRegistry.PackageCount.ToString());
+        AppendField(builder, "Catalog versions", snapshot.PackageRegistry.VersionCount.ToString());
+        builder.AppendLine();
+
+        if (snapshot.PackageSources.Count == 0)
+        {
+            builder.AppendLine("No package sources reported.");
+            builder.AppendLine();
+            return;
+        }
+
+        builder.AppendLine("| Source | State | Channel | Priority | Packages | Versions | Manifest | Summary |");
+        builder.AppendLine("| --- | --- | --- | --- | --- | --- | --- | --- |");
+
+        foreach (var source in snapshot.PackageSources.OrderBy(source => source.Priority).ThenBy(source => source.DisplayName, StringComparer.OrdinalIgnoreCase))
+        {
+            builder.AppendLine(
+                $"| {EscapeTable(source.DisplayName)} | {EscapeTable(source.State)} | {EscapeTable(source.Channel)} | {EscapeTable(source.Priority.ToString())} | {EscapeTable(source.PackageCount.ToString())} | {EscapeTable(source.VersionCount.ToString())} | {EscapeTable(source.ManifestPath)} | {EscapeTable(source.Summary)} |");
+        }
+
+        builder.AppendLine();
+    }
+
+    private static void AppendPackageDownloads(StringBuilder builder, EnvironmentSnapshot snapshot)
+    {
+        AppendSection(builder, "Package Downloads");
+        AppendField(builder, "Summary", snapshot.PackageDownloadsSummary.Summary);
+        AppendField(builder, "Details", snapshot.PackageDownloadsSummary.Details);
+        AppendField(builder, "Configured selections", snapshot.PackageDownloadsSummary.ActiveSelectionCount.ToString());
+        AppendField(builder, "Cached artifacts", snapshot.PackageDownloadsSummary.CachedCount.ToString());
+        AppendField(builder, "Pending downloads", snapshot.PackageDownloadsSummary.PendingCount.ToString());
+        AppendField(builder, "Missing artifacts", snapshot.PackageDownloadsSummary.MissingCount.ToString());
+        AppendField(builder, "Selections with errors", snapshot.PackageDownloadsSummary.ErrorCount.ToString());
+        AppendField(builder, "Checksum verified", snapshot.PackageDownloadsSummary.VerifiedChecksumCount.ToString());
+        AppendField(builder, "Checksum unverified", snapshot.PackageDownloadsSummary.UnverifiedChecksumCount.ToString());
+        AppendField(builder, "Checksum mismatches", snapshot.PackageDownloadsSummary.ChecksumMismatchCount.ToString());
+        AppendField(builder, "Archives extracted", snapshot.PackageDownloadsSummary.ExtractedCount.ToString());
+        AppendField(builder, "Extraction pending", snapshot.PackageDownloadsSummary.PendingExtractionCount.ToString());
+        AppendField(builder, "Extraction errors", snapshot.PackageDownloadsSummary.ExtractionErrorCount.ToString());
+        builder.AppendLine();
+
+        if (snapshot.PackageDownloads.Count == 0)
+        {
+            builder.AppendLine("No package downloads reported.");
+            builder.AppendLine();
+            return;
+        }
+
+        builder.AppendLine("| Package | Requested | Resolved | State | Checksum | Extraction | Source | Artifact | Cache | Install | Active | Summary |");
+        builder.AppendLine("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |");
+
+        foreach (var download in snapshot.PackageDownloads.OrderBy(download => download.DisplayName, StringComparer.OrdinalIgnoreCase))
+        {
+            builder.AppendLine(
+                $"| {EscapeTable(download.DisplayName)} | {EscapeTable(download.RequestedVersion)} | {EscapeTable(download.ResolvedVersion)} | {EscapeTable(download.State)} | {EscapeTable(download.ChecksumState)} | {EscapeTable(download.ExtractionState)} | {EscapeTable(download.SourceId)} | {EscapeTable(download.ArtifactSource)} | {EscapeTable(download.CachePath)} | {EscapeTable(download.InstallPath)} | {EscapeTable(download.ActivePath)} | {EscapeTable(download.Summary)} |");
+        }
+
+        builder.AppendLine();
+    }
+
+    private static void AppendRuntimePackages(StringBuilder builder, EnvironmentSnapshot snapshot)
+    {
+        AppendSection(builder, "Runtime Packages");
+        AppendField(builder, "Summary", snapshot.RuntimePackageSummary.Summary);
+        AppendField(builder, "Details", snapshot.RuntimePackageSummary.Details);
+        AppendField(builder, "Runtime packages", snapshot.RuntimePackageSummary.RuntimeCount.ToString());
+        AppendField(builder, "Installed runtimes", snapshot.RuntimePackageSummary.InstalledCount.ToString());
+        AppendField(builder, "Active runtimes", snapshot.RuntimePackageSummary.ActiveCount.ToString());
+        AppendField(builder, "Switchable runtimes", snapshot.RuntimePackageSummary.SwitchableCount.ToString());
+        AppendField(builder, "Runtimes needing attention", snapshot.RuntimePackageSummary.AttentionCount.ToString());
+        builder.AppendLine();
+
+        if (snapshot.RuntimePackages.Count == 0)
+        {
+            builder.AppendLine("No runtime packages reported.");
+            builder.AppendLine();
+            return;
+        }
+
+        builder.AppendLine("| Runtime | State | Requested | Resolved | Active | Available | Installed | Source | Active path | Summary |");
+        builder.AppendLine("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |");
+
+        foreach (var runtime in snapshot.RuntimePackages.OrderBy(runtime => runtime.DisplayName, StringComparer.OrdinalIgnoreCase))
+        {
+            builder.AppendLine(
+                $"| {EscapeTable(runtime.DisplayName)} | {EscapeTable(runtime.State)} | {EscapeTable(runtime.RequestedVersion)} | {EscapeTable(runtime.ResolvedVersion)} | {EscapeTable(runtime.ActiveVersion)} | {EscapeTable(string.Join(", ", runtime.AvailableVersions))} | {EscapeTable(runtime.InstalledVersions.Count == 0 ? "None" : string.Join(", ", runtime.InstalledVersions))} | {EscapeTable(runtime.SourceId)} | {EscapeTable(runtime.ActivePath)} | {EscapeTable(runtime.Summary)} |");
+        }
+
+        builder.AppendLine();
+    }
+
+    private static void AppendToolPackages(StringBuilder builder, EnvironmentSnapshot snapshot)
+    {
+        AppendSection(builder, "Tool Packages");
+        AppendField(builder, "Summary", snapshot.ToolPackageSummary.Summary);
+        AppendField(builder, "Details", snapshot.ToolPackageSummary.Details);
+        AppendField(builder, "Tool packages", snapshot.ToolPackageSummary.ToolCount.ToString());
+        AppendField(builder, "Selected tools", snapshot.ToolPackageSummary.SelectedCount.ToString());
+        AppendField(builder, "Installed tools", snapshot.ToolPackageSummary.InstalledCount.ToString());
+        AppendField(builder, "Active tools", snapshot.ToolPackageSummary.ActiveCount.ToString());
+        AppendField(builder, "Tools needing attention", snapshot.ToolPackageSummary.AttentionCount.ToString());
+        builder.AppendLine();
+
+        if (snapshot.ToolPackages.Count == 0)
+        {
+            builder.AppendLine("No tool packages reported.");
+            builder.AppendLine();
+            return;
+        }
+
+        builder.AppendLine("| Tool | State | Requested | Resolved | Active | Commands | Source | Active path | Summary |");
+        builder.AppendLine("| --- | --- | --- | --- | --- | --- | --- | --- | --- |");
+
+        foreach (var tool in snapshot.ToolPackages.OrderBy(tool => tool.DisplayName, StringComparer.OrdinalIgnoreCase))
+        {
+            builder.AppendLine(
+                $"| {EscapeTable(tool.DisplayName)} | {EscapeTable(tool.State)} | {EscapeTable(tool.RequestedVersion)} | {EscapeTable(tool.ResolvedVersion)} | {EscapeTable(tool.ActiveVersion)} | {EscapeTable(tool.ProvidedCommands.Count == 0 ? "None" : string.Join(", ", tool.ProvidedCommands))} | {EscapeTable(tool.SourceId)} | {EscapeTable(tool.ActivePath)} | {EscapeTable(tool.Summary)} |");
+        }
+
+        builder.AppendLine();
+    }
+
+    private static void AppendStackProfiles(StringBuilder builder, EnvironmentSnapshot snapshot)
+    {
+        AppendSection(builder, "Stack Profiles");
+        AppendField(builder, "Summary", snapshot.StackProfileSummary.Summary);
+        AppendField(builder, "Details", snapshot.StackProfileSummary.Details);
+        AppendField(builder, "Active profile", snapshot.StackProfileSummary.ActiveProfileName);
+        AppendField(builder, "Active profile key", snapshot.StackProfileSummary.ActiveProfileKey);
+        AppendField(builder, "Profiles", snapshot.StackProfileSummary.ProfileCount.ToString());
+        AppendField(builder, "Valid profiles", snapshot.StackProfileSummary.ValidProfileCount.ToString());
+        AppendField(builder, "Invalid profiles", snapshot.StackProfileSummary.InvalidProfileCount.ToString());
+        builder.AppendLine();
+
+        if (snapshot.StackProfiles.Count == 0)
+        {
+            builder.AppendLine("No stack profiles reported.");
+            builder.AppendLine();
+            return;
+        }
+
+        builder.AppendLine("| Profile | State | Active | Valid | Services | Packages | Tags | Summary |");
+        builder.AppendLine("| --- | --- | --- | --- | --- | --- | --- | --- |");
+
+        foreach (var profile in snapshot.StackProfiles.OrderByDescending(profile => profile.IsActive).ThenBy(profile => profile.DisplayName, StringComparer.OrdinalIgnoreCase))
+        {
+            var services = profile.ServiceKeys.Count == 0 ? "All configured services" : string.Join(", ", profile.ServiceKeys);
+            var packages = profile.PackageSelections.Count == 0
+                ? "None"
+                : string.Join(", ", profile.PackageSelections.Select(selection => $"{selection.Key} {selection.Value}"));
+            var tags = profile.Tags.Count == 0 ? "None" : string.Join(", ", profile.Tags);
+
+            builder.AppendLine(
+                $"| {EscapeTable(profile.DisplayName)} | {EscapeTable(profile.State)} | {EscapeTable(FormatBool(profile.IsActive))} | {EscapeTable(FormatBool(profile.IsValid))} | {EscapeTable(services)} | {EscapeTable(packages)} | {EscapeTable(tags)} | {EscapeTable(profile.Summary)} |");
+        }
+
+        builder.AppendLine();
+    }
+
     private static void AppendProjects(StringBuilder builder, EnvironmentSnapshot snapshot)
     {
         AppendSection(builder, "Projects");
@@ -242,13 +414,13 @@ public sealed class DiagnosticReportService : IDiagnosticReportService
             return;
         }
 
-        builder.AppendLine("| Project | Runtime | URL | HTTPS | Path |");
-        builder.AppendLine("| --- | --- | --- | --- | --- |");
+        builder.AppendLine("| Project | Runtime | URL | HTTPS | Tags | Description | Path |");
+        builder.AppendLine("| --- | --- | --- | --- | --- | --- | --- |");
 
         foreach (var project in snapshot.Projects.OrderBy(project => project.Name, StringComparer.OrdinalIgnoreCase))
         {
             builder.AppendLine(
-                $"| {EscapeTable(project.Name)} | {EscapeTable(project.Runtime)} | {EscapeTable(project.Url)} | {EscapeTable(FormatBool(project.UsesHttps))} | {EscapeTable(project.Path)} |");
+                $"| {EscapeTable(project.Name)} | {EscapeTable(project.Runtime)} | {EscapeTable(project.Url)} | {EscapeTable(FormatBool(project.UsesHttps))} | {EscapeTable(project.Tags.Count == 0 ? "None" : string.Join(", ", project.Tags))} | {EscapeTable(project.Description)} | {EscapeTable(project.Path)} |");
         }
 
         builder.AppendLine();
@@ -267,6 +439,12 @@ public sealed class DiagnosticReportService : IDiagnosticReportService
         AppendField(builder, "Temp root", FormatInlineCode(_paths.TempRoot));
         AppendField(builder, "App settings", FormatInlineCode(_paths.AppSettingsFile));
         AppendField(builder, "Services settings", FormatInlineCode(_paths.ServicesSettingsFile));
+        AppendField(builder, "Project settings", FormatInlineCode(_paths.ProjectsSettingsFile));
+        AppendField(builder, "Stack profiles", FormatInlineCode(_paths.ProfilesSettingsFile));
+        AppendField(builder, "Package sources", FormatInlineCode(_paths.PackageSourcesSettingsFile));
+        AppendField(builder, "Packages lock", FormatInlineCode(_paths.PackagesLockSettingsFile));
+        AppendField(builder, "Package manifests", FormatInlineCode(_paths.PackageManifestsRoot));
+        AppendField(builder, "Package cache", FormatInlineCode(_paths.PackageCacheRoot));
         builder.AppendLine();
     }
 

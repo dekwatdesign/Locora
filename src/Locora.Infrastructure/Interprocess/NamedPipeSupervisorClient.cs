@@ -78,9 +78,44 @@ public sealed class NamedPipeSupervisorClient : ISupervisorClient
         await SendAsync(SupervisorCommandNames.RepairRuntime, cancellationToken);
     }
 
+    public async Task RepairDomainsAsync(CancellationToken cancellationToken = default)
+    {
+        await SendAsync(SupervisorCommandNames.RepairDomains, cancellationToken);
+    }
+
     public async Task RepairServiceAsync(string serviceKey, CancellationToken cancellationToken = default)
     {
         await SendAsync(SupervisorCommandNames.RepairService, cancellationToken, serviceKey);
+    }
+
+    public async Task SyncPackageDownloadsAsync(CancellationToken cancellationToken = default)
+    {
+        await SendAsync(SupervisorCommandNames.SyncPackageDownloads, cancellationToken);
+    }
+
+    public async Task ExtractPackageArchivesAsync(CancellationToken cancellationToken = default)
+    {
+        await SendAsync(SupervisorCommandNames.ExtractPackageArchives, cancellationToken);
+    }
+
+    public async Task InstallOrUpdatePackagesAsync(CancellationToken cancellationToken = default)
+    {
+        await SendAsync(SupervisorCommandNames.InstallOrUpdatePackages, cancellationToken);
+    }
+
+    public async Task RemovePackageInstallAsync(string packageId, CancellationToken cancellationToken = default)
+    {
+        await SendAsync(SupervisorCommandNames.RemovePackageInstall, cancellationToken, packageId);
+    }
+
+    public async Task SelectRuntimeVersionAsync(string selectionKey, CancellationToken cancellationToken = default)
+    {
+        await SendAsync(SupervisorCommandNames.SelectRuntimeVersion, cancellationToken, selectionKey);
+    }
+
+    public async Task SelectStackProfileAsync(string profileKey, CancellationToken cancellationToken = default)
+    {
+        await SendAsync(SupervisorCommandNames.SelectStackProfile, cancellationToken, profileKey);
     }
 
     public async Task RepairLocalSslAsync(CancellationToken cancellationToken = default)

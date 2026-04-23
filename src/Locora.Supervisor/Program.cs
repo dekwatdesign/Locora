@@ -1,9 +1,11 @@
 using Locora.Infrastructure.Hosting;
+using Locora.Infrastructure.Configuration;
 using Locora.Infrastructure.Services;
 using Locora.Supervisor.Configuration;
 using Locora.Supervisor.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 using var singleInstanceLease = SingleInstanceLease.Acquire("Locora.Supervisor", TimeSpan.FromSeconds(15));
 if (!singleInstanceLease.OwnsMutex)
@@ -20,9 +22,17 @@ var host = LocoraHostBuilder.BuildHost(
             .Bind(context.Configuration.GetSection(SupervisorSettings.SectionName));
         services.AddOptions<ManagedServicesOptions>()
             .Bind(context.Configuration.GetSection(ManagedServicesOptions.SectionName));
+        services.AddSingleton<IPostConfigureOptions<ManagedServicesOptions>, VersionAwareManagedServicesPostConfigure>();
         services.AddOptions<ProjectDiscoveryOptions>()
             .Bind(context.Configuration.GetSection(ProjectDiscoveryOptions.SectionName));
+        services.AddOptions<PackageSourcesOptions>()
+            .Bind(context.Configuration.GetSection(PackageSourcesOptions.SectionName));
+        services.AddOptions<PackagesLockOptions>()
+            .Bind(context.Configuration.GetSection(PackagesLockOptions.SectionName));
         services.AddSingleton<PortProbe>();
+        services.AddSingleton<PackageSourceRegistry>();
+        services.AddSingleton<PackageDownloadManager>();
+        services.AddSingleton<StackProfileRegistry>();
         services.AddSingleton<ManagedServiceFactory>();
         services.AddSingleton<ManagedServiceRegistry>();
         services.AddSingleton<ServiceConfigurationWriter>();

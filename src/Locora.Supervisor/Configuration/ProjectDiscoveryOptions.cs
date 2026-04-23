@@ -8,6 +8,8 @@ public sealed class ProjectDiscoveryOptions
 
     public bool GenerateNginxVHosts { get; init; } = true;
 
+    public bool GenerateApacheVHosts { get; init; } = true;
+
     public bool GenerateHostsPreview { get; init; } = true;
 
     public string DomainSuffix { get; init; } = "locora.test";

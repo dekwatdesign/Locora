@@ -60,4 +60,31 @@ public sealed partial class ServicesPage : Page
             ViewModel.CopyMailpitSmtpConfigCommand.Execute(null);
         }
     }
+
+    private void OnOpenDatabaseAdminClicked(object sender, RoutedEventArgs args)
+    {
+        if (sender is FrameworkElement { DataContext: ServiceStatusCard { SupportsDatabaseAdminTool: true } service } &&
+            ViewModel.OpenDatabaseAdminToolCommand.CanExecute(service))
+        {
+            ViewModel.OpenDatabaseAdminToolCommand.Execute(service);
+        }
+    }
+
+    private void OnCopyDatabaseConnectionClicked(object sender, RoutedEventArgs args)
+    {
+        if (sender is FrameworkElement { DataContext: ServiceStatusCard { SupportsDatabaseAdminTool: true } service } &&
+            ViewModel.CopyDatabaseConnectionCommand.CanExecute(service))
+        {
+            ViewModel.CopyDatabaseConnectionCommand.Execute(service);
+        }
+    }
+
+    private void OnOpenDatabaseDetailsClicked(object sender, RoutedEventArgs args)
+    {
+        if (sender is FrameworkElement { DataContext: ServiceStatusCard { SupportsDatabaseAdminTool: true } service } &&
+            ViewModel.OpenDatabaseConnectionDetailsCommand.CanExecute(service))
+        {
+            ViewModel.OpenDatabaseConnectionDetailsCommand.Execute(service);
+        }
+    }
 }

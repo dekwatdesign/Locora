@@ -1,3 +1,5 @@
+using Locora.App.Models;
+
 namespace Locora.App.Services;
 
 public interface IProjectActionLauncher
@@ -8,7 +10,11 @@ public interface IProjectActionLauncher
 
     void OpenFolder(string folderPath);
 
-    void OpenTerminal(string folderPath);
+    void RevealInExplorer(string path);
+
+    void OpenTerminal(ProjectTerminalLaunchProfile launchProfile);
+
+    void OpenDatabaseAdminTool(string serviceKey, string workingDirectory);
 
     void OpenEditor(string folderPath);
 }

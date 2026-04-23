@@ -24,7 +24,21 @@ public interface IWorkbenchService
 
     Task<EnvironmentSnapshot> RepairRuntimeAsync(CancellationToken cancellationToken = default);
 
+    Task<EnvironmentSnapshot> RepairDomainsAsync(CancellationToken cancellationToken = default);
+
     Task<EnvironmentSnapshot> RepairServiceAsync(string serviceKey, CancellationToken cancellationToken = default);
+
+    Task<EnvironmentSnapshot> SyncPackageDownloadsAsync(CancellationToken cancellationToken = default);
+
+    Task<EnvironmentSnapshot> ExtractPackageArchivesAsync(CancellationToken cancellationToken = default);
+
+    Task<EnvironmentSnapshot> InstallOrUpdatePackagesAsync(CancellationToken cancellationToken = default);
+
+    Task<EnvironmentSnapshot> RemovePackageInstallAsync(string packageId, CancellationToken cancellationToken = default);
+
+    Task<EnvironmentSnapshot> SelectRuntimeVersionAsync(string packageId, string version, CancellationToken cancellationToken = default);
+
+    Task<EnvironmentSnapshot> SelectStackProfileAsync(string profileKey, CancellationToken cancellationToken = default);
 
     Task<EnvironmentSnapshot> RepairLocalSslAsync(CancellationToken cancellationToken = default);
 

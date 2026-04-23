@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="Locora.App.Views.TerminalPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:models="using:Locora.App.Models">
+    <Grid Padding="24" RowSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Spacing="4">
+            <TextBlock Text="Terminal" Style="{StaticResource PageTitleTextStyle}" />
+            <TextBlock Text="{x:Bind ViewModel.TerminalSessionSummary, Mode=OneWay}"
+                       Opacity="0.72" />
+        </StackPanel>
+
+        <CommandBar Grid.Row="1"
+                    DefaultLabelPosition="Right"
+                    HorizontalAlignment="Left">
+            <AppBarButton Label="New"
+                          AutomationProperties.HelpText="Start a built-in terminal session at the Locora workspace root."
+                          ToolTipService.ToolTip="Start root terminal session"
+                          Command="{x:Bind ViewModel.OpenRootTerminalSessionCommand}">
+                <AppBarButton.Icon>
+                    <SymbolIcon Symbol="Add" />
+                </AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton Label="Stop"
+                          AutomationProperties.HelpText="Stop the selected built-in terminal session."
+                          ToolTipService.ToolTip="Stop selected terminal session"
+                          Command="{x:Bind ViewModel.StopTerminalSessionCommand}">
+                <AppBarButton.Icon>
+                    <SymbolIcon Symbol="Stop" />
+                </AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton Label="Commands"
+                          AutomationProperties.HelpText="Open the preset commands file for the built-in terminal."
+                          ToolTipService.ToolTip="Open terminal commands file"
+                          Command="{x:Bind ViewModel.OpenTerminalCommandsSettingsFileCommand}">
+                <AppBarButton.Icon>
+                    <SymbolIcon Symbol="Edit" />
+                </AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton Label="Aliases"
+                          AutomationProperties.HelpText="Open the aliases folder that is added to project terminal PATH."
+                          ToolTipService.ToolTip="Open aliases folder"
+                          Command="{x:Bind ViewModel.OpenAliasesRootCommand}">
+                <AppBarButton.Icon>
+                    <SymbolIcon Symbol="Folder" />
+                </AppBarButton.Icon>
+            </AppBarButton>
+        </CommandBar>
+
+        <Grid Grid.Row="2" RowSpacing="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Border x:Name="TerminalSessionsPanel"
+                    Grid.Row="0"
+                    Padding="12"
+                    CornerRadius="8"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                <ListView MinHeight="58"
+                          MaxHeight="96"
+                          ItemsSource="{x:Bind ViewModel.TerminalSessions, Mode=OneWay}"
+                          SelectedItem="{x:Bind ViewModel.SelectedTerminalSession, Mode=TwoWay}"
+                          SelectionMode="Single"
+                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                          ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                    <ListView.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <ItemsStackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ListView.ItemsPanel>
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="models:TerminalSession">
+                            <Grid MinWidth="190"
+                                  MaxWidth="280"
+                                  ColumnSpacing="8"
+                                  Padding="8,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="{x:Bind Title}"
+                                               FontWeight="SemiBold"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{x:Bind Status}"
+                                               Opacity="0.72"
+                                               TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                                <Button Grid.Column="1"
+                                        Width="32"
+                                        Height="32"
+                                        Padding="0"
+                                        Tag="{Binding}"
+                                        Click="OnCloseTerminalTabClick"
+                                        AutomationProperties.Name="{x:Bind CloseAutomationName}"
+                                        ToolTipService.ToolTip="Close terminal tab">
+                                    <SymbolIcon Symbol="Cancel" />
+                                </Button>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Border>
+
+            <Grid x:Name="TerminalOutputPanel"
+                  Grid.Row="1"
+                  RowSpacing="10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Spacing="4">
+                    <TextBlock Text="{x:Bind ViewModel.SelectedTerminalTitle, Mode=OneWay}"
+                               Style="{StaticResource CardTitleTextStyle}" />
+                    <TextBlock Text="{x:Bind ViewModel.SelectedTerminalStatus, Mode=OneWay}"
+                               Opacity="0.72" />
+                </StackPanel>
+
+                <Border Grid.Row="1"
+                        Padding="12"
+                        CornerRadius="8"
+                        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                    <Grid>
+                        <Border x:Load="{x:Bind ViewModel.ShowTerminalEmptyState, Mode=OneWay}">
+                            <StackPanel Spacing="10" VerticalAlignment="Center">
+                                <TextBlock Text="No terminal sessions open" Style="{StaticResource CardTitleTextStyle}" />
+                                <Button Content="New Root Session"
+                                        AutomationProperties.HelpText="Start a built-in terminal session at the Locora workspace root."
+                                        ToolTipService.ToolTip="Start root terminal session"
+                                        Command="{x:Bind ViewModel.OpenRootTerminalSessionCommand}" />
+                            </StackPanel>
+                        </Border>
+                        <ScrollViewer x:Load="{x:Bind ViewModel.HasTerminalSessions, Mode=OneWay}"
+                                      HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Auto">
+                            <TextBlock Text="{x:Bind ViewModel.SelectedTerminalOutput, Mode=OneWay}"
+                                       FontFamily="Consolas"
+                                       TextWrapping="NoWrap"
+                                       IsTextSelectionEnabled="True" />
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <Grid Grid.Row="2" RowSpacing="8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Grid ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ComboBox MinWidth="320"
+                              HorizontalAlignment="Stretch"
+                              Header="Preset command"
+                              ItemsSource="{x:Bind ViewModel.TerminalCommands, Mode=OneWay}"
+                              SelectedItem="{x:Bind ViewModel.SelectedTerminalCommand, Mode=TwoWay}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="models:TerminalQuickCommand">
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="{x:Bind DisplayLabel}"
+                                               FontWeight="SemiBold"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{x:Bind ScopeLabel}"
+                                               Opacity="0.72"
+                                               TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <Button Grid.Column="1"
+                            Content="Run Preset"
+                            AutomationProperties.HelpText="Run the selected preset command in the appropriate built-in terminal tab."
+                            ToolTipService.ToolTip="Run preset command"
+                            Command="{x:Bind ViewModel.RunTerminalCommandCommand}"
+                            CommandParameter="{x:Bind ViewModel.SelectedTerminalCommand, Mode=OneWay}" />
+                </Grid>
+
+                <StackPanel Grid.Row="1"
+                            Spacing="4">
+                    <TextBlock Text="{x:Bind ViewModel.SelectedTerminalCommandHint, Mode=OneWay}"
+                               Opacity="0.72"
+                               TextWrapping="WrapWholeWords" />
+                    <TextBlock x:Load="{x:Bind ViewModel.HasSelectedTerminalCommand, Mode=OneWay}"
+                               Text="{x:Bind ViewModel.SelectedTerminalCommandResolvedText, Mode=OneWay}"
+                               FontFamily="Consolas"
+                               TextWrapping="WrapWholeWords" />
+                </StackPanel>
+
+                <Grid Grid.Row="2" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="TerminalInputBox"
+                             PlaceholderText="Command"
+                             Text="{x:Bind ViewModel.TerminalInputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             IsEnabled="{x:Bind ViewModel.HasSelectedRunningTerminalSession, Mode=OneWay}"
+                             KeyDown="OnTerminalInputKeyDown" />
+                    <Button Grid.Column="1"
+                            Content="Send"
+                            AutomationProperties.HelpText="Send the command to the selected built-in terminal session."
+                            ToolTipService.ToolTip="Send command"
+                            Command="{x:Bind ViewModel.SendTerminalInputCommand}" />
+                </Grid>
+            </Grid>
+        </Grid>
+    </Grid>
+</Page>

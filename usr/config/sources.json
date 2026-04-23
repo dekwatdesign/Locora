@@ -1,0 +1,17 @@
+{
+  "LocoraPackageSources": {
+    "SchemaVersion": 1,
+    "Sources": [
+      {
+        "Id": "locora-bundled",
+        "DisplayName": "Locora bundled Windows x64 manifest",
+        "Kind": "file",
+        "Channel": "stable",
+        "ManifestPath": "package-manifests/locora.windows-x64.json",
+        "Priority": 100,
+        "IsEnabled": true,
+        "IsBundled": true
+      }
+    ]
+  }
+}

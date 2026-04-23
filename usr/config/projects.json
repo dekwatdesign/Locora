@@ -2,6 +2,7 @@
   "LocoraProjects": {
     "EnableAutoDiscovery": true,
     "GenerateNginxVHosts": true,
+    "GenerateApacheVHosts": true,
     "GenerateHostsPreview": true,
     "DomainSuffix": "locora.test",
     "DefaultScheme": "http",

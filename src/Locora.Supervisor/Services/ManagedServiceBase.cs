@@ -355,7 +355,7 @@ public abstract class ManagedServiceBase : IManagedService
             {
                 lock (_syncRoot)
                 {
-                    _lastNote = $"Executable not found at {executablePath}";
+                    _lastNote = BuildMissingExecutableNote(executablePath);
                 }
 
                 return;
@@ -511,7 +511,7 @@ public abstract class ManagedServiceBase : IManagedService
     {
         if (!executableExists)
         {
-            return $"Executable not found: {executablePath}";
+            return BuildMissingExecutableNote(executablePath);
         }
 
         if (trackedRunning && Definition.Port is int port && !portResponsive)
@@ -752,6 +752,13 @@ public abstract class ManagedServiceBase : IManagedService
         }
 
         await FinalizeExitedProcessAsync(process, stdoutPump, stderrPump);
+    }
+
+    private string BuildMissingExecutableNote(string executablePath)
+    {
+        return string.IsNullOrWhiteSpace(Definition.VersionResolutionNote)
+            ? $"Executable not found: {executablePath}"
+            : $"{Definition.VersionResolutionNote} Expected executable: {executablePath}";
     }
 
     private async Task PumpStreamAsync(StreamReader reader, string path, CancellationToken cancellationToken)

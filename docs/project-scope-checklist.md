@@ -34,13 +34,13 @@ Legend:
 - [x] Diagnostics center screen
 - [x] MVVM view model wiring
 - [~] UX-oriented summary cards and warning surfaces
-- [ ] First-run onboarding flow
-- [ ] Search / command palette
-- [ ] Global notifications / toasts
-- [ ] Empty-state recovery actions
-- [ ] Advanced settings UX
-- [ ] Accessibility pass
-- [ ] Responsive tuning for narrow window sizes
+- [x] First-run onboarding flow
+- [x] Search / command palette
+- [x] Global notifications / toasts
+- [x] Empty-state recovery actions
+- [x] Advanced settings UX
+- [x] Accessibility pass
+- [x] Responsive tuning for narrow window sizes
 
 ## 3. Supervisor and Runtime Control
 
@@ -70,7 +70,7 @@ Legend:
 - [x] Memcached adapter
 - [x] Mailpit / mail catcher adapter
 - [~] Per-service config generation
-- [ ] Version-aware service registration
+- [x] Version-aware service registration
 - [x] Auto-start selection persistence
 
 ## 5. Project Discovery
@@ -80,21 +80,21 @@ Legend:
 - [x] Framework detection from project markers
 - [x] Runtime inference per project
 - [x] Auto local URL generation
-- [ ] Favorite / pinned projects
-- [ ] Project tags / metadata
+- [x] Favorite / pinned projects
+- [x] Project tags / metadata
 - [x] Open in editor / terminal / browser / explorer actions
 
 ## 6. Domains and VHosts
 
-- [ ] Apache vhost template generation
+- [x] Apache vhost template generation
 - [x] Nginx vhost template generation
 - [~] Automatic local domain mapping
 - [~] Hosts file preview generation
 - [~] Privileged hosts file editing
-- [ ] Collision detection for domains
-- [ ] Custom TLD support
-- [ ] Per-project domain overrides
-- [ ] Repair hosts / vhost actions
+- [x] Collision detection for domains
+- [x] Custom TLD support
+- [x] Per-project domain overrides
+- [x] Repair hosts / vhost actions
 
 ## 7. Local SSL
 
@@ -107,34 +107,34 @@ Legend:
 
 ## 8. Package and Runtime Management
 
-- [ ] Package manifest schema
-- [ ] Package source registry
-- [ ] Download manager
-- [ ] Checksum validation
-- [ ] Archive extraction
-- [ ] Install / remove / update packages
-- [ ] PHP multi-version management
-- [ ] Node.js multi-version management
-- [ ] Python runtime support
-- [ ] Java runtime support
-- [ ] Tool package support
-- [ ] Runtime switching UI
-- [ ] Compatibility validation between packages and profiles
+- [x] Package manifest schema
+- [x] Package source registry
+- [x] Download manager
+- [x] Checksum validation
+- [x] Archive extraction
+- [x] Install / remove / update packages
+- [~] PHP multi-version management
+- [~] Node.js multi-version management
+- [x] Python runtime support
+- [x] Java runtime support
+- [x] Tool package support
+- [x] Runtime switching UI
+- [x] Compatibility validation between packages and profiles
 
 ## 9. Developer Utilities
 
-- [ ] Built-in ConPTY terminal
-- [ ] Tabbed terminal sessions
-- [ ] Project-scoped shell environment injection
-- [ ] Aliases and custom commands
-- [ ] Open database admin tools
+- [x] Built-in ConPTY terminal
+- [x] Tabbed terminal sessions
+- [x] Project-scoped shell environment injection
+- [x] Aliases and custom commands
+- [x] Open database admin tools
 - [x] Mailpit inbox integration
-- [ ] Editor integration
-- [ ] Explorer/context menu integration
+- [x] Editor integration
+- [x] Explorer/context menu integration
 
 ## 10. Profiles and Automation
 
-- [ ] Stack profiles
+- [x] Stack profiles
 - [ ] Save / load active environment
 - [ ] Per-project overrides
 - [ ] Import / export profiles
@@ -174,6 +174,7 @@ Legend:
 - [~] Safe confirmation UX for privileged actions
 - [x] Rollback for `hosts` edits
 - [x] Rollback for certificate trust operations
+- [x] Windows shell context menu registration
 - [ ] PATH/environment variable change management
 
 ## 15. Testing and Release Readiness
@@ -207,7 +208,7 @@ If building in the highest-value order, do these next:
 - [x] Add restart policies and better crash recovery
 - [x] Implement per-service start/stop commands from the UI
 - [x] Detect projects from `www/` and suggest domain mappings
-- [~] Generate hosts/vhost entries
+- [x] Generate hosts/vhost entries
 - [x] Wire local SSL management
 
 ## Completed Recent Slice
@@ -234,7 +235,32 @@ If building in the highest-value order, do these next:
 - [x] Add a dedicated diagnostics center view
 - [x] Add deeper port conflict diagnostics and collision detection
 - [x] Add SSL repair flow for expired or missing project certificates
+- [x] Add empty-state recovery actions
+- [x] Add first-run onboarding flow
+- [x] Add advanced settings UX
+- [x] Add accessibility pass
+- [x] Add responsive tuning for narrow window sizes
+- [x] Add version-aware service registration
+- [x] Add package manifest schema
+- [x] Add package source registry
+- [x] Add install/remove/update package flow
+- [x] Add runtime version inventory and switching UI for manifest-backed PHP/Node/Python selections
+- [x] Add package/service compatibility validation for active selections
+- [x] Add project terminal environment injection with active runtime PATH and LOCORA_* variables
+- [x] Add manifest-backed Python runtime catalog plus terminal environment variables
+- [x] Add manifest-backed Java runtime catalog plus terminal `JAVA_HOME` support
+- [x] Add manifest-backed tool package inventory plus terminal PATH injection for active tools
+- [x] Add built-in ConPTY terminal sessions with project-scoped environment injection
+- [x] Add closable tabbed UX for multiple built-in terminal sessions
+- [x] Add aliases and custom commands
+- [x] Open database admin tools
+- [x] Add editor integration with project-aware target selection and preferred editor fallbacks
+- [x] Add in-app Explorer reveal/copy actions and project card context menus
+- [x] Add Windows shell context menu registration files and activation relay
+- [x] Add stack profiles with active profile persistence, profile-aware Start All, package selection merge, Settings selection UI, command-palette actions, and diagnostic report coverage
 
 ## Next Highest-Value Slice
 
-- [ ] Add Apache vhost template generation
+- [ ] Save / load active environment
+- [ ] Per-project overrides
+- [ ] Import / export profiles

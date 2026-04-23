@@ -19,7 +19,13 @@ public sealed class EnvironmentPaths : IEnvironmentPaths
 
     public string UserRoot => Path.Combine(AppRoot, _directories.UserRootName);
 
+    public string CacheRoot => Path.Combine(UserRoot, "cache");
+
     public string ConfigRoot => Path.Combine(UserRoot, "config");
+
+    public string AliasesRoot => Path.Combine(UserRoot, "aliases");
+
+    public string ShellIntegrationRoot => Path.Combine(UserRoot, "shell");
 
     public string LogsRoot => Path.Combine(UserRoot, "logs");
 
@@ -38,6 +44,26 @@ public sealed class EnvironmentPaths : IEnvironmentPaths
     public string ServicesSettingsFile => Path.Combine(ConfigRoot, "services.json");
 
     public string ProjectsSettingsFile => Path.Combine(ConfigRoot, "projects.json");
+
+    public string ProfilesSettingsFile => Path.Combine(ConfigRoot, "profiles.json");
+
+    public string PackageSourcesSettingsFile => Path.Combine(ConfigRoot, "sources.json");
+
+    public string PackagesLockSettingsFile => Path.Combine(ConfigRoot, "packages.lock.json");
+
+    public string ProjectPinsSettingsFile => Path.Combine(ConfigRoot, "project-pins.json");
+
+    public string OnboardingSettingsFile => Path.Combine(ConfigRoot, "onboarding.json");
+
+    public string TerminalCommandsSettingsFile => Path.Combine(ConfigRoot, "terminal-commands.json");
+
+    public string ShellContextMenuInstallFile => Path.Combine(ShellIntegrationRoot, "install-context-menu.reg");
+
+    public string ShellContextMenuUninstallFile => Path.Combine(ShellIntegrationRoot, "uninstall-context-menu.reg");
+
+    public string PackageManifestsRoot => Path.Combine(AppRoot, "package-manifests");
+
+    public string PackageCacheRoot => Path.Combine(CacheRoot, "packages");
 
     public string GetLogFilePath(string processName) => Path.Combine(LogsRoot, $"{processName}.log.jsonl");
 

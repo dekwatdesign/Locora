@@ -15,6 +15,7 @@ public partial class App : Application
     private static IHost? _host;
     private static SingleInstanceLease? _singleInstanceLease;
     private Window? _mainWindow;
+    private Services.ShellContextMenuActivationRelay? _activationRelay;
 
     public App()
     {
@@ -32,9 +33,22 @@ public partial class App : Application
 
     protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
+        var rootPath = Environment.GetEnvironmentVariable("LOCORA_ROOT") ?? AppContext.BaseDirectory;
+        var activationPipeName = Services.ShellContextMenuActivationRelay.CreatePipeName(rootPath);
+        var shellCommand = Services.ShellContextMenuCommand.TryParse(Environment.GetCommandLineArgs().Skip(1).ToArray());
+
         _singleInstanceLease = SingleInstanceLease.Acquire("Locora.App", TimeSpan.FromSeconds(2));
         if (!_singleInstanceLease.OwnsMutex)
         {
+            if (shellCommand is not null &&
+                await Services.ShellContextMenuActivationRelay.TrySendAsync(activationPipeName, shellCommand, TimeSpan.FromSeconds(2)))
+            {
+                _singleInstanceLease.Dispose();
+                _singleInstanceLease = null;
+                Exit();
+                return;
+            }
+
             UserFacingAlerts.ShowDuplicateInstance("Locora", _singleInstanceLease.RootPath, _singleInstanceLease.TimedOut);
             _singleInstanceLease.Dispose();
             _singleInstanceLease = null;
@@ -56,8 +70,12 @@ public partial class App : Application
                 }
 
                 services.AddSingleton<Services.IProjectActionLauncher, Services.ProjectActionLauncher>();
+                services.AddSingleton<Services.ITerminalSessionService, Services.ConPtyTerminalSessionService>();
                 services.AddSingleton<Services.IClipboardService, Services.ClipboardService>();
                 services.AddSingleton<Services.IDiagnosticReportService, Services.DiagnosticReportService>();
+                services.AddSingleton<Services.IProjectPinStore, Services.ProjectPinStore>();
+                services.AddSingleton<Services.IOnboardingStateStore, Services.OnboardingStateStore>();
+                services.AddSingleton<Services.IShellContextMenuRegistrationService, Services.ShellContextMenuRegistrationService>();
                 services.AddSingleton<ISupervisorClient, NamedPipeSupervisorClient>();
                 services.AddSingleton<IWorkbenchService, WorkbenchService>();
                 services.AddSingleton<MainWindowViewModel>();
@@ -70,6 +88,11 @@ public partial class App : Application
         _mainWindow.Activated += OnMainWindowActivated;
         _mainWindow.Closed += OnMainWindowClosed;
         _mainWindow.Activate();
+        _activationRelay = new Services.ShellContextMenuActivationRelay(
+            activationPipeName,
+            DispatchShellContextMenuCommand);
+        _activationRelay.Start();
+        DispatchShellContextMenuCommand(shellCommand);
         GetService<Services.ITrayService>().Initialize(_mainWindow);
     }
 
@@ -97,9 +120,21 @@ public partial class App : Application
         }
         finally
         {
+            _activationRelay?.Dispose();
+            _activationRelay = null;
             _singleInstanceLease?.Dispose();
             _singleInstanceLease = null;
         }
+    }
+
+    private void DispatchShellContextMenuCommand(Services.ShellContextMenuCommand? command)
+    {
+        if (command is null || _mainWindow is not MainWindow mainWindow)
+        {
+            return;
+        }
+
+        mainWindow.DispatcherQueue.TryEnqueue(() => mainWindow.ViewModel.HandleShellContextMenuCommand(command));
     }
 
     private void OnUnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)

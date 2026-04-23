@@ -6,7 +6,13 @@ public interface IEnvironmentPaths
 
     string UserRoot { get; }
 
+    string CacheRoot { get; }
+
     string ConfigRoot { get; }
+
+    string AliasesRoot { get; }
+
+    string ShellIntegrationRoot { get; }
 
     string LogsRoot { get; }
 
@@ -25,6 +31,26 @@ public interface IEnvironmentPaths
     string ServicesSettingsFile { get; }
 
     string ProjectsSettingsFile { get; }
+
+    string ProfilesSettingsFile { get; }
+
+    string PackageSourcesSettingsFile { get; }
+
+    string PackagesLockSettingsFile { get; }
+
+    string ProjectPinsSettingsFile { get; }
+
+    string OnboardingSettingsFile { get; }
+
+    string TerminalCommandsSettingsFile { get; }
+
+    string ShellContextMenuInstallFile { get; }
+
+    string ShellContextMenuUninstallFile { get; }
+
+    string PackageManifestsRoot { get; }
+
+    string PackageCacheRoot { get; }
 
     string GetLogFilePath(string processName);
 

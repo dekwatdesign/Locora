@@ -48,7 +48,9 @@ public sealed class NginxConfigValidator
                 definition.DisplayName,
                 false,
                 "Nginx executable is missing",
-                $"Expected executable: {executablePath}",
+                string.IsNullOrWhiteSpace(definition.VersionResolutionNote)
+                    ? $"Expected executable: {executablePath}"
+                    : $"{definition.VersionResolutionNote} Expected executable: {executablePath}",
                 DateTimeOffset.UtcNow));
         }
 

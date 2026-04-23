@@ -1,0 +1,74 @@
+{
+  "LocoraPackagesLock": {
+    "SchemaVersion": 1,
+    "ActiveSelections": [
+      {
+        "PackageId": "nginx",
+        "RequestedVersion": "1.27.x",
+        "SelectionStrategy": "latest-matching",
+        "SourceId": "locora-bundled"
+      },
+      {
+        "PackageId": "apache",
+        "RequestedVersion": "2.4.x",
+        "SelectionStrategy": "latest-matching",
+        "SourceId": "locora-bundled"
+      },
+      {
+        "PackageId": "mariadb",
+        "RequestedVersion": "11.x",
+        "SelectionStrategy": "latest-matching",
+        "SourceId": "locora-bundled"
+      },
+      {
+        "PackageId": "postgresql",
+        "RequestedVersion": "18.x",
+        "SelectionStrategy": "latest-matching",
+        "SourceId": "locora-bundled"
+      },
+      {
+        "PackageId": "redis",
+        "RequestedVersion": "7.x",
+        "SelectionStrategy": "latest-matching",
+        "SourceId": "locora-bundled"
+      },
+      {
+        "PackageId": "mailpit",
+        "RequestedVersion": "1.x",
+        "SelectionStrategy": "latest-matching",
+        "SourceId": "locora-bundled"
+      },
+      {
+        "PackageId": "memcached",
+        "RequestedVersion": "1.6.x",
+        "SelectionStrategy": "latest-matching",
+        "SourceId": "locora-bundled"
+      },
+      {
+        "PackageId": "php",
+        "RequestedVersion": "8.3.x",
+        "SelectionStrategy": "latest-matching",
+        "SourceId": "locora-bundled"
+      },
+      {
+        "PackageId": "nodejs",
+        "RequestedVersion": "22.x",
+        "SelectionStrategy": "latest-matching",
+        "SourceId": "locora-bundled"
+      },
+      {
+        "PackageId": "python",
+        "RequestedVersion": "3.12.x",
+        "SelectionStrategy": "latest-matching",
+        "SourceId": "locora-bundled"
+      },
+      {
+        "PackageId": "java",
+        "RequestedVersion": "21.x",
+        "SelectionStrategy": "latest-matching",
+        "SourceId": "locora-bundled"
+      }
+    ],
+    "InstalledPackages": []
+  }
+}

@@ -1,4 +1,5 @@
 using Locora.App.Contracts;
+using Locora.Infrastructure.Services;
 
 namespace Locora.Supervisor.Services;
 
@@ -14,6 +15,9 @@ public sealed class SupervisorStateStore
     private readonly LocalSslService _localSslService;
     private readonly PortDiagnosticsService _portDiagnosticsService;
     private readonly PermissionDiagnosticsService _permissionDiagnosticsService;
+    private readonly PackageSourceRegistry _packageSourceRegistry;
+    private readonly PackageDownloadManager _packageDownloadManager;
+    private readonly StackProfileRegistry _stackProfileRegistry;
     private readonly RuntimeRepairService _runtimeRepairService;
     private readonly string _appRoot;
 
@@ -28,6 +32,9 @@ public sealed class SupervisorStateStore
         LocalSslService localSslService,
         PortDiagnosticsService portDiagnosticsService,
         PermissionDiagnosticsService permissionDiagnosticsService,
+        PackageSourceRegistry packageSourceRegistry,
+        PackageDownloadManager packageDownloadManager,
+        StackProfileRegistry stackProfileRegistry,
         RuntimeRepairService runtimeRepairService,
         Locora.Application.Abstractions.IEnvironmentPaths environmentPaths)
     {
@@ -41,6 +48,9 @@ public sealed class SupervisorStateStore
         _localSslService = localSslService;
         _portDiagnosticsService = portDiagnosticsService;
         _permissionDiagnosticsService = permissionDiagnosticsService;
+        _packageSourceRegistry = packageSourceRegistry;
+        _packageDownloadManager = packageDownloadManager;
+        _stackProfileRegistry = stackProfileRegistry;
         _runtimeRepairService = runtimeRepairService;
         _appRoot = environmentPaths.AppRoot;
     }
@@ -49,20 +59,36 @@ public sealed class SupervisorStateStore
     {
         var statuses = await _registry.GetStatusesAsync(cancellationToken);
         var projects = await GenerateProjectConfigurationAsync(cancellationToken);
-        var validationResults = CreateValidationResults();
         var portDiagnostics = _portDiagnosticsService.GetDiagnostics(statuses);
         var permissionDiagnostics = _permissionDiagnosticsService.GetDiagnostics();
+        var packageRegistry = await _packageSourceRegistry.GetSnapshotAsync(cancellationToken);
+        var packageDownloads = await _packageDownloadManager.GetSnapshotAsync(cancellationToken);
+        var runtimePackages = await _packageDownloadManager.GetRuntimeSnapshotAsync(cancellationToken);
+        var toolPackages = await _packageDownloadManager.GetToolSnapshotAsync(cancellationToken);
+        var stackProfiles = await _stackProfileRegistry.GetSnapshotAsync(_registry.Services, cancellationToken);
+        var packageCompatibility = await _packageDownloadManager.GetCompatibilitySnapshotAsync(CreatePackageCompatibilityRequirements(), cancellationToken);
+        var validationResults = CreateValidationResults(packageCompatibility, stackProfiles);
         var sslStatus = await _localSslService.GetStatusAsync(projects, cancellationToken);
 
         return new EnvironmentSnapshotDto(
             _appRoot,
-            "Full Stack",
+            stackProfiles.ActiveProfileName,
             statuses.Select(Map).ToList(),
             projects.Select(Map).ToList(),
-            CreateIssues(statuses, projects, validationResults, portDiagnostics, permissionDiagnostics, sslStatus),
+            CreateIssues(statuses, projects, validationResults, portDiagnostics, permissionDiagnostics, packageRegistry, packageDownloads, runtimePackages, toolPackages, stackProfiles, sslStatus),
             validationResults,
             portDiagnostics.Select(Map).ToList(),
             permissionDiagnostics.Select(Map).ToList(),
+            packageRegistry.Sources.Select(Map).ToList(),
+            Map(packageRegistry),
+            packageDownloads.Downloads.Select(Map).ToList(),
+            Map(packageDownloads),
+            runtimePackages.Runtimes.Select(Map).ToList(),
+            Map(runtimePackages),
+            toolPackages.Tools.Select(Map).ToList(),
+            Map(toolPackages),
+            stackProfiles.Profiles.Select(Map).ToList(),
+            Map(stackProfiles),
             Map(sslStatus),
             DateTimeOffset.UtcNow,
             _privilegeService.IsElevated(),
@@ -72,7 +98,8 @@ public sealed class SupervisorStateStore
     public async Task StartAllAsync(CancellationToken cancellationToken = default)
     {
         await GenerateProjectConfigurationAsync(cancellationToken);
-        await _registry.StartAllAsync(cancellationToken);
+        var activeProfile = await _stackProfileRegistry.GetActiveProfileAsync(_registry.Services, cancellationToken);
+        await _registry.StartServicesAsync(activeProfile.ServiceKeys, cancellationToken);
     }
 
     public async Task StopAllAsync(CancellationToken cancellationToken = default)
@@ -118,9 +145,45 @@ public sealed class SupervisorStateStore
         await _runtimeRepairService.RepairCommonIssuesAsync(cancellationToken);
     }
 
+    public async Task RepairDomainsAsync(CancellationToken cancellationToken = default)
+    {
+        await _runtimeRepairService.RepairDomainsAsync(cancellationToken);
+    }
+
     public async Task RepairServiceAsync(string serviceKey, CancellationToken cancellationToken = default)
     {
         await _runtimeRepairService.RepairServiceAsync(serviceKey, cancellationToken);
+    }
+
+    public async Task SyncPackageDownloadsAsync(CancellationToken cancellationToken = default)
+    {
+        await _packageDownloadManager.SyncDownloadsAsync(cancellationToken);
+    }
+
+    public async Task ExtractPackageArchivesAsync(CancellationToken cancellationToken = default)
+    {
+        await _packageDownloadManager.ExtractArchivesAsync(cancellationToken);
+    }
+
+    public async Task InstallOrUpdatePackagesAsync(CancellationToken cancellationToken = default)
+    {
+        await _packageDownloadManager.InstallOrUpdatePackagesAsync(cancellationToken);
+    }
+
+    public async Task RemovePackageInstallAsync(string packageId, CancellationToken cancellationToken = default)
+    {
+        await _packageDownloadManager.RemoveInstalledPackageAsync(packageId, cancellationToken);
+    }
+
+    public async Task SelectRuntimeVersionAsync(string selectionKey, CancellationToken cancellationToken = default)
+    {
+        await _packageDownloadManager.SelectRuntimeVersionAsync(selectionKey, cancellationToken);
+    }
+
+    public async Task SelectStackProfileAsync(string profileKey, CancellationToken cancellationToken = default)
+    {
+        var result = await _stackProfileRegistry.SelectProfileAsync(profileKey, _registry.Services, cancellationToken);
+        await _packageDownloadManager.ApplyPackageSelectionsAsync(result.Profile.PackageSelections, cancellationToken);
     }
 
     public async Task RepairLocalSslAsync(CancellationToken cancellationToken = default)
@@ -155,6 +218,11 @@ public sealed class SupervisorStateStore
         IReadOnlyList<ValidationResultDto> validationResults,
         IReadOnlyList<PortDiagnosticSnapshot> portDiagnostics,
         IReadOnlyList<PermissionDiagnosticSnapshot> permissionDiagnostics,
+        PackageSourceRegistrySnapshot packageRegistry,
+        PackageDownloadManagerSnapshot packageDownloads,
+        RuntimePackageManagerSnapshot runtimePackages,
+        ToolPackageManagerSnapshot toolPackages,
+        StackProfileRegistrySnapshot stackProfiles,
         LocalSslStatusSnapshot sslStatus)
     {
         var issues = new List<HealthIssueDto>();
@@ -178,6 +246,16 @@ public sealed class SupervisorStateStore
                     "No projects discovered",
                     "Locora scanned the project root but did not find any project folders yet.",
                     "Create or copy a project folder into www, then refresh the dashboard."));
+        }
+
+        foreach (var collision in GetDomainCollisions(projects))
+        {
+            issues.Add(
+                new HealthIssueDto(
+                    "Error",
+                    $"Domain collision: {collision.Host}",
+                    $"{string.Join(", ", collision.Projects.Select(project => project.Name))} all resolve to {collision.Host}, so Locora skipped hosts and vhost generation for that hostname.",
+                    "Rename one of the project folders or add/update a .locora.json domain override so each project has a unique hostname, then refresh."));
         }
 
         foreach (var status in statuses.Where(status => !status.ExecutableExists))
@@ -217,7 +295,9 @@ public sealed class SupervisorStateStore
                     "Error",
                     $"{validation.DisplayName} config validation failed",
                     validation.Summary,
-                    "Use Repair Runtime Configs from Services or Domains & Hosts, then review the validation output before restarting."));
+                    validation.Key.Equals("package_service_compatibility", StringComparison.OrdinalIgnoreCase)
+                        ? "Open Settings to align package selections with service versions, then run Install or Update Active Packages."
+                        : "Use Repair Runtime Configs from Services or Domains & Hosts, then review the validation output before restarting."));
         }
 
         foreach (var diagnostic in portDiagnostics.Where(ShouldSurfacePortDiagnostic))
@@ -238,6 +318,141 @@ public sealed class SupervisorStateStore
                     $"{diagnostic.DisplayName} needs attention",
                     diagnostic.Summary,
                     diagnostic.SuggestedAction));
+        }
+
+        if (packageRegistry.EnabledSourceCount == 0)
+        {
+            issues.Add(
+                new HealthIssueDto(
+                    "Warning",
+                    "No package sources enabled",
+                    "Locora could not catalog any runtime or tool packages because every package source is disabled.",
+                    "Enable at least one source in sources.json, then refresh diagnostics."));
+        }
+
+        foreach (var source in packageRegistry.Sources.Where(source => source.State.Equals("Error", StringComparison.OrdinalIgnoreCase)))
+        {
+            issues.Add(
+                new HealthIssueDto(
+                    "Error",
+                    $"Package source error: {source.DisplayName}",
+                    source.Summary,
+                    source.Details));
+        }
+
+        if (packageRegistry.EnabledSourceCount > 0 && packageRegistry.ReadySourceCount == 0)
+        {
+            issues.Add(
+                new HealthIssueDto(
+                    "Warning",
+                    "Package registry is not ready",
+                    packageRegistry.Summary,
+                    packageRegistry.Details));
+        }
+
+        if (packageDownloads.ChecksumMismatchCount > 0)
+        {
+            issues.Add(
+                new HealthIssueDto(
+                    "Error",
+                    "Package checksum validation failed",
+                    packageDownloads.Summary,
+                    "Replace invalid cache files or correct manifest Sha256 values before installing cached runtimes or tools."));
+        }
+        else if (packageDownloads.ErrorCount > 0)
+        {
+            issues.Add(
+                new HealthIssueDto(
+                    "Error",
+                    "Package download plan has errors",
+                    packageDownloads.Summary,
+                    packageDownloads.Details));
+        }
+        else if (packageDownloads.MissingCount > 0)
+        {
+            issues.Add(
+                new HealthIssueDto(
+                    "Warning",
+                    "Package artifacts are not staged",
+                    packageDownloads.Summary,
+                    "Add local archives or manifest download URLs, then run Install or Update Active Packages from Settings."));
+        }
+        else if (packageDownloads.PendingCount > 0)
+        {
+            issues.Add(
+                new HealthIssueDto(
+                    "Info",
+                    "Package downloads are pending sync",
+                    packageDownloads.Summary,
+                    "Run Install or Update Active Packages from Settings, or use Sync Package Downloads when you only want to warm the cache."));
+        }
+
+        if (packageDownloads.ExtractionErrorCount > 0)
+        {
+            issues.Add(
+                new HealthIssueDto(
+                    "Error",
+                    "Package archive extraction needs attention",
+                    packageDownloads.Summary,
+                    "Repair the cached archive, supported archive type, or active runtime path, then run Extract Package Archives again."));
+        }
+        else if (packageDownloads.PendingExtractionCount > 0 && packageDownloads.CachedCount > 0)
+        {
+            issues.Add(
+                new HealthIssueDto(
+                    "Info",
+                    "Cached packages are ready to extract",
+                    packageDownloads.Summary,
+                    "Run Install or Update Active Packages from Settings, or use Extract Package Archives when the cache is already primed."));
+        }
+
+        if (packageDownloads.UnverifiedChecksumCount > 0 && packageDownloads.CachedCount > 0)
+        {
+            issues.Add(
+                new HealthIssueDto(
+                    "Warning",
+                    "Cached packages are not checksum-verified yet",
+                    packageDownloads.Summary,
+                    "Add Sha256 values to package manifest versions, then refresh so Locora can verify cached artifacts."));
+        }
+
+        if (runtimePackages.AttentionCount > 0)
+        {
+            issues.Add(
+                new HealthIssueDto(
+                    "Warning",
+                    "Runtime versions need attention",
+                    runtimePackages.Summary,
+                    "Open Settings and run Install or Update Active Packages, or switch selected PHP, Node.js, Python, or Java versions back to an installed version."));
+        }
+        else if (runtimePackages.RuntimeCount > 0 && runtimePackages.ActiveCount == 0)
+        {
+            issues.Add(
+                new HealthIssueDto(
+                    "Info",
+                    "Runtime versions are cataloged but inactive",
+                    runtimePackages.Summary,
+                    "Open Settings to select a PHP, Node.js, Python, or Java version, then install or extract the active package selections."));
+        }
+
+        if (toolPackages.AttentionCount > 0)
+        {
+            issues.Add(
+                new HealthIssueDto(
+                    "Warning",
+                    "Tool packages need attention",
+                    toolPackages.Summary,
+                    "Open Settings and run Install or Update Active Packages, or remove tool selections that are no longer needed."));
+        }
+
+        if (stackProfiles.InvalidProfileCount > 0)
+        {
+            issues.Add(
+                new HealthIssueDto(
+                    "Warning",
+                    "Stack profiles need attention",
+                    stackProfiles.Summary,
+                    "Open Settings and fix profiles.json so profile service keys match configured services."));
         }
 
         if (sslStatus.CaExists && sslStatus.TrustSupported && !sslStatus.IsCurrentUserTrusted)
@@ -286,7 +501,7 @@ public sealed class SupervisorStateStore
                     "Info",
                     "Runtime-backed supervisor active",
                     "Locora is now probing configured services from real executable and port state instead of serving mock service cards.",
-                    "Next, install managed runtime packages or wire package download/install automation."));
+                    "Next, sync package downloads, extract cached archives, or continue into install/update automation."));
         }
 
         return issues;
@@ -304,6 +519,181 @@ public sealed class SupervisorStateStore
             status.Note);
     }
 
+    private static PackageSourceStatusDto Map(PackageSourceStatusSnapshot source)
+    {
+        return new PackageSourceStatusDto(
+            source.Id,
+            source.DisplayName,
+            source.Kind,
+            source.State,
+            source.Channel,
+            source.Priority,
+            source.ManifestPath,
+            source.PackageCount,
+            source.VersionCount,
+            source.Summary,
+            source.Details,
+            source.IsEnabled);
+    }
+
+    private static PackageRegistrySummaryDto Map(PackageSourceRegistrySnapshot registry)
+    {
+        return new PackageRegistrySummaryDto(
+            registry.EnabledSourceCount,
+            registry.ReadySourceCount,
+            registry.ErrorSourceCount,
+            registry.PackageCount,
+            registry.VersionCount,
+            registry.Summary,
+            registry.Details);
+    }
+
+    private static PackageDownloadStatusDto Map(PackageDownloadStatusSnapshot download)
+    {
+        return new PackageDownloadStatusDto(
+            download.PackageId,
+            download.DisplayName,
+            download.RequestedVersion,
+            download.ResolvedVersion,
+            download.SourceId,
+            download.State,
+            download.ChecksumState,
+            download.ExpectedSha256,
+            download.ActualSha256,
+            download.ExtractionState,
+            download.ArtifactSource,
+            download.CachePath,
+            download.InstallPath,
+            download.ActivePath,
+            download.Summary,
+            download.Details,
+            download.IsCached,
+            download.IsExtracted);
+    }
+
+    private static PackageDownloadSummaryDto Map(PackageDownloadManagerSnapshot summary)
+    {
+        return new PackageDownloadSummaryDto(
+            summary.ActiveSelectionCount,
+            summary.CachedCount,
+            summary.PendingCount,
+            summary.MissingCount,
+            summary.ErrorCount,
+            summary.VerifiedChecksumCount,
+            summary.UnverifiedChecksumCount,
+            summary.ChecksumMismatchCount,
+            summary.ExtractedCount,
+            summary.PendingExtractionCount,
+            summary.ExtractionErrorCount,
+            summary.Summary,
+            summary.Details);
+    }
+
+    private static RuntimePackageStatusDto Map(RuntimePackageStatusSnapshot runtime)
+    {
+        return new RuntimePackageStatusDto(
+            runtime.PackageId,
+            runtime.DisplayName,
+            runtime.Family,
+            runtime.Kind,
+            runtime.State,
+            runtime.RequestedVersion,
+            runtime.ResolvedVersion,
+            runtime.ActiveVersion,
+            runtime.DefaultVersion,
+            runtime.SourceId,
+            runtime.Channel,
+            runtime.InstallRootPath,
+            runtime.ActivePath,
+            runtime.ExecutablePath,
+            runtime.Summary,
+            runtime.Details,
+            runtime.AvailableVersions,
+            runtime.InstalledVersions,
+            runtime.SupportsSwitching,
+            runtime.IsInstalled,
+            runtime.IsActive);
+    }
+
+    private static RuntimePackageSummaryDto Map(RuntimePackageManagerSnapshot summary)
+    {
+        return new RuntimePackageSummaryDto(
+            summary.RuntimeCount,
+            summary.InstalledCount,
+            summary.ActiveCount,
+            summary.SwitchableCount,
+            summary.AttentionCount,
+            summary.Summary,
+            summary.Details);
+    }
+
+    private static ToolPackageStatusDto Map(ToolPackageStatusSnapshot tool)
+    {
+        return new ToolPackageStatusDto(
+            tool.PackageId,
+            tool.DisplayName,
+            tool.Family,
+            tool.Kind,
+            tool.State,
+            tool.RequestedVersion,
+            tool.ResolvedVersion,
+            tool.ActiveVersion,
+            tool.DefaultVersion,
+            tool.SourceId,
+            tool.Channel,
+            tool.InstallRootPath,
+            tool.ActivePath,
+            tool.ExecutablePath,
+            tool.Summary,
+            tool.Details,
+            tool.AvailableVersions,
+            tool.InstalledVersions,
+            tool.ProvidedCommands,
+            tool.IsSelected,
+            tool.IsInstalled,
+            tool.IsActive);
+    }
+
+    private static ToolPackageSummaryDto Map(ToolPackageManagerSnapshot summary)
+    {
+        return new ToolPackageSummaryDto(
+            summary.ToolCount,
+            summary.SelectedCount,
+            summary.InstalledCount,
+            summary.ActiveCount,
+            summary.AttentionCount,
+            summary.Summary,
+            summary.Details);
+    }
+
+    private static StackProfileStatusDto Map(StackProfileStatusSnapshot profile)
+    {
+        return new StackProfileStatusDto(
+            profile.Key,
+            profile.DisplayName,
+            profile.Description,
+            profile.State,
+            profile.ServiceKeys,
+            profile.PackageSelections,
+            profile.Tags,
+            profile.IsActive,
+            profile.IsValid,
+            profile.Summary,
+            profile.Details);
+    }
+
+    private static StackProfileSummaryDto Map(StackProfileRegistrySnapshot summary)
+    {
+        return new StackProfileSummaryDto(
+            summary.ProfileCount,
+            summary.ValidProfileCount,
+            summary.InvalidProfileCount,
+            summary.ActiveProfileKey,
+            summary.ActiveProfileName,
+            summary.Summary,
+            summary.Details);
+    }
+
     private static ProjectSummaryDto Map(DiscoveredProject project)
     {
         return new ProjectSummaryDto(
@@ -311,14 +701,40 @@ public sealed class SupervisorStateStore
             project.Path,
             project.Url,
             $"{project.Runtime} / {project.Framework}",
+            project.Description,
+            project.Tags,
             project.UsesHttps);
     }
 
-    private IReadOnlyList<ValidationResultDto> CreateValidationResults()
+    private IReadOnlyList<ValidationResultDto> CreateValidationResults(
+        PackageCompatibilityManagerSnapshot packageCompatibility,
+        StackProfileRegistrySnapshot stackProfiles)
     {
-        return _nginxConfigValidator.LastResult is { } result
-            ? [Map(result)]
-            : [];
+        var results = new List<ValidationResultDto>();
+
+        if (_nginxConfigValidator.LastResult is { } result)
+        {
+            results.Add(Map(result));
+        }
+
+        results.Add(Map(packageCompatibility));
+        results.Add(MapProfileCompatibility(stackProfiles));
+        return results;
+    }
+
+    private IReadOnlyList<PackageCompatibilityRequirement> CreatePackageCompatibilityRequirements()
+    {
+        return _registry.Services
+            .Select(service => service.Definition)
+            .Where(definition => !string.IsNullOrWhiteSpace(definition.RelativeExecutablePath))
+            .Select(definition => new PackageCompatibilityRequirement(
+                definition.Key,
+                definition.DisplayName,
+                InferPackageId(definition),
+                definition.Version,
+                definition.RelativeExecutablePath,
+                definition.RelativeStopExecutablePath))
+            .ToArray();
     }
 
     private async Task<IReadOnlyList<DiscoveredProject>> GenerateProjectConfigurationAsync(CancellationToken cancellationToken)
@@ -338,6 +754,44 @@ public sealed class SupervisorStateStore
             result.Summary,
             result.Details,
             result.CheckedAt);
+    }
+
+    private static ValidationResultDto Map(PackageCompatibilityManagerSnapshot compatibility)
+    {
+        return new ValidationResultDto(
+            "package_service_compatibility",
+            "Package/service compatibility",
+            compatibility.AttentionCount == 0,
+            compatibility.Summary,
+            compatibility.Details,
+            DateTimeOffset.UtcNow);
+    }
+
+    private static ValidationResultDto MapProfileCompatibility(StackProfileRegistrySnapshot stackProfiles)
+    {
+        return new ValidationResultDto(
+            "stack_profile_compatibility",
+            "Stack profile compatibility",
+            stackProfiles.InvalidProfileCount == 0,
+            stackProfiles.Summary,
+            stackProfiles.Details,
+            DateTimeOffset.UtcNow);
+    }
+
+    private static string InferPackageId(Locora.Supervisor.Configuration.ManagedServiceDefinition definition)
+    {
+        var segments = definition.RelativeExecutablePath
+            .Replace('\\', '/')
+            .Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        if (segments.Length >= 2 && segments[0].Equals("bin", StringComparison.OrdinalIgnoreCase))
+        {
+            return segments[1];
+        }
+
+        return string.IsNullOrWhiteSpace(definition.Kind)
+            ? definition.Key
+            : definition.Kind;
     }
 
     private static PortDiagnosticDto Map(PortDiagnosticSnapshot diagnostic)
@@ -387,6 +841,16 @@ public sealed class SupervisorStateStore
             diagnostic.Key.Equals("hosts_write_path", StringComparison.OrdinalIgnoreCase);
     }
 
+    private static IReadOnlyList<DomainCollisionIssue> GetDomainCollisions(IReadOnlyList<DiscoveredProject> projects)
+    {
+        return projects
+            .GroupBy(project => new Uri(project.Url).Host, StringComparer.OrdinalIgnoreCase)
+            .Where(group => group.Count() > 1)
+            .Select(group => new DomainCollisionIssue(group.Key, group.OrderBy(project => project.Name).ToList()))
+            .OrderBy(collision => collision.Host, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
     private static SslStatusDto Map(LocalSslStatusSnapshot status)
     {
         return new SslStatusDto(
@@ -422,4 +886,6 @@ public sealed class SupervisorStateStore
             diagnostic.CertificatePath,
             diagnostic.ExpiresAt);
     }
+
+    private sealed record DomainCollisionIssue(string Host, IReadOnlyList<DiscoveredProject> Projects);
 }

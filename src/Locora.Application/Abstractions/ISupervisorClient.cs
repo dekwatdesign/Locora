@@ -24,7 +24,21 @@ public interface ISupervisorClient
 
     Task RepairRuntimeAsync(CancellationToken cancellationToken = default);
 
+    Task RepairDomainsAsync(CancellationToken cancellationToken = default);
+
     Task RepairServiceAsync(string serviceKey, CancellationToken cancellationToken = default);
+
+    Task SyncPackageDownloadsAsync(CancellationToken cancellationToken = default);
+
+    Task ExtractPackageArchivesAsync(CancellationToken cancellationToken = default);
+
+    Task InstallOrUpdatePackagesAsync(CancellationToken cancellationToken = default);
+
+    Task RemovePackageInstallAsync(string packageId, CancellationToken cancellationToken = default);
+
+    Task SelectRuntimeVersionAsync(string selectionKey, CancellationToken cancellationToken = default);
+
+    Task SelectStackProfileAsync(string profileKey, CancellationToken cancellationToken = default);
 
     Task RepairLocalSslAsync(CancellationToken cancellationToken = default);
 

@@ -13,22 +13,43 @@ This scaffold turns the repo into a real multi-project Windows desktop solution 
 
 - Portable folder layout rooted around `usr/`, `www/`, `bin/`, `data/`, and `temp/`
 - WinUI shell with Dashboard, Services, Domains & Hosts, Diagnostics, Logs, and Settings
+- Shell command palette with Ctrl+K search across pages, repair/start/stop actions, and discovered projects
+- Shell-level action notifications using a global InfoBar toast surface
+- Empty-state recovery cards across service, project, diagnostic, and activity lists
+- Persistent first-run onboarding guide with setup progress and recovery actions
+- Advanced Settings page with expandable groups for paths, JSON config, domain defaults, permissions, tray behavior, and diagnostic reports
+- Accessibility pass with contextual automation names, screen-reader help text, access keys, and live shell notifications
+- Responsive shell/page tuning that stacks dense Dashboard, Diagnostics, Settings, Services, and toolbar layouts on narrow windows
 - Generic Host bootstrapping in both the app and supervisor
 - JSON config from `usr/config/appsettings.json`
 - JSON-lines logging under `usr/logs/*.log.jsonl`
 - Named-pipe IPC contract between shell and supervisor
 - Config-driven managed services from `usr/config/services.json`
-- Optional Apache service definition with generated `httpd.conf`
+- Version-aware service resolution that expands `current` aliases or matching `bin/<service>/<version>` folders to the newest installed runtime satisfying the configured version range
+- File-backed package source registry with bundled manifest metadata in `package-manifests/`, source definitions in `usr/config/sources.json`, requested-version lock state in `usr/config/packages.lock.json`, package artifact caching under `usr/cache/packages`, SHA-256 validation for cached artifacts when manifests provide hashes, archive extraction into `bin/<package>/<version>`, best-effort refresh of `bin/<package>/current`, one-click install/update for active selections, removal of installed package folders, runtime version switching for PHP, Node.js, Python, and Java packages, package/service compatibility validation, and UI/reporting hooks for source health plus download/cache/runtime status
+- Tool package inventory for manifest-backed CLIs such as Mailpit and Composer, including provided commands, selected/install state, and diagnostic report coverage
+- Optional Apache service definition with generated `httpd.conf` and per-project vhosts
 - Optional PostgreSQL service definition with generated `postgresql.conf` / `pg_hba.conf` and first-start cluster initialization
 - Optional Redis, Memcached, and Mailpit service definitions with generated Redis config plus Memcached and Mailpit connection details
 - Runtime probing for executable presence, port responsiveness, and tracked process state
 - Port conflict diagnostics for duplicate configured ports and external TCP listeners, including PID/process hints on Windows
 - Stdout/stderr log streaming into `usr/logs/<service>.stdout.log` and `usr/logs/<service>.stderr.log`
 - Project discovery from `www/`
-- Framework/runtime hints for Laravel, WordPress, Symfony, Node/Next.js, Python, PHP, and static projects
+- Framework/runtime hints for Laravel, WordPress, Symfony, Node/Next.js, Python, PHP, Java, and static projects
 - Project quick actions for URL, folder, terminal, and editor
+- Project card right-click context menus plus command-palette actions for opening, revealing in File Explorer, copying folder paths, terminal/editor launch, and pinning
+- Windows Explorer context menu registration files generated under `usr/shell`, including install/uninstall `.reg` files for current-user folder/background menus and a shell activation relay into the running app instance
+- Preferred editor integration that chooses `.code-workspace`, `.slnx` / `.sln`, or a single `*proj` before falling back to the folder, tries common local editors such as VS Code, Cursor, Windsurf, VSCodium, Visual Studio, and JetBrains IDEs, and accepts custom `PreferredEditor` command templates
+- Project terminal launches with per-project `LOCORA_*` environment variables plus active runtime PATH injection for PHP, Node.js, Python, and Java selections
+- Project terminal launches also prepend installed tool package bins and expose `LOCORA_TOOL_*` environment variables for active tools
+- Built-in Terminal page starts ConPTY-backed sessions on Windows, falls back to redirected shell processes when ConPTY is unavailable, opens project-scoped sessions from project cards, manages multiple sessions through a closable tab strip, loads preset commands from `usr/config/terminal-commands.json`, and exposes the portable `usr/aliases` folder on terminal `PATH`
+- Persisted pinned projects in the dashboard via `usr/config/project-pins.json`
+- Per-project `.locora.json` metadata for generated domains, descriptions, and tags
 - Mailpit inbox utility card with open-inbox, copy-SMTP-config, and connection-details quick actions
+- Services page launchers for MariaDB/PostgreSQL database admin tools plus copy/open connection detail actions
 - Nginx vhost generation under `usr/config/nginx/vhosts`
+- Apache vhost generation under `usr/config/apache/vhosts`
+- Editable generated domain defaults (`DomainSuffix` / `DefaultScheme`) from the Domains & Hosts page, persisted to `usr/config/projects.json`
 - Local SSL generation with a Locora CA, per-project cert material, trust rollback, and HTTPS vhosts when certs exist
 - Local SSL repair for missing, expired, invalid, or stale project certificates, with per-project certificate diagnostics
 - Safe hosts-file preview generation at `usr/config/hosts.locora.generated`
@@ -48,8 +69,6 @@ This scaffold turns the repo into a real multi-project Windows desktop solution 
 
 - Production-ready repair for generated service configs
 - Additional adapters for other tools
-- Terminal hosting
-- Package management
 - Import from existing Laragon installs
 
 ## Open on Windows
@@ -63,6 +82,8 @@ This scaffold turns the repo into a real multi-project Windows desktop solution 
 
 ## Suggested next implementation step
 
-Build on the new runtime-backed supervisor slice:
+Build on the new stack profile slice:
 
-- Add Apache vhost template generation
+- Save / load active environment
+- Per-project overrides
+- Import / export profiles

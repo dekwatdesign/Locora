@@ -12,7 +12,14 @@ public static class SupervisorCommandNames
     public const string RestartElevated = "restart_elevated";
     public const string ValidateNginxConfig = "validate_nginx_config";
     public const string RepairRuntime = "repair_runtime";
+    public const string RepairDomains = "repair_domains";
     public const string RepairService = "repair_service";
+    public const string SyncPackageDownloads = "sync_package_downloads";
+    public const string ExtractPackageArchives = "extract_package_archives";
+    public const string InstallOrUpdatePackages = "install_or_update_packages";
+    public const string RemovePackageInstall = "remove_package_install";
+    public const string SelectRuntimeVersion = "select_runtime_version";
+    public const string SelectStackProfile = "select_stack_profile";
     public const string RepairLocalSsl = "repair_local_ssl";
     public const string GenerateLocalSsl = "generate_local_ssl";
     public const string TrustLocalSslCa = "trust_local_ssl_ca";
@@ -36,6 +43,16 @@ public sealed record EnvironmentSnapshotDto(
     IReadOnlyList<ValidationResultDto> ValidationResults,
     IReadOnlyList<PortDiagnosticDto> PortDiagnostics,
     IReadOnlyList<PermissionDiagnosticDto> PermissionDiagnostics,
+    IReadOnlyList<PackageSourceStatusDto> PackageSources,
+    PackageRegistrySummaryDto PackageRegistry,
+    IReadOnlyList<PackageDownloadStatusDto> PackageDownloads,
+    PackageDownloadSummaryDto PackageDownloadsSummary,
+    IReadOnlyList<RuntimePackageStatusDto> RuntimePackages,
+    RuntimePackageSummaryDto RuntimePackageSummary,
+    IReadOnlyList<ToolPackageStatusDto> ToolPackages,
+    ToolPackageSummaryDto ToolPackageSummary,
+    IReadOnlyList<StackProfileStatusDto> StackProfiles,
+    StackProfileSummaryDto StackProfileSummary,
     SslStatusDto SslStatus,
     DateTimeOffset GeneratedAt,
     bool IsSupervisorElevated,
@@ -55,7 +72,31 @@ public sealed record ProjectSummaryDto(
     string Path,
     string Url,
     string Runtime,
+    string Description,
+    IReadOnlyList<string> Tags,
     bool UsesHttps);
+
+public sealed record StackProfileStatusDto(
+    string Key,
+    string DisplayName,
+    string Description,
+    string State,
+    IReadOnlyList<string> ServiceKeys,
+    IReadOnlyDictionary<string, string> PackageSelections,
+    IReadOnlyList<string> Tags,
+    bool IsActive,
+    bool IsValid,
+    string Summary,
+    string Details);
+
+public sealed record StackProfileSummaryDto(
+    int ProfileCount,
+    int ValidProfileCount,
+    int InvalidProfileCount,
+    string ActiveProfileKey,
+    string ActiveProfileName,
+    string Summary,
+    string Details);
 
 public sealed record HealthIssueDto(
     string Severity,
@@ -89,6 +130,129 @@ public sealed record PermissionDiagnosticDto(
     string Summary,
     string Details,
     string SuggestedAction);
+
+public sealed record PackageSourceStatusDto(
+    string Id,
+    string DisplayName,
+    string Kind,
+    string State,
+    string Channel,
+    int Priority,
+    string ManifestPath,
+    int PackageCount,
+    int VersionCount,
+    string Summary,
+    string Details,
+    bool IsEnabled);
+
+public sealed record PackageRegistrySummaryDto(
+    int EnabledSourceCount,
+    int ReadySourceCount,
+    int ErrorSourceCount,
+    int PackageCount,
+    int VersionCount,
+    string Summary,
+    string Details);
+
+public sealed record PackageDownloadStatusDto(
+    string PackageId,
+    string DisplayName,
+    string RequestedVersion,
+    string ResolvedVersion,
+    string SourceId,
+    string State,
+    string ChecksumState,
+    string? ExpectedSha256,
+    string? ActualSha256,
+    string ExtractionState,
+    string ArtifactSource,
+    string CachePath,
+    string InstallPath,
+    string ActivePath,
+    string Summary,
+    string Details,
+    bool IsCached,
+    bool IsExtracted);
+
+public sealed record PackageDownloadSummaryDto(
+    int ActiveSelectionCount,
+    int CachedCount,
+    int PendingCount,
+    int MissingCount,
+    int ErrorCount,
+    int VerifiedChecksumCount,
+    int UnverifiedChecksumCount,
+    int ChecksumMismatchCount,
+    int ExtractedCount,
+    int PendingExtractionCount,
+    int ExtractionErrorCount,
+    string Summary,
+    string Details);
+
+public sealed record RuntimePackageStatusDto(
+    string PackageId,
+    string DisplayName,
+    string Family,
+    string Kind,
+    string State,
+    string RequestedVersion,
+    string ResolvedVersion,
+    string ActiveVersion,
+    string DefaultVersion,
+    string SourceId,
+    string Channel,
+    string InstallRootPath,
+    string ActivePath,
+    string ExecutablePath,
+    string Summary,
+    string Details,
+    IReadOnlyList<string> AvailableVersions,
+    IReadOnlyList<string> InstalledVersions,
+    bool SupportsSwitching,
+    bool IsInstalled,
+    bool IsActive);
+
+public sealed record RuntimePackageSummaryDto(
+    int RuntimeCount,
+    int InstalledCount,
+    int ActiveCount,
+    int SwitchableCount,
+    int AttentionCount,
+    string Summary,
+    string Details);
+
+public sealed record ToolPackageStatusDto(
+    string PackageId,
+    string DisplayName,
+    string Family,
+    string Kind,
+    string State,
+    string RequestedVersion,
+    string ResolvedVersion,
+    string ActiveVersion,
+    string DefaultVersion,
+    string SourceId,
+    string Channel,
+    string InstallRootPath,
+    string ActivePath,
+    string ExecutablePath,
+    string Summary,
+    string Details,
+    IReadOnlyList<string> AvailableVersions,
+    IReadOnlyList<string> InstalledVersions,
+    IReadOnlyList<string> ProvidedCommands,
+    bool IsSelected,
+    bool IsInstalled,
+    bool IsActive);
+
+public sealed record ToolPackageSummaryDto(
+    int ToolCount,
+    int SelectedCount,
+    int InstalledCount,
+    int ActiveCount,
+    int AttentionCount,
+    string Summary,
+    string Details);
 
 public sealed record SslStatusDto(
     string AuthorityName,

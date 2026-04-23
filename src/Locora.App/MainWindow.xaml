@@ -4,37 +4,58 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <NavigationView x:Name="ShellNavigationView"
+                    AutomationProperties.Name="Locora navigation"
+                    AutomationProperties.HelpText="Use this navigation menu to switch between Dashboard, Services, Domains and Hosts, Diagnostics, Terminal, Logs, and Settings."
                     PaneDisplayMode="Left"
                     IsBackButtonVisible="Collapsed"
                     IsSettingsVisible="False"
                     SelectionChanged="OnSelectionChanged">
         <NavigationView.MenuItems>
-            <NavigationViewItem Tag="dashboard" Content="Dashboard">
+            <NavigationViewItem Tag="dashboard"
+                                Content="Dashboard"
+                                AutomationProperties.HelpText="Open the runtime overview, first-run guide, service summary, and projects.">
                 <NavigationViewItem.Icon>
                     <SymbolIcon Symbol="Home" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Tag="services" Content="Services">
+            <NavigationViewItem Tag="services"
+                                Content="Services"
+                                AutomationProperties.HelpText="Manage configured services and Mailpit integration.">
                 <NavigationViewItem.Icon>
                     <SymbolIcon Symbol="AllApps" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Tag="domains" Content="Domains &amp; Hosts">
+            <NavigationViewItem Tag="domains"
+                                Content="Domains &amp; Hosts"
+                                AutomationProperties.HelpText="Manage generated domains, hosts preview, vhosts, and local SSL.">
                 <NavigationViewItem.Icon>
                     <SymbolIcon Symbol="World" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Tag="diagnostics" Content="Diagnostics">
+            <NavigationViewItem Tag="diagnostics"
+                                Content="Diagnostics"
+                                AutomationProperties.HelpText="Inspect health issues, validation, port, permission, and SSL diagnostics.">
                 <NavigationViewItem.Icon>
                     <SymbolIcon Symbol="Find" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Tag="logs" Content="Logs">
+            <NavigationViewItem Tag="terminal"
+                                Content="Terminal"
+                                AutomationProperties.HelpText="Open built-in project terminal sessions.">
                 <NavigationViewItem.Icon>
                     <SymbolIcon Symbol="Document" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Tag="settings" Content="Settings">
+            <NavigationViewItem Tag="logs"
+                                Content="Logs"
+                                AutomationProperties.HelpText="Open recent Locora shell activity.">
+                <NavigationViewItem.Icon>
+                    <SymbolIcon Symbol="Document" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Tag="settings"
+                                Content="Settings"
+                                AutomationProperties.HelpText="Open advanced settings, portable paths, config files, and diagnostics export actions.">
                 <NavigationViewItem.Icon>
                     <SymbolIcon Symbol="Setting" />
                 </NavigationViewItem.Icon>
@@ -44,28 +65,111 @@
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <CommandBar DefaultLabelPosition="Right">
-                <AppBarButton Label="Refresh" Command="{Binding RefreshCommand}">
-                    <AppBarButton.Icon>
-                        <SymbolIcon Symbol="Refresh" />
-                    </AppBarButton.Icon>
-                </AppBarButton>
-                <AppBarButton Label="Start All" Command="{Binding StartAllCommand}">
-                    <AppBarButton.Icon>
-                        <SymbolIcon Symbol="Play" />
-                    </AppBarButton.Icon>
-                </AppBarButton>
-                <AppBarButton Label="Stop All" Command="{Binding StopAllCommand}">
-                    <AppBarButton.Icon>
-                        <SymbolIcon Symbol="Stop" />
-                    </AppBarButton.Icon>
-                </AppBarButton>
-            </CommandBar>
+            <Grid x:Name="TopBarGrid" Padding="12,8" ColumnSpacing="12" RowSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition x:Name="TopBarSearchColumn" Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <VisualStateManager.VisualStateGroups>
+                    <VisualStateGroup>
+                        <VisualState x:Name="NarrowTopBar" />
+                        <VisualState x:Name="ExpandedTopBar">
+                            <VisualState.StateTriggers>
+                                <AdaptiveTrigger MinWindowWidth="760" />
+                            </VisualState.StateTriggers>
+                            <VisualState.Setters>
+                                <Setter Target="CommandPaletteBox.MinWidth" Value="320" />
+                                <Setter Target="ShellCommandBar.(Grid.Row)" Value="0" />
+                                <Setter Target="ShellCommandBar.(Grid.Column)" Value="1" />
+                                <Setter Target="ShellCommandBar.HorizontalAlignment" Value="Right" />
+                            </VisualState.Setters>
+                        </VisualState>
+                    </VisualStateGroup>
+                </VisualStateManager.VisualStateGroups>
 
-            <Frame x:Name="ContentFrame" Grid.Row="1" />
+                <AutoSuggestBox x:Name="CommandPaletteBox"
+                                MinWidth="220"
+                                MaxWidth="560"
+                                HorizontalAlignment="Stretch"
+                                PlaceholderText="Search pages, commands, projects (Ctrl+K)"
+                                AutomationProperties.Name="Command palette"
+                                AutomationProperties.HelpText="Search pages, actions, and projects. Press Ctrl+K to focus this box."
+                                ToolTipService.ToolTip="Press Ctrl+K to search pages, commands, and projects."
+                                QuerySubmitted="OnCommandPaletteQuerySubmitted"
+                                SuggestionChosen="OnCommandPaletteSuggestionChosen"
+                                TextChanged="OnCommandPaletteTextChanged">
+                    <AutoSuggestBox.QueryIcon>
+                        <SymbolIcon Symbol="Find" />
+                    </AutoSuggestBox.QueryIcon>
+                    <AutoSuggestBox.KeyboardAccelerators>
+                        <KeyboardAccelerator Key="K"
+                                             Modifiers="Control"
+                                             Invoked="OnCommandPaletteAcceleratorInvoked" />
+                    </AutoSuggestBox.KeyboardAccelerators>
+                </AutoSuggestBox>
+
+                <CommandBar x:Name="ShellCommandBar"
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            HorizontalAlignment="Left"
+                            DefaultLabelPosition="Right">
+                    <AppBarButton Label="Command"
+                                  AccessKey="K"
+                                  Click="OnCommandPaletteButtonClick"
+                                  AutomationProperties.HelpText="Open the command palette. Shortcut: Control K."
+                                  ToolTipService.ToolTip="Open command palette">
+                        <AppBarButton.Icon>
+                            <SymbolIcon Symbol="Find" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                    <AppBarButton Label="Refresh"
+                                  AccessKey="R"
+                                  AutomationProperties.HelpText="Refresh the environment snapshot."
+                                  ToolTipService.ToolTip="Refresh the environment snapshot"
+                                  Command="{Binding RefreshCommand}">
+                        <AppBarButton.Icon>
+                            <SymbolIcon Symbol="Refresh" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                    <AppBarButton Label="Start All"
+                                  AccessKey="S"
+                                  AutomationProperties.HelpText="Start all enabled services."
+                                  ToolTipService.ToolTip="Start all enabled services"
+                                  Command="{Binding StartAllCommand}">
+                        <AppBarButton.Icon>
+                            <SymbolIcon Symbol="Play" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                    <AppBarButton Label="Stop All"
+                                  AccessKey="T"
+                                  AutomationProperties.HelpText="Stop all managed services."
+                                  ToolTipService.ToolTip="Stop all managed services"
+                                  Command="{Binding StopAllCommand}">
+                        <AppBarButton.Icon>
+                            <SymbolIcon Symbol="Stop" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                </CommandBar>
+            </Grid>
+
+            <InfoBar Grid.Row="1"
+                     Margin="12,0,12,8"
+                     AutomationProperties.LiveSetting="Polite"
+                     IsClosable="True"
+                     IsOpen="{Binding IsGlobalNotificationOpen, Mode=TwoWay}"
+                     Message="{Binding GlobalNotificationMessage}"
+                     Severity="{Binding GlobalNotificationSeverity}"
+                     Title="{Binding GlobalNotificationTitle}" />
+
+            <Frame x:Name="ContentFrame" Grid.Row="2" />
         </Grid>
     </NavigationView>
 </Window>
