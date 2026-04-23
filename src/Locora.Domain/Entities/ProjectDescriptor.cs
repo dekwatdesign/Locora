@@ -7,4 +7,5 @@ public sealed record ProjectDescriptor(
     string Runtime,
     string Description,
     IReadOnlyList<string> Tags,
-    bool UsesHttps);
+    bool UsesHttps,
+    string OverrideSummary);

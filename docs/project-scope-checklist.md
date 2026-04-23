@@ -20,8 +20,8 @@ Legend:
 - [x] Tray integration seam
 - [x] Real tray icon and tray quick actions
 - [x] Single-instance behavior
-- [ ] App update mechanism
-- [ ] Installer strategy or portable distribution automation
+- [x] App update mechanism
+- [x] Installer strategy or portable distribution automation
 
 ## 2. UI Shell and UX
 
@@ -45,14 +45,14 @@ Legend:
 ## 3. Supervisor and Runtime Control
 
 - [x] Supervisor process project
-- [~] Supervisor state store
+- [x] Supervisor state store
 - [x] Start all / stop all shell actions wired through IPC
 - [x] Start / stop individual services through IPC and UI
 - [x] Supervisor lifecycle orchestration shape
 - [x] Real process spawning
 - [x] Real process stop / kill logic
 - [x] PID tracking
-- [~] Health checks
+- [x] Health checks
 - [x] Restart policies
 - [x] Port probing / port conflict detection
 - [x] Stdout / stderr capture per service
@@ -69,7 +69,7 @@ Legend:
 - [x] Redis adapter
 - [x] Memcached adapter
 - [x] Mailpit / mail catcher adapter
-- [~] Per-service config generation
+- [x] Per-service config generation
 - [x] Version-aware service registration
 - [x] Auto-start selection persistence
 
@@ -88,9 +88,9 @@ Legend:
 
 - [x] Apache vhost template generation
 - [x] Nginx vhost template generation
-- [~] Automatic local domain mapping
-- [~] Hosts file preview generation
-- [~] Privileged hosts file editing
+- [x] Automatic local domain mapping
+- [x] Hosts file preview generation
+- [x] Privileged hosts file editing
 - [x] Collision detection for domains
 - [x] Custom TLD support
 - [x] Per-project domain overrides
@@ -101,7 +101,7 @@ Legend:
 - [x] Local CA management
 - [x] Certificate generation per domain
 - [x] Windows trust-store integration
-- [~] Certificate renewal / regeneration
+- [x] Certificate renewal / regeneration
 - [x] SSL status display in UI
 - [x] SSL repair flow
 
@@ -113,8 +113,8 @@ Legend:
 - [x] Checksum validation
 - [x] Archive extraction
 - [x] Install / remove / update packages
-- [~] PHP multi-version management
-- [~] Node.js multi-version management
+- [x] PHP multi-version management
+- [x] Node.js multi-version management
 - [x] Python runtime support
 - [x] Java runtime support
 - [x] Tool package support
@@ -135,11 +135,11 @@ Legend:
 ## 10. Profiles and Automation
 
 - [x] Stack profiles
-- [ ] Save / load active environment
-- [ ] Per-project overrides
-- [ ] Import / export profiles
-- [ ] Service presets
-- [ ] Custom tools menu
+- [x] Save / load active environment
+- [x] Per-project overrides
+- [x] Import / export profiles
+- [x] Service presets
+- [x] Custom tools menu
 
 ## 11. Diagnostics and Repair
 
@@ -155,40 +155,40 @@ Legend:
 
 ## 12. Sharing and External Access
 
-- [ ] Local tunnel integration
-- [ ] Share URL lifecycle
-- [ ] Consent and warning UX
-- [ ] Firewall / network guidance
+- [x] Local tunnel integration
+- [x] Share URL lifecycle
+- [x] Consent and warning UX
+- [x] Firewall / network guidance
 
 ## 13. Import, Backup, and Migration
 
-- [ ] Import from Laragon layout/config
-- [ ] Config backup
-- [ ] Config restore
-- [ ] Runtime backup guidance
-- [ ] Portable relocation validation
+- [x] Import from Laragon layout/config
+- [x] Config backup
+- [x] Config restore
+- [x] Runtime backup guidance
+- [x] Portable relocation validation
 
 ## 14. Security and Privileged Operations
 
-- [~] Elevation broker strategy
-- [~] Safe confirmation UX for privileged actions
+- [x] Elevation broker strategy
+- [x] Safe confirmation UX for privileged actions
 - [x] Rollback for `hosts` edits
 - [x] Rollback for certificate trust operations
 - [x] Windows shell context menu registration
-- [ ] PATH/environment variable change management
+- [x] PATH/environment variable change management
 
 ## 15. Testing and Release Readiness
 
-- [ ] Unit test projects
-- [ ] Integration test projects
-- [ ] E2E test projects
-- [ ] Snapshot tests for generated configs
+- [x] Unit test projects
+- [x] Integration test projects
+- [x] E2E test projects
+- [x] Snapshot tests for generated configs
 - [ ] Windows 10 validation
-- [ ] Windows 11 validation
-- [ ] Paths with spaces validation
-- [ ] Portable move-to-new-drive validation
-- [ ] Build pipeline / CI
-- [ ] Release packaging
+- [x] Windows 11 validation
+- [x] Paths with spaces validation
+- [x] Portable move-to-new-drive validation
+- [x] Build pipeline / CI
+- [x] Release packaging
 
 ## Suggested Next Slice
 
@@ -198,7 +198,7 @@ If building in the highest-value order, do these next:
 - [x] Implement real `NginxServiceAdapter`
 - [x] Implement real `MariaDbServiceAdapter`
 - [x] Replace mock `SupervisorStateStore` with runtime-backed state
-- [~] Add port probing and process health checks
+- [x] Add port probing and process health checks
 - [x] Stream real service logs into `usr/logs`
 - [x] Persist service auto-start settings
 
@@ -258,9 +258,34 @@ If building in the highest-value order, do these next:
 - [x] Add in-app Explorer reveal/copy actions and project card context menus
 - [x] Add Windows shell context menu registration files and activation relay
 - [x] Add stack profiles with active profile persistence, profile-aware Start All, package selection merge, Settings selection UI, command-palette actions, and diagnostic report coverage
+- [x] Add save/load active environment flow with supervisor-backed profile creation, package lock capture, Settings controls, and command-palette action
+- [x] Add per-project overrides for domain, scheme, document root, runtime, framework, description, and tags through `projects.json` / `.locora.json`
+- [x] Add stack profile import/export through `usr/profiles`, supervisor-backed merge/export commands, Settings controls, and command-palette actions
+- [x] Add service presets with validated `services.json` groups, supervisor start/stop commands, Services-page controls, command-palette actions, and diagnostic report coverage
+- [x] Add custom tools menu backed by `custom-tools.json`, Settings controls, command-palette actions, URL/file/folder/editor launch support, and terminal command tools
+- [x] Add local tunnel integration backed by `local-tunnels.json`, Domains-page controls, command-palette actions, terminal launch support, and tunnel placeholder resolution
+- [x] Add share URL lifecycle tracking with dedicated tunnel terminal sessions, public URL detection, copy/open/stop actions, command-palette controls, and stopped-session cleanup
+- [x] Add consent and warning UX for external access with session-scoped acknowledgement, tunnel command gating, and Domains-page warning state
+- [x] Add firewall and network guidance for service ports, LAN inbound rules, tunnel outbound access, data-service exposure, and diagnostic reports
+- [x] Add Laragon import flow that previews www projects, merges project discovery overrides, preserves external source paths, backs up projects.json, and discovers absolute override paths
+- [x] Add configuration backup archives for usr/config with timestamped zip output, manifest metadata, backup folder path, Settings controls, and command-palette actions
+- [x] Add configuration restore from backup zip with path validation, pre-restore backup, zip-slip protection, Settings controls, and command-palette action
+- [x] Add runtime backup guidance covering service data, runtime binaries, package cache, package lock state, restore order, Settings controls, command-palette access, and diagnostic reports
+- [x] Add portable relocation validation for service, project, package, runtime, and tool paths with health issue surfacing, Settings controls, command-palette access, and diagnostic report coverage
+- [x] Add CurrentUser PATH/environment change management with generated install/uninstall PowerShell scripts, pre-change backups, manifest output, Settings controls, command-palette actions, and diagnostic report coverage
+- [x] Add app update mechanism with configurable release manifest checks, version comparison, cached manifest and update plan files under `usr/updates`, Settings controls, command-palette actions, and diagnostic report coverage
+- [x] Add portable distribution automation with generated PowerShell packaging script, portable ZIP staging plan, checksum and release manifest outputs, Settings controls, command-palette actions, and diagnostic report coverage
+- [x] Add unit test projects for Domain, Application, Infrastructure, and Supervisor with xUnit, solution registration, and initial coverage for offline snapshots, runtime selection forwarding, environment paths, JSON persistence, and port diagnostics
+- [x] Add integration test project with temp-root host bootstrap coverage and generated project config/vhost/hosts-preview verification
+- [x] Add E2E test project that boots the supervisor host with a unique temp root and named pipe, reaches it through `NamedPipeSupervisorClient`, maps through `WorkbenchService`, discovers the welcome project, and saves an active environment profile
+- [x] Add snapshot test project for generated Nginx root config, project vhost config, and hosts preview output with temp-root normalization
+- [x] Validate Windows 11 build/test readiness on Microsoft Windows 11 Pro 10.0.26200 with `Locora.App` build and solution test suite passing
+- [x] Add privileged action confirmation dialogs for hosts writes, elevated supervisor restart, and local SSL trust changes
+- [x] Validate host bootstrap, generated configs, snapshots, and E2E supervisor flows under roots with spaces
+- [x] Validate portable move-to-new-drive readiness with an integration test that reboots Locora from a `subst`-mapped drive
+- [x] Add a Windows GitHub Actions workflow plus a repo-level portable packaging script that builds, tests, zips, checksums, and emits a release manifest
+- [x] Validate local portable release packaging on Windows 11 by publishing `Locora.App` and creating `artifacts/dist/Locora-0.0.0-localtest-win-x64-portable.zip`
 
 ## Next Highest-Value Slice
 
-- [ ] Save / load active environment
-- [ ] Per-project overrides
-- [ ] Import / export profiles
+- [ ] Windows 10 validation

@@ -40,7 +40,7 @@
                      Title="Supervisor not connected"
                      Message="The shell is running, but Locora.Supervisor has not answered yet. You can still review the portable structure and UI." />
 
-            <Border x:Load="{x:Bind ViewModel.ShowFirstRunOnboarding, Mode=OneWay}"
+            <Border Visibility="{x:Bind ViewModel.ShowFirstRunOnboarding, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                     Padding="20"
                     CornerRadius="16"
                     AutomationProperties.Name="First-run setup guide"
@@ -264,7 +264,7 @@
 
                 <StackPanel Grid.Row="0" Grid.Column="0" Spacing="12">
                     <TextBlock Text="Service Overview" Style="{StaticResource SectionTitleTextStyle}" />
-                    <Border x:Load="{x:Bind ViewModel.ShowServicesEmptyState, Mode=OneWay}"
+                    <Border Visibility="{x:Bind ViewModel.ShowServicesEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                             Padding="16"
                             CornerRadius="12"
                             Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
@@ -325,7 +325,7 @@
 
                 <StackPanel x:Name="DashboardSidePanel" Grid.Row="1" Grid.Column="0" Spacing="12">
                     <TextBlock Text="Attention Needed" Style="{StaticResource SectionTitleTextStyle}" />
-                    <Border x:Load="{x:Bind ViewModel.ShowHealthIssuesEmptyState, Mode=OneWay}"
+                    <Border Visibility="{x:Bind ViewModel.ShowHealthIssuesEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                             Padding="16"
                             CornerRadius="12"
                             Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
@@ -366,7 +366,7 @@
                     <TextBlock Text="Projects" Style="{StaticResource SectionTitleTextStyle}" Margin="0,12,0,0" />
                     <TextBlock Text="Pinned projects stay at the top of this list."
                                Opacity="0.72" />
-                    <Border x:Load="{x:Bind ViewModel.ShowProjectsEmptyState, Mode=OneWay}"
+                    <Border Visibility="{x:Bind ViewModel.ShowProjectsEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                             Padding="16"
                             CornerRadius="12"
                             Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
@@ -449,6 +449,7 @@
                                         <TextBlock Text="{x:Bind Runtime}" Opacity="0.72" />
                                         <TextBlock Text="{x:Bind Description}" TextWrapping="Wrap" Opacity="0.82" />
                                         <TextBlock Text="{x:Bind TagsLabel}" Opacity="0.72" />
+                                        <TextBlock Text="{x:Bind OverrideSummary}" TextWrapping="Wrap" Opacity="0.72" />
                                         <TextBlock Text="{x:Bind Folder}" TextWrapping="Wrap" Opacity="0.72" />
 
                                         <Grid ColumnSpacing="8" RowSpacing="8">

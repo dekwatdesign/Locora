@@ -23,9 +23,43 @@ public sealed class EnvironmentPaths : IEnvironmentPaths
 
     public string ConfigRoot => Path.Combine(UserRoot, "config");
 
+    public string ConfigBackupRoot => Path.Combine(UserRoot, "backups", "config");
+
+    public string ProfilesRoot => Path.Combine(UserRoot, "profiles");
+
     public string AliasesRoot => Path.Combine(UserRoot, "aliases");
 
     public string ShellIntegrationRoot => Path.Combine(UserRoot, "shell");
+
+    public string UserEnvironmentApplyScriptFile => Path.Combine(ShellIntegrationRoot, "install-user-environment.ps1");
+
+    public string UserEnvironmentRemoveScriptFile => Path.Combine(ShellIntegrationRoot, "uninstall-user-environment.ps1");
+
+    public string UserEnvironmentManifestFile => Path.Combine(ShellIntegrationRoot, "user-environment-manifest.json");
+
+    public string UserEnvironmentBackupRoot => Path.Combine(ShellIntegrationRoot, "environment-backups");
+
+    public string AppUpdateRoot => Path.Combine(UserRoot, "updates");
+
+    public string AppUpdateDownloadRoot => Path.Combine(AppUpdateRoot, "downloads");
+
+    public string AppUpdateManifestCacheFile => Path.Combine(AppUpdateRoot, "latest-release.json");
+
+    public string AppUpdatePlanFile => Path.Combine(AppUpdateRoot, "update-plan.json");
+
+    public string AppUpdateManifestExampleFile => Path.Combine(AppUpdateRoot, "release-manifest.example.json");
+
+    public string PortableDistributionRoot => Path.Combine(UserRoot, "distribution");
+
+    public string PortableDistributionArtifactsRoot => Path.Combine(PortableDistributionRoot, "artifacts");
+
+    public string PortableDistributionScriptFile => Path.Combine(PortableDistributionRoot, "build-portable-distribution.ps1");
+
+    public string PortableDistributionPlanFile => Path.Combine(PortableDistributionRoot, "portable-distribution-plan.json");
+
+    public string PortableDistributionReadmeFile => Path.Combine(PortableDistributionRoot, "README.md");
+
+    public string PortableDistributionManifestTemplateFile => Path.Combine(PortableDistributionRoot, "release-manifest.template.json");
 
     public string LogsRoot => Path.Combine(UserRoot, "logs");
 
@@ -56,6 +90,10 @@ public sealed class EnvironmentPaths : IEnvironmentPaths
     public string OnboardingSettingsFile => Path.Combine(ConfigRoot, "onboarding.json");
 
     public string TerminalCommandsSettingsFile => Path.Combine(ConfigRoot, "terminal-commands.json");
+
+    public string CustomToolsSettingsFile => Path.Combine(ConfigRoot, "custom-tools.json");
+
+    public string LocalTunnelsSettingsFile => Path.Combine(ConfigRoot, "local-tunnels.json");
 
     public string ShellContextMenuInstallFile => Path.Combine(ShellIntegrationRoot, "install-context-menu.reg");
 

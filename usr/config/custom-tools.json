@@ -1,0 +1,46 @@
+{
+  "LocoraTools": {
+    "Tools": [
+      {
+        "Key": "open-localhost",
+        "DisplayName": "Open localhost",
+        "Description": "Open the default local HTTP endpoint in the browser.",
+        "Action": "url",
+        "Target": "http://localhost/",
+        "Scope": "root",
+        "Tags": [
+          "browser",
+          "web"
+        ],
+        "IsEnabled": true
+      },
+      {
+        "Key": "open-config-folder",
+        "DisplayName": "Open config folder",
+        "Description": "Open Locora's portable configuration folder.",
+        "Action": "folder",
+        "Target": "{configRoot}",
+        "Scope": "root",
+        "Tags": [
+          "config",
+          "folder"
+        ],
+        "IsEnabled": true
+      },
+      {
+        "Key": "composer-diagnose",
+        "DisplayName": "Composer diagnose",
+        "Description": "Run Composer diagnostics in the selected project terminal tab.",
+        "Action": "terminal",
+        "Target": "composer diagnose",
+        "Scope": "project",
+        "Tags": [
+          "composer",
+          "php",
+          "diagnostics"
+        ],
+        "IsEnabled": true
+      }
+    ]
+  }
+}

@@ -11,6 +11,7 @@ public sealed record ProjectCard(
     ProjectTerminalLaunchProfile TerminalLaunchProfile,
     string Description,
     string TagsLabel,
+    string OverrideSummary,
     bool IsPinned,
     string PinButtonLabel,
     ICommand TogglePinCommand,

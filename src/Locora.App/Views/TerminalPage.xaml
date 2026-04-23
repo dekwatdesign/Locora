@@ -132,7 +132,7 @@
                         CornerRadius="8"
                         Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
                     <Grid>
-                        <Border x:Load="{x:Bind ViewModel.ShowTerminalEmptyState, Mode=OneWay}">
+                        <Border Visibility="{x:Bind ViewModel.ShowTerminalEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <StackPanel Spacing="10" VerticalAlignment="Center">
                                 <TextBlock Text="No terminal sessions open" Style="{StaticResource CardTitleTextStyle}" />
                                 <Button Content="New Root Session"
@@ -141,7 +141,7 @@
                                         Command="{x:Bind ViewModel.OpenRootTerminalSessionCommand}" />
                             </StackPanel>
                         </Border>
-                        <ScrollViewer x:Load="{x:Bind ViewModel.HasTerminalSessions, Mode=OneWay}"
+                        <ScrollViewer Visibility="{x:Bind ViewModel.HasTerminalSessions, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                                       HorizontalScrollBarVisibility="Auto"
                                       VerticalScrollBarVisibility="Auto">
                             <TextBlock Text="{x:Bind ViewModel.SelectedTerminalOutput, Mode=OneWay}"
@@ -196,7 +196,7 @@
                     <TextBlock Text="{x:Bind ViewModel.SelectedTerminalCommandHint, Mode=OneWay}"
                                Opacity="0.72"
                                TextWrapping="WrapWholeWords" />
-                    <TextBlock x:Load="{x:Bind ViewModel.HasSelectedTerminalCommand, Mode=OneWay}"
+                    <TextBlock Visibility="{x:Bind ViewModel.HasSelectedTerminalCommand, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                                Text="{x:Bind ViewModel.SelectedTerminalCommandResolvedText, Mode=OneWay}"
                                FontFamily="Consolas"
                                TextWrapping="WrapWholeWords" />

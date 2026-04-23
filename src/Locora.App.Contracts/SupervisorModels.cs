@@ -7,6 +7,8 @@ public static class SupervisorCommandNames
     public const string StopAll = "stop_all";
     public const string StartService = "start_service";
     public const string StopService = "stop_service";
+    public const string StartServicePreset = "start_service_preset";
+    public const string StopServicePreset = "stop_service_preset";
     public const string ApplyHostsPreview = "apply_hosts_preview";
     public const string RollbackHosts = "rollback_hosts";
     public const string RestartElevated = "restart_elevated";
@@ -20,6 +22,9 @@ public static class SupervisorCommandNames
     public const string RemovePackageInstall = "remove_package_install";
     public const string SelectRuntimeVersion = "select_runtime_version";
     public const string SelectStackProfile = "select_stack_profile";
+    public const string SaveActiveEnvironment = "save_active_environment";
+    public const string ExportStackProfiles = "export_stack_profiles";
+    public const string ImportStackProfiles = "import_stack_profiles";
     public const string RepairLocalSsl = "repair_local_ssl";
     public const string GenerateLocalSsl = "generate_local_ssl";
     public const string TrustLocalSslCa = "trust_local_ssl_ca";
@@ -38,6 +43,7 @@ public sealed record EnvironmentSnapshotDto(
     string EnvironmentRoot,
     string ActiveProfile,
     IReadOnlyList<ServiceStatusDto> Services,
+    IReadOnlyList<ServicePresetStatusDto> ServicePresets,
     IReadOnlyList<ProjectSummaryDto> Projects,
     IReadOnlyList<HealthIssueDto> Issues,
     IReadOnlyList<ValidationResultDto> ValidationResults,
@@ -67,6 +73,18 @@ public sealed record ServiceStatusDto(
     bool AutoStart,
     string? Note);
 
+public sealed record ServicePresetStatusDto(
+    string Key,
+    string DisplayName,
+    string Description,
+    IReadOnlyList<string> ServiceKeys,
+    IReadOnlyList<string> Tags,
+    bool IsValid,
+    string State,
+    string ServicesLabel,
+    string Summary,
+    string Details);
+
 public sealed record ProjectSummaryDto(
     string Name,
     string Path,
@@ -74,7 +92,8 @@ public sealed record ProjectSummaryDto(
     string Runtime,
     string Description,
     IReadOnlyList<string> Tags,
-    bool UsesHttps);
+    bool UsesHttps,
+    string OverrideSummary);
 
 public sealed record StackProfileStatusDto(
     string Key,

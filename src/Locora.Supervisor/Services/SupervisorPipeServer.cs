@@ -79,6 +79,8 @@ public sealed class SupervisorPipeServer : BackgroundService
                 SupervisorCommandNames.StopAll => await HandleMutationAsync(request.CorrelationId, _stateStore.StopAllAsync, "All configured services processed for stop", cancellationToken),
                 SupervisorCommandNames.StartService => await HandleTargetMutationAsync(request, _stateStore.StartServiceAsync, "Service processed for start", cancellationToken),
                 SupervisorCommandNames.StopService => await HandleTargetMutationAsync(request, _stateStore.StopServiceAsync, "Service processed for stop", cancellationToken),
+                SupervisorCommandNames.StartServicePreset => await HandleTargetMutationAsync(request, _stateStore.StartServicePresetAsync, "Service preset processed for start", cancellationToken),
+                SupervisorCommandNames.StopServicePreset => await HandleTargetMutationAsync(request, _stateStore.StopServicePresetAsync, "Service preset processed for stop", cancellationToken),
                 SupervisorCommandNames.ApplyHostsPreview => await HandleMutationAsync(request.CorrelationId, _stateStore.ApplyHostsPreviewAsync, "Generated hosts preview applied", cancellationToken),
                 SupervisorCommandNames.RollbackHosts => await HandleMutationAsync(request.CorrelationId, _stateStore.RollbackHostsAsync, "Hosts file rolled back", cancellationToken),
                 SupervisorCommandNames.RestartElevated => await HandleRestartElevatedAsync(request.CorrelationId, cancellationToken),
@@ -92,6 +94,9 @@ public sealed class SupervisorPipeServer : BackgroundService
                 SupervisorCommandNames.RemovePackageInstall => await HandleTargetMutationAsync(request, _stateStore.RemovePackageInstallAsync, "Package install removed", cancellationToken),
                 SupervisorCommandNames.SelectRuntimeVersion => await HandleTargetMutationAsync(request, _stateStore.SelectRuntimeVersionAsync, "Runtime version selected", cancellationToken),
                 SupervisorCommandNames.SelectStackProfile => await HandleTargetMutationAsync(request, _stateStore.SelectStackProfileAsync, "Stack profile selected", cancellationToken),
+                SupervisorCommandNames.SaveActiveEnvironment => await HandleTargetMutationAsync(request, _stateStore.SaveActiveEnvironmentAsync, "Active environment saved as stack profile", cancellationToken),
+                SupervisorCommandNames.ExportStackProfiles => await HandleTargetMutationAsync(request, _stateStore.ExportStackProfilesAsync, "Stack profiles exported", cancellationToken),
+                SupervisorCommandNames.ImportStackProfiles => await HandleTargetMutationAsync(request, _stateStore.ImportStackProfilesAsync, "Stack profiles imported", cancellationToken),
                 SupervisorCommandNames.RepairLocalSsl => await HandleMutationAsync(request.CorrelationId, _stateStore.RepairLocalSslAsync, "Local SSL repaired", cancellationToken),
                 SupervisorCommandNames.GenerateLocalSsl => await HandleMutationAsync(request.CorrelationId, _stateStore.GenerateLocalSslAsync, "Local SSL generated", cancellationToken),
                 SupervisorCommandNames.TrustLocalSslCa => await HandleMutationAsync(request.CorrelationId, _stateStore.TrustLocalSslCaAsync, "Local SSL CA trusted", cancellationToken),
@@ -134,7 +139,7 @@ public sealed class SupervisorPipeServer : BackgroundService
     {
         if (string.IsNullOrWhiteSpace(request.TargetKey))
         {
-            return new SupervisorResponse(request.CorrelationId, false, "Missing target service key.", null);
+            return new SupervisorResponse(request.CorrelationId, false, "Missing target key.", null);
         }
 
         await operation(request.TargetKey, cancellationToken);

@@ -25,10 +25,16 @@
                         <Setter Target="FirstRunButtons.Orientation" Value="Horizontal" />
                         <Setter Target="RootButtons.Orientation" Value="Horizontal" />
                         <Setter Target="ProjectConfigButtons.Orientation" Value="Horizontal" />
+                        <Setter Target="AppUpdateButtons.Orientation" Value="Horizontal" />
+                        <Setter Target="PortableDistributionButtons.Orientation" Value="Horizontal" />
                         <Setter Target="PackageManifestButtons.Orientation" Value="Horizontal" />
                         <Setter Target="ToolPackageButtons.Orientation" Value="Horizontal" />
                         <Setter Target="StackProfileButtons.Orientation" Value="Horizontal" />
+                        <Setter Target="CustomToolButtons.Orientation" Value="Horizontal" />
                         <Setter Target="PackageDownloadButtons.Orientation" Value="Horizontal" />
+                        <Setter Target="RuntimeBackupButtons.Orientation" Value="Horizontal" />
+                        <Setter Target="PortableRelocationButtons.Orientation" Value="Horizontal" />
+                        <Setter Target="UserEnvironmentButtons.Orientation" Value="Horizontal" />
                         <Setter Target="ExplorerContextButtons.Orientation" Value="Horizontal" />
                         <Setter Target="EditorPreferenceButtons.Orientation" Value="Horizontal" />
                         <Setter Target="DomainDefaultButtons.Orientation" Value="Horizontal" />
@@ -216,6 +222,37 @@
                                     Command="{x:Bind ViewModel.OpenConfigRootCommand}" />
                         </StackPanel>
 
+                        <TextBox Header="Configuration backups"
+                                 Text="{x:Bind ViewModel.ConfigBackupRootPath, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBlock Text="{x:Bind ViewModel.ConfigBackupStatus, Mode=OneWay}"
+                                   TextWrapping="Wrap"
+                                   Opacity="0.72" />
+                        <TextBox Header="Latest backup archive"
+                                 Text="{x:Bind ViewModel.LatestConfigBackupPath, Mode=OneWay}"
+                                 PlaceholderText="No backup created in this app session"
+                                 IsReadOnly="True" />
+                        <TextBox Header="Restore backup archive"
+                                 Text="{x:Bind ViewModel.ConfigRestorePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 PlaceholderText="locora-config-YYYYMMDD-HHMMSS.zip" />
+                        <TextBlock Text="{x:Bind ViewModel.ConfigRestoreStatus, Mode=OneWay}"
+                                   TextWrapping="Wrap"
+                                   Opacity="0.72" />
+                        <StackPanel x:Name="ConfigBackupButtons" Orientation="Vertical" Spacing="8">
+                            <Button Content="Back Up Config"
+                                    AutomationProperties.HelpText="Create a timestamped zip archive of usr/config."
+                                    ToolTipService.ToolTip="Back up Locora configuration"
+                                    Command="{x:Bind ViewModel.BackupConfigCommand}" />
+                            <Button Content="Restore Config Backup"
+                                    AutomationProperties.HelpText="Restore a Locora configuration backup archive into usr/config."
+                                    ToolTipService.ToolTip="Restore configuration backup"
+                                    Command="{x:Bind ViewModel.RestoreConfigCommand}" />
+                            <Button Content="Open Config Backups"
+                                    AutomationProperties.HelpText="Open the folder containing configuration backup archives."
+                                    ToolTipService.ToolTip="Open configuration backups"
+                                    Command="{x:Bind ViewModel.OpenConfigBackupRootCommand}" />
+                        </StackPanel>
+
                         <TextBox Header="Stack profiles"
                                  Text="{x:Bind ViewModel.ProfilesSettingsFilePath, Mode=OneWay}"
                                  IsReadOnly="True" />
@@ -277,6 +314,157 @@
                 </Border>
             </Expander>
 
+            <Expander Header="Application updates"
+                      AutomationProperties.HelpText="Check a configured release manifest, inspect cached update plan files, and open manual release links.">
+                <Border Style="{StaticResource SettingsCardBorderStyle}" Margin="0,12,0,0">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="{x:Bind ViewModel.AppUpdateSummary, Mode=OneWay}"
+                                   TextWrapping="Wrap"
+                                   Opacity="0.72" />
+                        <TextBlock Text="{x:Bind ViewModel.AppUpdateDetails, Mode=OneWay}"
+                                   TextWrapping="Wrap"
+                                   Opacity="0.72" />
+                        <TextBlock Text="{x:Bind ViewModel.AppUpdateCheckPolicy, Mode=OneWay}"
+                                   TextWrapping="Wrap"
+                                   Opacity="0.72" />
+                        <TextBox Header="State"
+                                 Text="{x:Bind ViewModel.AppUpdateState, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBox Header="Current version"
+                                 Text="{x:Bind ViewModel.AppUpdateCurrentVersion, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBox Header="Latest version"
+                                 Text="{x:Bind ViewModel.AppUpdateLatestVersion, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBox Header="Channel"
+                                 Text="{x:Bind ViewModel.AppUpdateChannel, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBox Header="Last checked"
+                                 Text="{x:Bind ViewModel.AppUpdateCheckedAtLabel, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBox Header="Manifest URI"
+                                 Text="{x:Bind ViewModel.AppUpdateManifestUri, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBox Header="Release page"
+                                 Text="{x:Bind ViewModel.AppUpdateReleasePageUri, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBox Header="Download URI"
+                                 Text="{x:Bind ViewModel.AppUpdateDownloadUri, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBox Header="SHA-256"
+                                 Text="{x:Bind ViewModel.AppUpdateSha256, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBox Header="Update plan"
+                                 Text="{x:Bind ViewModel.AppUpdatePlanPath, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBox Header="Cached manifest"
+                                 Text="{x:Bind ViewModel.AppUpdateManifestCachePath, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBox Header="Example manifest"
+                                 Text="{x:Bind ViewModel.AppUpdateManifestExamplePath, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBox Header="Download folder"
+                                 Text="{x:Bind ViewModel.AppUpdateDownloadRootPath, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <StackPanel x:Name="AppUpdateButtons" Orientation="Vertical" Spacing="8">
+                            <Button Content="Check for Updates"
+                                    AutomationProperties.HelpText="Read the configured app update manifest and refresh the cached update plan."
+                                    ToolTipService.ToolTip="Check configured update manifest"
+                                    Command="{x:Bind ViewModel.CheckForAppUpdatesCommand}" />
+                            <Button Content="Open Release Page"
+                                    AutomationProperties.HelpText="Open the release page URI from the app update status."
+                                    ToolTipService.ToolTip="Open app update release page"
+                                    Command="{x:Bind ViewModel.OpenAppUpdateReleasePageCommand}" />
+                            <Button Content="Open Download"
+                                    AutomationProperties.HelpText="Open the update download URI from the app update status."
+                                    ToolTipService.ToolTip="Open app update download"
+                                    Command="{x:Bind ViewModel.OpenAppUpdateDownloadCommand}" />
+                            <Button Content="Open Update Plan"
+                                    AutomationProperties.HelpText="Open the cached update plan JSON file."
+                                    ToolTipService.ToolTip="Open update plan"
+                                    Command="{x:Bind ViewModel.OpenAppUpdatePlanCommand}" />
+                            <Button Content="Open Manifest Cache"
+                                    AutomationProperties.HelpText="Open the cached release manifest JSON file."
+                                    ToolTipService.ToolTip="Open cached update manifest"
+                                    Command="{x:Bind ViewModel.OpenAppUpdateManifestCacheCommand}" />
+                            <Button Content="Open Example Manifest"
+                                    AutomationProperties.HelpText="Open the example release manifest schema."
+                                    ToolTipService.ToolTip="Open example update manifest"
+                                    Command="{x:Bind ViewModel.OpenAppUpdateManifestExampleCommand}" />
+                            <Button Content="Open appsettings.json"
+                                    AutomationProperties.HelpText="Open appsettings.json to edit the Updates section."
+                                    ToolTipService.ToolTip="Open appsettings.json"
+                                    Command="{x:Bind ViewModel.OpenAppSettingsFileCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Expander>
+
+            <Expander Header="Portable distribution automation"
+                      AutomationProperties.HelpText="Generate and inspect portable ZIP packaging scripts, release plans, and update manifest templates.">
+                <Border Style="{StaticResource SettingsCardBorderStyle}" Margin="0,12,0,0">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="{x:Bind ViewModel.PortableDistributionStatus, Mode=OneWay}"
+                                   TextWrapping="Wrap"
+                                   Opacity="0.72" />
+                        <TextBlock Text="{x:Bind ViewModel.PortableDistributionModeLabel, Mode=OneWay}"
+                                   TextWrapping="Wrap"
+                                   Opacity="0.72" />
+                        <TextBlock Text="{x:Bind ViewModel.PortableDistributionScopeLabel, Mode=OneWay}"
+                                   TextWrapping="Wrap"
+                                   Opacity="0.72" />
+                        <TextBox Header="Distribution folder"
+                                 Text="{x:Bind ViewModel.PortableDistributionRootPath, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBox Header="Artifacts folder"
+                                 Text="{x:Bind ViewModel.PortableDistributionArtifactsRootPath, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBox Header="Build script"
+                                 Text="{x:Bind ViewModel.PortableDistributionScriptPath, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBox Header="Distribution plan"
+                                 Text="{x:Bind ViewModel.PortableDistributionPlanPath, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBox Header="README"
+                                 Text="{x:Bind ViewModel.PortableDistributionReadmePath, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBox Header="Release manifest template"
+                                 Text="{x:Bind ViewModel.PortableDistributionManifestTemplatePath, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <StackPanel x:Name="PortableDistributionButtons" Orientation="Vertical" Spacing="8">
+                            <Button Content="Refresh Distribution Files"
+                                    AutomationProperties.HelpText="Regenerate the portable distribution PowerShell script, plan, README, and release manifest template."
+                                    ToolTipService.ToolTip="Regenerate portable distribution files"
+                                    Command="{x:Bind ViewModel.RefreshPortableDistributionFilesCommand}" />
+                            <Button Content="Open Build Script"
+                                    AutomationProperties.HelpText="Open the generated PowerShell script for building a portable ZIP release."
+                                    ToolTipService.ToolTip="Open portable distribution script"
+                                    Command="{x:Bind ViewModel.OpenPortableDistributionScriptCommand}" />
+                            <Button Content="Open Distribution Plan"
+                                    AutomationProperties.HelpText="Open the generated portable distribution plan JSON file."
+                                    ToolTipService.ToolTip="Open portable distribution plan"
+                                    Command="{x:Bind ViewModel.OpenPortableDistributionPlanCommand}" />
+                            <Button Content="Open README"
+                                    AutomationProperties.HelpText="Open the generated portable distribution README."
+                                    ToolTipService.ToolTip="Open portable distribution README"
+                                    Command="{x:Bind ViewModel.OpenPortableDistributionReadmeCommand}" />
+                            <Button Content="Open Manifest Template"
+                                    AutomationProperties.HelpText="Open the generated release manifest template for update checks."
+                                    ToolTipService.ToolTip="Open release manifest template"
+                                    Command="{x:Bind ViewModel.OpenPortableDistributionManifestTemplateCommand}" />
+                            <Button Content="Open Distribution Folder"
+                                    AutomationProperties.HelpText="Open the folder containing generated portable distribution helper files."
+                                    ToolTipService.ToolTip="Open portable distribution folder"
+                                    Command="{x:Bind ViewModel.OpenPortableDistributionRootCommand}" />
+                            <Button Content="Open Artifacts Folder"
+                                    AutomationProperties.HelpText="Open the folder where portable ZIP artifacts should be written."
+                                    ToolTipService.ToolTip="Open portable distribution artifacts"
+                                    Command="{x:Bind ViewModel.OpenPortableDistributionArtifactsRootCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Expander>
+
             <Expander Header="Project discovery and domain defaults"
                       AutomationProperties.HelpText="Edit generated domain defaults and run repair actions for hosts and vhost artifacts.">
                 <Border Style="{StaticResource SettingsCardBorderStyle}" Margin="0,12,0,0">
@@ -327,7 +515,7 @@
                         <TextBlock Text="{x:Bind ViewModel.PackageRegistryCatalogLabel, Mode=OneWay}"
                                    Opacity="0.72" />
 
-                        <Border x:Load="{x:Bind ViewModel.ShowPackageSourcesEmptyState, Mode=OneWay}"
+                        <Border Visibility="{x:Bind ViewModel.ShowPackageSourcesEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 Style="{StaticResource SettingsInnerCardBorderStyle}">
                             <StackPanel Spacing="10">
                                 <TextBlock Text="No package sources reported yet" Style="{StaticResource CardTitleTextStyle}" />
@@ -347,7 +535,7 @@
                             </StackPanel>
                         </Border>
 
-                        <ItemsControl x:Load="{x:Bind ViewModel.HasPackageSources, Mode=OneWay}"
+                        <ItemsControl Visibility="{x:Bind ViewModel.HasPackageSources, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                                       ItemsSource="{x:Bind ViewModel.PackageSources, Mode=OneWay}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="models:PackageSourceCard">
@@ -382,7 +570,7 @@
                                    Opacity="0.72" />
                         <TextBlock Text="{x:Bind ViewModel.RuntimePackageStatusLabel, Mode=OneWay}" />
 
-                        <Border x:Load="{x:Bind ViewModel.ShowRuntimePackagesEmptyState, Mode=OneWay}"
+                        <Border Visibility="{x:Bind ViewModel.ShowRuntimePackagesEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 Style="{StaticResource SettingsInnerCardBorderStyle}">
                             <StackPanel Spacing="10">
                                 <TextBlock Text="No runtime packages cataloged yet" Style="{StaticResource CardTitleTextStyle}" />
@@ -402,7 +590,7 @@
                             </StackPanel>
                         </Border>
 
-                        <ItemsControl x:Load="{x:Bind ViewModel.HasRuntimePackages, Mode=OneWay}"
+                        <ItemsControl Visibility="{x:Bind ViewModel.HasRuntimePackages, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                                       ItemsSource="{x:Bind ViewModel.RuntimePackages, Mode=OneWay}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="models:RuntimePackageCard">
@@ -478,7 +666,7 @@
                                     Command="{x:Bind ViewModel.OpenPackageManifestsRootCommand}" />
                         </StackPanel>
 
-                        <Border x:Load="{x:Bind ViewModel.ShowToolPackagesEmptyState, Mode=OneWay}"
+                        <Border Visibility="{x:Bind ViewModel.ShowToolPackagesEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 Style="{StaticResource SettingsInnerCardBorderStyle}">
                             <StackPanel Spacing="10">
                                 <TextBlock Text="No tool packages cataloged yet" Style="{StaticResource CardTitleTextStyle}" />
@@ -498,7 +686,7 @@
                             </StackPanel>
                         </Border>
 
-                        <ItemsControl x:Load="{x:Bind ViewModel.HasToolPackages, Mode=OneWay}"
+                        <ItemsControl Visibility="{x:Bind ViewModel.HasToolPackages, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                                       ItemsSource="{x:Bind ViewModel.ToolPackages, Mode=OneWay}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="models:ToolPackageCard">
@@ -534,9 +722,71 @@
                 </Border>
             </Expander>
 
+            <Expander Header="Laragon migration"
+                      AutomationProperties.HelpText="Preview and import projects from an existing Laragon root without moving project files.">
+                <Border Style="{StaticResource SettingsCardBorderStyle}" Margin="0,12,0,0">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Importing from Laragon adds project discovery overrides for folders under the Laragon www directory and preserves the source files in place."
+                                   TextWrapping="Wrap"
+                                   Opacity="0.72" />
+                        <TextBox Header="Laragon root"
+                                 Text="{x:Bind ViewModel.LaragonRootPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 PlaceholderText="C:\laragon" />
+                        <TextBlock Text="{x:Bind ViewModel.LaragonImportSummary, Mode=OneWay}"
+                                   TextWrapping="Wrap" />
+                        <TextBlock Text="{x:Bind ViewModel.LaragonImportStatus, Mode=OneWay}"
+                                   TextWrapping="Wrap"
+                                   Opacity="0.72" />
+
+                        <StackPanel Orientation="Vertical" Spacing="8">
+                            <Button Content="Preview Laragon Import"
+                                    AutomationProperties.HelpText="Scan the Laragon www folder and show project overrides before writing projects.json."
+                                    ToolTipService.ToolTip="Preview Laragon project import"
+                                    Command="{x:Bind ViewModel.PreviewLaragonImportCommand}" />
+                            <Button Content="Import Laragon Projects"
+                                    AutomationProperties.HelpText="Merge Laragon project overrides into projects.json and regenerate hosts and vhosts."
+                                    ToolTipService.ToolTip="Import Laragon projects"
+                                    Command="{x:Bind ViewModel.ImportLaragonProjectsCommand}" />
+                            <Button Content="Open Laragon Root"
+                                    AutomationProperties.HelpText="Open the configured Laragon root folder."
+                                    ToolTipService.ToolTip="Open Laragon root"
+                                    Command="{x:Bind ViewModel.OpenLaragonRootCommand}" />
+                            <Button Content="Open projects.json"
+                                    AutomationProperties.HelpText="Open project discovery settings after import."
+                                    ToolTipService.ToolTip="Open projects.json"
+                                    Command="{x:Bind ViewModel.OpenProjectsSettingsFileCommand}" />
+                        </StackPanel>
+
+                        <Border Visibility="{x:Bind ViewModel.ShowLaragonImportEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Style="{StaticResource SettingsInnerCardBorderStyle}">
+                            <TextBlock Text="No Laragon import preview yet" Style="{StaticResource CardTitleTextStyle}" />
+                        </Border>
+                        <ItemsControl Visibility="{x:Bind ViewModel.HasLaragonImportProjects, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                      ItemsSource="{x:Bind ViewModel.LaragonImportProjects, Mode=OneWay}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:LaragonImportProjectCard">
+                                    <Border Style="{StaticResource SettingsInnerCardBorderStyle}" Margin="0,0,0,8">
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="{x:Bind Name}" Style="{StaticResource CardTitleTextStyle}" />
+                                            <TextBlock Text="{x:Bind Status}" />
+                                            <TextBlock Text="{x:Bind DomainLabel}" />
+                                            <TextBlock Text="{x:Bind DocumentRootLabel}" Opacity="0.72" />
+                                            <TextBlock Text="{x:Bind RuntimeLabel}" Opacity="0.72" />
+                                            <TextBlock Text="{x:Bind FrameworkLabel}" Opacity="0.72" />
+                                            <TextBlock Text="{x:Bind TagsLabel}" Opacity="0.72" />
+                                            <TextBlock Text="{x:Bind SourcePath}" TextWrapping="Wrap" Opacity="0.72" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </Expander>
+
             <Expander Header="Stack profiles"
                       IsExpanded="True"
-                      AutomationProperties.HelpText="Select the active local stack profile and review profile service/package compatibility.">
+                      AutomationProperties.HelpText="Save or load local stack profiles and review profile service/package compatibility.">
                 <Border Style="{StaticResource SettingsCardBorderStyle}" Margin="0,12,0,0">
                     <StackPanel Spacing="12">
                         <TextBlock Text="{x:Bind ViewModel.StackProfileSummaryText, Mode=OneWay}" />
@@ -547,8 +797,32 @@
                         <TextBox Header="Profiles configuration"
                                  Text="{x:Bind ViewModel.ProfilesSettingsFilePath, Mode=OneWay}"
                                  IsReadOnly="True" />
+                        <TextBox Header="Saved profile name"
+                                 Text="{x:Bind ViewModel.NewStackProfileName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 PlaceholderText="Saved Environment" />
+                        <TextBlock Text="{x:Bind ViewModel.ActiveEnvironmentSaveStatus, Mode=OneWay}"
+                                   TextWrapping="Wrap"
+                                   Opacity="0.72" />
+                        <TextBox Header="Import / export file"
+                                 Text="{x:Bind ViewModel.ProfileTransferPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 PlaceholderText="profiles-export.json" />
+                        <TextBlock Text="{x:Bind ViewModel.ProfileTransferStatus, Mode=OneWay}"
+                                   TextWrapping="Wrap"
+                                   Opacity="0.72" />
 
                         <StackPanel x:Name="StackProfileButtons" Orientation="Vertical" Spacing="8">
+                            <Button Content="Save Active Environment"
+                                    AutomationProperties.HelpText="Save the current running services and active package selections as a stack profile."
+                                    ToolTipService.ToolTip="Save active environment as stack profile"
+                                    Command="{x:Bind ViewModel.SaveActiveEnvironmentCommand}" />
+                            <Button Content="Export Stack Profiles"
+                                    AutomationProperties.HelpText="Export stack profiles to the configured JSON file."
+                                    ToolTipService.ToolTip="Export stack profiles"
+                                    Command="{x:Bind ViewModel.ExportStackProfilesCommand}" />
+                            <Button Content="Import Stack Profiles"
+                                    AutomationProperties.HelpText="Import stack profiles from the configured JSON file and preserve existing profile keys."
+                                    ToolTipService.ToolTip="Import stack profiles"
+                                    Command="{x:Bind ViewModel.ImportStackProfilesCommand}" />
                             <Button Content="Refresh Snapshot"
                                     AutomationProperties.HelpText="Refresh stack profile state from the supervisor."
                                     ToolTipService.ToolTip="Refresh stack profile state"
@@ -557,6 +831,10 @@
                                     AutomationProperties.HelpText="Open the stack profiles JSON file."
                                     ToolTipService.ToolTip="Open profiles.json"
                                     Command="{x:Bind ViewModel.OpenProfilesSettingsFileCommand}" />
+                            <Button Content="Open profiles folder"
+                                    AutomationProperties.HelpText="Open the folder used for profile import and export files."
+                                    ToolTipService.ToolTip="Open profiles folder"
+                                    Command="{x:Bind ViewModel.OpenProfilesRootCommand}" />
                             <Button Content="Open packages.lock.json"
                                     AutomationProperties.HelpText="Open package selections that are merged when a stack profile is selected."
                                     ToolTipService.ToolTip="Open package lock state"
@@ -567,7 +845,7 @@
                                     Command="{x:Bind ViewModel.StartAllCommand}" />
                         </StackPanel>
 
-                        <Border x:Load="{x:Bind ViewModel.ShowStackProfilesEmptyState, Mode=OneWay}"
+                        <Border Visibility="{x:Bind ViewModel.ShowStackProfilesEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 Style="{StaticResource SettingsInnerCardBorderStyle}">
                             <StackPanel Spacing="10">
                                 <TextBlock Text="No stack profiles configured" Style="{StaticResource CardTitleTextStyle}" />
@@ -587,7 +865,7 @@
                             </StackPanel>
                         </Border>
 
-                        <ItemsControl x:Load="{x:Bind ViewModel.HasStackProfiles, Mode=OneWay}"
+                        <ItemsControl Visibility="{x:Bind ViewModel.HasStackProfiles, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                                       ItemsSource="{x:Bind ViewModel.StackProfiles, Mode=OneWay}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="models:StackProfileCard">
@@ -605,8 +883,8 @@
                                                 <Button Grid.Column="1"
                                                         Content="{x:Bind SelectButtonLabel, Mode=OneWay}"
                                                         AutomationProperties.Name="{x:Bind SelectAutomationName, Mode=OneWay}"
-                                                        AutomationProperties.HelpText="Select this stack profile and merge its package selections into packages.lock.json."
-                                                        ToolTipService.ToolTip="Select stack profile"
+                                                        AutomationProperties.HelpText="Load this stack profile and merge its package selections into packages.lock.json."
+                                                        ToolTipService.ToolTip="Load stack profile"
                                                         IsEnabled="{x:Bind CanSelect, Mode=OneWay}"
                                                         Command="{x:Bind SelectProfileCommand}"
                                                         CommandParameter="{x:Bind}"
@@ -620,6 +898,87 @@
                                             <TextBlock Text="{x:Bind Summary}" TextWrapping="Wrap" />
                                             <TextBlock Text="{x:Bind Details}" TextWrapping="Wrap" Opacity="0.72" />
                                         </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </Expander>
+
+            <Expander Header="Custom tools menu"
+                      AutomationProperties.HelpText="Run and edit custom tool menu entries from custom-tools.json.">
+                <Border Style="{StaticResource SettingsCardBorderStyle}" Margin="0,12,0,0">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="{x:Bind ViewModel.CustomToolsStatus, Mode=OneWay}"
+                                   TextWrapping="Wrap"
+                                   Opacity="0.72" />
+                        <TextBox Header="Custom tools configuration"
+                                 Text="{x:Bind ViewModel.CustomToolsSettingsFilePath, Mode=OneWay}"
+                                 IsReadOnly="True" />
+
+                        <StackPanel x:Name="CustomToolButtons" Orientation="Vertical" Spacing="8">
+                            <Button Content="Reload Custom Tools"
+                                    AutomationProperties.HelpText="Reload custom tools from custom-tools.json."
+                                    ToolTipService.ToolTip="Reload custom tools"
+                                    Command="{x:Bind ViewModel.ReloadCustomToolsCommand}" />
+                            <Button Content="Open custom-tools.json"
+                                    AutomationProperties.HelpText="Open the custom tools JSON file."
+                                    ToolTipService.ToolTip="Open custom-tools.json"
+                                    Command="{x:Bind ViewModel.OpenCustomToolsSettingsFileCommand}" />
+                            <Button Content="Open Terminal Commands"
+                                    AutomationProperties.HelpText="Open terminal preset commands used alongside custom terminal tools."
+                                    ToolTipService.ToolTip="Open terminal commands"
+                                    Command="{x:Bind ViewModel.OpenTerminalCommandsSettingsFileCommand}" />
+                        </StackPanel>
+
+                        <Border Visibility="{x:Bind ViewModel.ShowCustomToolsEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Style="{StaticResource SettingsInnerCardBorderStyle}">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="No custom tools configured" Style="{StaticResource CardTitleTextStyle}" />
+                                <StackPanel Orientation="Vertical" Spacing="8">
+                                    <Button Content="Open custom-tools.json"
+                                            AutomationProperties.HelpText="Open the custom tools JSON file."
+                                            ToolTipService.ToolTip="Open custom-tools.json"
+                                            Command="{x:Bind ViewModel.OpenCustomToolsSettingsFileCommand}" />
+                                    <Button Content="Reload Custom Tools"
+                                            AutomationProperties.HelpText="Reload custom tools from custom-tools.json."
+                                            ToolTipService.ToolTip="Reload custom tools"
+                                            Command="{x:Bind ViewModel.ReloadCustomToolsCommand}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <ItemsControl Visibility="{x:Bind ViewModel.HasCustomTools, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                      ItemsSource="{x:Bind ViewModel.CustomTools, Mode=OneWay}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:CustomToolMenuItem">
+                                    <Border Style="{StaticResource SettingsInnerCardBorderStyle}" Margin="0,0,0,8">
+                                        <Grid ColumnSpacing="12" RowSpacing="8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Spacing="6">
+                                                <TextBlock Text="{x:Bind DisplayName}" Style="{StaticResource CardTitleTextStyle}" />
+                                                <TextBlock Text="{x:Bind Summary}" TextWrapping="Wrap" Opacity="0.72" />
+                                                <TextBlock Text="{x:Bind ActionLabel}" />
+                                                <TextBlock Text="{x:Bind ScopeLabel}" Opacity="0.72" />
+                                                <TextBlock Text="{x:Bind TargetLabel}" TextWrapping="Wrap" />
+                                                <TextBlock Text="{x:Bind TagsLabel}" TextWrapping="Wrap" Opacity="0.72" />
+                                            </StackPanel>
+
+                                            <Button Grid.Column="1"
+                                                    Content="Run"
+                                                    AutomationProperties.Name="{x:Bind RunAutomationName}"
+                                                    AutomationProperties.HelpText="Run this custom tool."
+                                                    ToolTipService.ToolTip="Run custom tool"
+                                                    IsEnabled="{x:Bind CanRun, Mode=OneWay}"
+                                                    Command="{x:Bind RunCommand}"
+                                                    CommandParameter="{x:Bind}"
+                                                    VerticalAlignment="Center" />
+                                        </Grid>
                                     </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -675,7 +1034,7 @@
                                     Command="{x:Bind ViewModel.OpenPackagesLockSettingsFileCommand}" />
                         </StackPanel>
 
-                        <Border x:Load="{x:Bind ViewModel.ShowPackageDownloadsEmptyState, Mode=OneWay}"
+                        <Border Visibility="{x:Bind ViewModel.ShowPackageDownloadsEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 Style="{StaticResource SettingsInnerCardBorderStyle}">
                             <StackPanel Spacing="10">
                                 <TextBlock Text="No package download plan yet" Style="{StaticResource CardTitleTextStyle}" />
@@ -695,7 +1054,7 @@
                             </StackPanel>
                         </Border>
 
-                        <ItemsControl x:Load="{x:Bind ViewModel.HasPackageDownloads, Mode=OneWay}"
+                        <ItemsControl Visibility="{x:Bind ViewModel.HasPackageDownloads, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                                       ItemsSource="{x:Bind ViewModel.PackageDownloads, Mode=OneWay}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="models:PackageDownloadCard">
@@ -733,6 +1092,153 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </Expander>
+
+            <Expander Header="Runtime backup guidance"
+                      AutomationProperties.HelpText="Review the runtime, package, and service-data paths that matter for portable backup and restore planning.">
+                <Border Style="{StaticResource SettingsCardBorderStyle}" Margin="0,12,0,0">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="{x:Bind ViewModel.RuntimeBackupStatusLabel, Mode=OneWay}"
+                                   TextWrapping="Wrap" />
+                        <TextBlock Text="{x:Bind ViewModel.RuntimeBackupIncludeLabel, Mode=OneWay}"
+                                   TextWrapping="Wrap"
+                                   Opacity="0.72" />
+                        <TextBlock Text="{x:Bind ViewModel.RuntimeBackupRestoreOrderLabel, Mode=OneWay}"
+                                   TextWrapping="Wrap"
+                                   Opacity="0.72" />
+                        <TextBlock Text="{x:Bind ViewModel.RuntimeBackupSkipLabel, Mode=OneWay}"
+                                   TextWrapping="Wrap"
+                                   Opacity="0.72" />
+
+                        <TextBox Header="Service data"
+                                 Text="{x:Bind ViewModel.DataRoot, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBox Header="Runtime binaries"
+                                 Text="{x:Bind ViewModel.BinRoot, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBox Header="Package cache"
+                                 Text="{x:Bind ViewModel.PackageCacheRootPath, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBox Header="Package lock state"
+                                 Text="{x:Bind ViewModel.PackagesLockSettingsFilePath, Mode=OneWay}"
+                                 IsReadOnly="True" />
+
+                        <StackPanel x:Name="RuntimeBackupButtons" Orientation="Vertical" Spacing="8">
+                            <Button Content="Back Up Config"
+                                    AutomationProperties.HelpText="Create a timestamped zip archive of usr/config before backing up runtime folders."
+                                    ToolTipService.ToolTip="Back up Locora configuration"
+                                    Command="{x:Bind ViewModel.BackupConfigCommand}" />
+                            <Button Content="Open Data"
+                                    AutomationProperties.HelpText="Open the service data folder in File Explorer."
+                                    ToolTipService.ToolTip="Open service data"
+                                    Command="{x:Bind ViewModel.OpenDataRootCommand}" />
+                            <Button Content="Open Bin"
+                                    AutomationProperties.HelpText="Open the runtime binaries folder in File Explorer."
+                                    ToolTipService.ToolTip="Open runtime binaries"
+                                    Command="{x:Bind ViewModel.OpenBinRootCommand}" />
+                            <Button Content="Open Package Cache"
+                                    AutomationProperties.HelpText="Open the package cache folder in File Explorer."
+                                    ToolTipService.ToolTip="Open package cache"
+                                    Command="{x:Bind ViewModel.OpenPackageCacheRootCommand}" />
+                            <Button Content="Open packages.lock.json"
+                                    AutomationProperties.HelpText="Open the package lock JSON file."
+                                    ToolTipService.ToolTip="Open packages.lock.json"
+                                    Command="{x:Bind ViewModel.OpenPackagesLockSettingsFileCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Expander>
+
+            <Expander Header="Portable relocation validation"
+                      AutomationProperties.HelpText="Validate whether service, project, package, runtime, and tool paths can survive moving Locora to another folder or drive.">
+                <Border Style="{StaticResource SettingsCardBorderStyle}" Margin="0,12,0,0">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="{x:Bind ViewModel.PortableRelocationValidationStatusLabel, Mode=OneWay}"
+                                   TextWrapping="Wrap" />
+                        <TextBlock Text="{x:Bind ViewModel.PortableRelocationValidationDetails, Mode=OneWay}"
+                                   TextWrapping="Wrap"
+                                   Opacity="0.72" />
+                        <TextBox Header="Portable root"
+                                 Text="{x:Bind ViewModel.EnvironmentRoot, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBox Header="Projects root"
+                                 Text="{x:Bind ViewModel.ProjectRoot, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBox Header="Configuration root"
+                                 Text="{x:Bind ViewModel.ConfigRoot, Mode=OneWay}"
+                                 IsReadOnly="True" />
+
+                        <StackPanel x:Name="PortableRelocationButtons" Orientation="Vertical" Spacing="8">
+                            <Button Content="Refresh Snapshot"
+                                    AutomationProperties.HelpText="Run the portable relocation readiness check through the supervisor snapshot."
+                                    ToolTipService.ToolTip="Validate portable relocation readiness"
+                                    Command="{x:Bind ViewModel.RefreshCommand}" />
+                            <Button Content="Export Diagnostic Report"
+                                    AutomationProperties.HelpText="Export diagnostics including portable relocation validation details."
+                                    ToolTipService.ToolTip="Export diagnostic report"
+                                    Command="{x:Bind ViewModel.ExportDiagnosticReportCommand}" />
+                            <Button Content="Open Config Folder"
+                                    AutomationProperties.HelpText="Open the configuration folder containing service, package, and project path settings."
+                                    ToolTipService.ToolTip="Open configuration folder"
+                                    Command="{x:Bind ViewModel.OpenConfigRootCommand}" />
+                            <Button Content="Open Projects Root"
+                                    AutomationProperties.HelpText="Open the portable projects root."
+                                    ToolTipService.ToolTip="Open projects root"
+                                    Command="{x:Bind ViewModel.OpenProjectRootCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Expander>
+
+            <Expander Header="PATH and environment variables"
+                      AutomationProperties.HelpText="Review generated PowerShell scripts for user-level PATH and LOCORA variable changes.">
+                <Border Style="{StaticResource SettingsCardBorderStyle}" Margin="0,12,0,0">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="{x:Bind ViewModel.UserEnvironmentStatus, Mode=OneWay}"
+                                   TextWrapping="Wrap"
+                                   Opacity="0.72" />
+                        <TextBlock Text="{x:Bind ViewModel.UserEnvironmentManagedPathEntriesLabel, Mode=OneWay}"
+                                   TextWrapping="Wrap"
+                                   Opacity="0.72" />
+                        <TextBlock Text="{x:Bind ViewModel.UserEnvironmentManagedVariablesLabel, Mode=OneWay}"
+                                   TextWrapping="Wrap"
+                                   Opacity="0.72" />
+                        <TextBox Header="Install script"
+                                 Text="{x:Bind ViewModel.UserEnvironmentApplyScriptPath, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBox Header="Uninstall script"
+                                 Text="{x:Bind ViewModel.UserEnvironmentRemoveScriptPath, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBox Header="Manifest"
+                                 Text="{x:Bind ViewModel.UserEnvironmentManifestPath, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <TextBox Header="Backup folder"
+                                 Text="{x:Bind ViewModel.UserEnvironmentBackupRootPath, Mode=OneWay}"
+                                 IsReadOnly="True" />
+                        <StackPanel x:Name="UserEnvironmentButtons" Orientation="Vertical" Spacing="8">
+                            <Button Content="Refresh Environment Scripts"
+                                    AutomationProperties.HelpText="Regenerate the CurrentUser PowerShell scripts and manifest for this portable root."
+                                    ToolTipService.ToolTip="Regenerate user environment scripts"
+                                    Command="{x:Bind ViewModel.RefreshUserEnvironmentFilesCommand}" />
+                            <Button Content="Open Install Script"
+                                    AutomationProperties.HelpText="Open the generated PowerShell script that adds Locora user PATH and LOCORA variables."
+                                    ToolTipService.ToolTip="Open the generated environment install script"
+                                    Command="{x:Bind ViewModel.OpenUserEnvironmentApplyScriptCommand}" />
+                            <Button Content="Open Uninstall Script"
+                                    AutomationProperties.HelpText="Open the generated PowerShell script that removes Locora user PATH and LOCORA variables."
+                                    ToolTipService.ToolTip="Open the generated environment uninstall script"
+                                    Command="{x:Bind ViewModel.OpenUserEnvironmentRemoveScriptCommand}" />
+                            <Button Content="Open Manifest"
+                                    AutomationProperties.HelpText="Open the JSON manifest describing the generated PATH and environment variable plan."
+                                    ToolTipService.ToolTip="Open the generated environment manifest"
+                                    Command="{x:Bind ViewModel.OpenUserEnvironmentManifestCommand}" />
+                            <Button Content="Open Aliases Folder"
+                                    AutomationProperties.HelpText="Open the aliases folder that persistent PATH scripts add for the current user."
+                                    ToolTipService.ToolTip="Open the aliases folder"
+                                    Command="{x:Bind ViewModel.OpenAliasesRootCommand}" />
+                        </StackPanel>
                     </StackPanel>
                 </Border>
             </Expander>
@@ -862,7 +1368,7 @@
                                     Command="{x:Bind ViewModel.RefreshCommand}" />
                         </StackPanel>
 
-                        <Border x:Load="{x:Bind ViewModel.ShowPermissionDiagnosticsEmptyState, Mode=OneWay}"
+                        <Border Visibility="{x:Bind ViewModel.ShowPermissionDiagnosticsEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 Style="{StaticResource SettingsInnerCardBorderStyle}">
                             <StackPanel Spacing="10">
                                 <TextBlock Text="No permission diagnostics yet" Style="{StaticResource CardTitleTextStyle}" />
@@ -905,7 +1411,7 @@
                       AutomationProperties.HelpText="Copy or export a Markdown diagnostic report for troubleshooting.">
                 <Border Style="{StaticResource SettingsCardBorderStyle}" Margin="0,12,0,0">
                     <StackPanel Spacing="12">
-                        <TextBlock Text="Copy or export a Markdown snapshot with services, health issues, validation results, port diagnostics, permissions, package sources, package downloads, runtime versions, stack profiles, SSL certificate diagnostics, projects, and key paths."
+                        <TextBlock Text="Copy or export a Markdown snapshot with services, health issues, validation results, portable relocation checks, port diagnostics, permissions, package sources, package downloads, runtime versions, runtime backup guidance, stack profiles, custom tools, SSL certificate diagnostics, projects, and key paths."
                                    TextWrapping="Wrap"
                                    Opacity="0.72" />
                         <StackPanel x:Name="DiagnosticReportActions" Orientation="Vertical" Spacing="8">

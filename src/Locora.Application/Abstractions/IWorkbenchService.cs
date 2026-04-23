@@ -14,6 +14,10 @@ public interface IWorkbenchService
 
     Task<EnvironmentSnapshot> StopServiceAsync(string serviceKey, CancellationToken cancellationToken = default);
 
+    Task<EnvironmentSnapshot> StartServicePresetAsync(string presetKey, CancellationToken cancellationToken = default);
+
+    Task<EnvironmentSnapshot> StopServicePresetAsync(string presetKey, CancellationToken cancellationToken = default);
+
     Task<EnvironmentSnapshot> ApplyHostsPreviewAsync(CancellationToken cancellationToken = default);
 
     Task<EnvironmentSnapshot> RollbackHostsAsync(CancellationToken cancellationToken = default);
@@ -39,6 +43,12 @@ public interface IWorkbenchService
     Task<EnvironmentSnapshot> SelectRuntimeVersionAsync(string packageId, string version, CancellationToken cancellationToken = default);
 
     Task<EnvironmentSnapshot> SelectStackProfileAsync(string profileKey, CancellationToken cancellationToken = default);
+
+    Task<EnvironmentSnapshot> SaveActiveEnvironmentAsync(string profileName, CancellationToken cancellationToken = default);
+
+    Task<EnvironmentSnapshot> ExportStackProfilesAsync(string targetPath, CancellationToken cancellationToken = default);
+
+    Task<EnvironmentSnapshot> ImportStackProfilesAsync(string sourcePath, CancellationToken cancellationToken = default);
 
     Task<EnvironmentSnapshot> RepairLocalSslAsync(CancellationToken cancellationToken = default);
 

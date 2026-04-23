@@ -9,6 +9,10 @@ public sealed class AppSettings
     public SupervisorConnectionSettings Supervisor { get; init; } = new();
 
     public ExperienceSettings Experience { get; init; } = new();
+
+    public AppUpdateSettings Updates { get; init; } = new();
+
+    public PortableDistributionSettings Distribution { get; init; } = new();
 }
 
 public sealed class DirectorySettings
@@ -40,4 +44,34 @@ public sealed class ExperienceSettings
     public string PreferredShell { get; init; } = "PowerShell";
 
     public string PreferredEditor { get; init; } = "VS Code";
+}
+
+public sealed class AppUpdateSettings
+{
+    public string Channel { get; init; } = "stable";
+
+    public string ManifestUri { get; init; } = string.Empty;
+
+    public string ReleasePageUri { get; init; } = string.Empty;
+
+    public bool AllowPrerelease { get; init; }
+
+    public bool CheckOnStartup { get; init; }
+
+    public int CheckTimeoutMs { get; init; } = 5000;
+}
+
+public sealed class PortableDistributionSettings
+{
+    public string Configuration { get; init; } = "Release";
+
+    public string RuntimeIdentifier { get; init; } = "win-x64";
+
+    public bool IncludeRuntimeBinaries { get; init; }
+
+    public bool IncludePackageCache { get; init; }
+
+    public bool IncludeUserData { get; init; }
+
+    public bool CreateReleaseManifest { get; init; } = true;
 }

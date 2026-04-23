@@ -187,6 +187,53 @@
         "StartTimeoutMs": 5000,
         "StopTimeoutMs": 3000
       }
+    ],
+    "Presets": [
+      {
+        "Key": "web-db-mail",
+        "DisplayName": "Web + DB + Mail",
+        "Description": "Start the default web server, MariaDB, and Mailpit for PHP and CMS work.",
+        "ServiceKeys": [
+          "nginx",
+          "mariadb",
+          "mailpit"
+        ],
+        "Tags": [
+          "web",
+          "database",
+          "mail"
+        ]
+      },
+      {
+        "Key": "node-api",
+        "DisplayName": "Node API",
+        "Description": "Start Nginx, PostgreSQL, Redis, and Mailpit for API and full-stack JavaScript projects.",
+        "ServiceKeys": [
+          "nginx",
+          "postgresql",
+          "redis",
+          "mailpit"
+        ],
+        "Tags": [
+          "node",
+          "api",
+          "postgres",
+          "cache"
+        ]
+      },
+      {
+        "Key": "cache-lab",
+        "DisplayName": "Cache Lab",
+        "Description": "Start Redis and Memcached for cache integration testing.",
+        "ServiceKeys": [
+          "redis",
+          "memcached"
+        ],
+        "Tags": [
+          "cache",
+          "testing"
+        ]
+      }
     ]
   }
 }

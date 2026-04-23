@@ -10,9 +10,43 @@ public interface IEnvironmentPaths
 
     string ConfigRoot { get; }
 
+    string ConfigBackupRoot { get; }
+
+    string ProfilesRoot { get; }
+
     string AliasesRoot { get; }
 
     string ShellIntegrationRoot { get; }
+
+    string UserEnvironmentApplyScriptFile { get; }
+
+    string UserEnvironmentRemoveScriptFile { get; }
+
+    string UserEnvironmentManifestFile { get; }
+
+    string UserEnvironmentBackupRoot { get; }
+
+    string AppUpdateRoot { get; }
+
+    string AppUpdateDownloadRoot { get; }
+
+    string AppUpdateManifestCacheFile { get; }
+
+    string AppUpdatePlanFile { get; }
+
+    string AppUpdateManifestExampleFile { get; }
+
+    string PortableDistributionRoot { get; }
+
+    string PortableDistributionArtifactsRoot { get; }
+
+    string PortableDistributionScriptFile { get; }
+
+    string PortableDistributionPlanFile { get; }
+
+    string PortableDistributionReadmeFile { get; }
+
+    string PortableDistributionManifestTemplateFile { get; }
 
     string LogsRoot { get; }
 
@@ -43,6 +77,10 @@ public interface IEnvironmentPaths
     string OnboardingSettingsFile { get; }
 
     string TerminalCommandsSettingsFile { get; }
+
+    string CustomToolsSettingsFile { get; }
+
+    string LocalTunnelsSettingsFile { get; }
 
     string ShellContextMenuInstallFile { get; }
 

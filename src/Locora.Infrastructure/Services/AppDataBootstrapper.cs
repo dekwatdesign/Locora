@@ -30,14 +30,20 @@ public sealed class AppDataBootstrapper : IHostedService
     {
         Directory.CreateDirectory(_environmentPaths.UserRoot);
         Directory.CreateDirectory(_environmentPaths.ConfigRoot);
+        Directory.CreateDirectory(_environmentPaths.ConfigBackupRoot);
         Directory.CreateDirectory(_environmentPaths.LogsRoot);
         Directory.CreateDirectory(_environmentPaths.ProjectRoot);
         Directory.CreateDirectory(_environmentPaths.DataRoot);
         Directory.CreateDirectory(_environmentPaths.BinRoot);
         Directory.CreateDirectory(_environmentPaths.TempRoot);
-        Directory.CreateDirectory(Path.Combine(_environmentPaths.UserRoot, "profiles"));
+        Directory.CreateDirectory(_environmentPaths.ProfilesRoot);
         Directory.CreateDirectory(_environmentPaths.AliasesRoot);
         Directory.CreateDirectory(_environmentPaths.ShellIntegrationRoot);
+        Directory.CreateDirectory(_environmentPaths.UserEnvironmentBackupRoot);
+        Directory.CreateDirectory(_environmentPaths.AppUpdateRoot);
+        Directory.CreateDirectory(_environmentPaths.AppUpdateDownloadRoot);
+        Directory.CreateDirectory(_environmentPaths.PortableDistributionRoot);
+        Directory.CreateDirectory(_environmentPaths.PortableDistributionArtifactsRoot);
         Directory.CreateDirectory(Path.Combine(_environmentPaths.UserRoot, "templates"));
         Directory.CreateDirectory(Path.Combine(_environmentPaths.UserRoot, "cache"));
         EnsureWelcomeProject();
@@ -219,7 +225,8 @@ public sealed class AppDataBootstrapper : IHostedService
                                 StartTimeoutMs = 5000,
                                 StopTimeoutMs = 3000
                             }
-                        }
+                        },
+                        Presets = CreateDefaultServicePresets()
                     }
                 },
                 cancellationToken);
@@ -240,7 +247,8 @@ public sealed class AppDataBootstrapper : IHostedService
                         DomainSuffix = "locora.test",
                         DefaultScheme = "http",
                         IndexFileNames = new[] { "index.php", "index.html", "index.htm" },
-                        IgnoredDirectoryNames = new[] { ".git", ".idea", ".vscode", "node_modules", "vendor" }
+                        IgnoredDirectoryNames = new[] { ".git", ".idea", ".vscode", "node_modules", "vendor" },
+                        ProjectOverrides = Array.Empty<object>()
                     }
                 },
                 cancellationToken);
@@ -368,6 +376,34 @@ public sealed class AppDataBootstrapper : IHostedService
                 cancellationToken);
         }
 
+        if (!File.Exists(_environmentPaths.CustomToolsSettingsFile))
+        {
+            await _jsonFileStore.WriteAsync(
+                _environmentPaths.CustomToolsSettingsFile,
+                new
+                {
+                    LocoraTools = new
+                    {
+                        Tools = CreateDefaultCustomTools()
+                    }
+                },
+                cancellationToken);
+        }
+
+        if (!File.Exists(_environmentPaths.LocalTunnelsSettingsFile))
+        {
+            await _jsonFileStore.WriteAsync(
+                _environmentPaths.LocalTunnelsSettingsFile,
+                new
+                {
+                    LocoraTunnels = new
+                    {
+                        Profiles = CreateDefaultLocalTunnels()
+                    }
+                },
+                cancellationToken);
+        }
+
         _logger.LogInformation("Portable workspace root prepared at {Root}", _environmentPaths.AppRoot);
     }
 
@@ -424,6 +460,126 @@ public sealed class AppDataBootstrapper : IHostedService
                     ["nodejs"] = "22.x"
                 },
                 Tags = new[] { "node", "postgres", "api" }
+            }
+        ];
+    }
+
+    private static object[] CreateDefaultServicePresets()
+    {
+        return
+        [
+            new
+            {
+                Key = "web-db-mail",
+                DisplayName = "Web + DB + Mail",
+                Description = "Start the default web server, MariaDB, and Mailpit for PHP and CMS work.",
+                ServiceKeys = new[] { "nginx", "mariadb", "mailpit" },
+                Tags = new[] { "web", "database", "mail" }
+            },
+            new
+            {
+                Key = "node-api",
+                DisplayName = "Node API",
+                Description = "Start Nginx, PostgreSQL, Redis, and Mailpit for API and full-stack JavaScript projects.",
+                ServiceKeys = new[] { "nginx", "postgresql", "redis", "mailpit" },
+                Tags = new[] { "node", "api", "postgres", "cache" }
+            },
+            new
+            {
+                Key = "cache-lab",
+                DisplayName = "Cache Lab",
+                Description = "Start Redis and Memcached for cache integration testing.",
+                ServiceKeys = new[] { "redis", "memcached" },
+                Tags = new[] { "cache", "testing" }
+            }
+        ];
+    }
+
+    private static object[] CreateDefaultCustomTools()
+    {
+        return
+        [
+            new
+            {
+                Key = "open-localhost",
+                DisplayName = "Open localhost",
+                Description = "Open the default local HTTP endpoint in the browser.",
+                Action = "url",
+                Target = "http://localhost/",
+                Scope = "root",
+                Tags = new[] { "browser", "web" },
+                IsEnabled = true
+            },
+            new
+            {
+                Key = "open-config-folder",
+                DisplayName = "Open config folder",
+                Description = "Open Locora's portable configuration folder.",
+                Action = "folder",
+                Target = "{configRoot}",
+                Scope = "root",
+                Tags = new[] { "config", "folder" },
+                IsEnabled = true
+            },
+            new
+            {
+                Key = "composer-diagnose",
+                DisplayName = "Composer diagnose",
+                Description = "Run Composer diagnostics in the selected project terminal tab.",
+                Action = "terminal",
+                Target = "composer diagnose",
+                Scope = "project",
+                Tags = new[] { "composer", "php", "diagnostics" },
+                IsEnabled = true
+            }
+        ];
+    }
+
+    private static object[] CreateDefaultLocalTunnels()
+    {
+        return
+        [
+            new
+            {
+                Key = "cloudflared-selected-project",
+                DisplayName = "Cloudflared quick tunnel",
+                Provider = "cloudflared",
+                Description = "Expose the selected project URL through a temporary Cloudflare Tunnel.",
+                CommandText = "cloudflared tunnel --url {localUrl}",
+                Scope = "project",
+                ProjectName = "",
+                LocalUrl = "{projectUrl}",
+                Port = 80,
+                Tags = new[] { "share", "cloudflared", "temporary" },
+                IsEnabled = true
+            },
+            new
+            {
+                Key = "ngrok-http-80",
+                DisplayName = "Ngrok HTTP 80",
+                Provider = "ngrok",
+                Description = "Expose the default local web server port with ngrok.",
+                CommandText = "ngrok http {port}",
+                Scope = "root",
+                ProjectName = "",
+                LocalUrl = "http://127.0.0.1:{port}",
+                Port = 80,
+                Tags = new[] { "share", "ngrok", "http" },
+                IsEnabled = true
+            },
+            new
+            {
+                Key = "dev-tunnel-http-80",
+                DisplayName = "Dev Tunnel HTTP 80",
+                Provider = "devtunnel",
+                Description = "Expose the default local web server port with Microsoft dev tunnels.",
+                CommandText = "devtunnel host -p {port} --allow-anonymous",
+                Scope = "root",
+                ProjectName = "",
+                LocalUrl = "http://127.0.0.1:{port}",
+                Port = 80,
+                Tags = new[] { "share", "devtunnel", "http" },
+                IsEnabled = true
             }
         ];
     }

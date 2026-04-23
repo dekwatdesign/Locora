@@ -17,6 +17,7 @@
       ".vscode",
       "node_modules",
       "vendor"
-    ]
+    ],
+    "ProjectOverrides": []
   }
 }

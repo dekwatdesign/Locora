@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -32,6 +33,7 @@ public sealed class MainWindowViewModel : ObservableObject
     private static readonly string[] DefaultIndexFileNames = ["index.php", "index.html", "index.htm"];
     private static readonly string[] DefaultIgnoredDirectoryNames = [".git", ".idea", ".vscode", "node_modules", "vendor"];
     private static readonly string[] GeneratedDomainSchemes = ["http", "https"];
+    private static readonly Regex PublicShareUrlRegex = new(@"https?://[^\s<>'""]+", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private readonly IWorkbenchService _workbenchService;
     private readonly IProjectActionLauncher _projectActionLauncher;
     private readonly ITerminalSessionService _terminalSessionService;
@@ -40,11 +42,17 @@ public sealed class MainWindowViewModel : ObservableObject
     private readonly IProjectPinStore _projectPinStore;
     private readonly IOnboardingStateStore _onboardingStateStore;
     private readonly IShellContextMenuRegistrationService _shellContextMenuRegistrationService;
+    private readonly IUserEnvironmentChangeService _userEnvironmentChangeService;
+    private readonly IAppUpdateService _appUpdateService;
+    private readonly IPortableDistributionService _portableDistributionService;
+    private readonly IUserConfirmationService _userConfirmationService;
     private readonly IEnvironmentPaths _environmentPaths;
     private readonly AppSettings _settings;
     private readonly ILogger<MainWindowViewModel> _logger;
     private EnvironmentSnapshot? _lastSnapshot;
     private HashSet<string> _pinnedProjectKeys = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, ShareUrlSessionCard> _shareSessionsByTerminalId = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _shareMonitoredTerminalIds = new(StringComparer.OrdinalIgnoreCase);
     private bool _initialized;
     private bool _isBusy;
     private bool _isSupervisorConnected;
@@ -81,6 +89,7 @@ public sealed class MainWindowViewModel : ObservableObject
     private string _generatedDomainScheme = DefaultGeneratedDomainScheme;
     private string _domainSettingsStatus = $"Generated URLs use {DefaultGeneratedDomainScheme}://<project>.{DefaultGeneratedDomainSuffix} by default.";
     private bool _isFirstRunOnboardingDismissed;
+    private bool _externalAccessConsentAccepted;
     private bool _hasLocalSslMaterial;
     private bool _isLocalSslTrusted;
     private bool _isGlobalNotificationOpen;
@@ -127,14 +136,45 @@ public sealed class MainWindowViewModel : ObservableObject
     private int _validStackProfileCount;
     private int _invalidStackProfileCount;
     private string _activeStackProfileKey = "bootstrap";
+    private string _newStackProfileName = $"Saved Environment {DateTime.Now:yyyyMMdd HHmm}";
+    private string _activeEnvironmentSaveStatus = "Save the current running services and active package selections as a reusable stack profile.";
+    private string _profileTransferPath = string.Empty;
+    private string _profileTransferStatus = "Export profiles to a portable JSON file or import profiles from an existing export.";
+    private string _configBackupStatus = "Back up usr/config before migrations, manual edits, or risky service changes.";
+    private string _latestConfigBackupPath = string.Empty;
+    private string _configRestorePath = string.Empty;
+    private string _configRestoreStatus = "Restore a Locora configuration backup zip when you need to roll back usr/config.";
+    private string _laragonRootPath = ResolveDefaultLaragonRootPath();
+    private string _laragonImportStatus = "Preview a Laragon root to import projects from its www folder into Locora project discovery.";
+    private string _laragonImportSummary = "No Laragon import preview has been generated.";
     private TerminalSession? _selectedTerminalSession;
     private TerminalQuickCommand? _selectedTerminalCommand;
     private string _terminalInputText = string.Empty;
+    private string _customToolsStatus = "Custom tools are loaded from custom-tools.json.";
+    private string _localTunnelsStatus = "Local tunnel profiles are loaded from local-tunnels.json.";
     private string _shellIntegrationRootPath = string.Empty;
     private string _shellContextMenuInstallFilePath = string.Empty;
     private string _shellContextMenuUninstallFilePath = string.Empty;
     private string _shellContextMenuReadmeFilePath = string.Empty;
     private string _shellContextMenuExecutablePath = string.Empty;
+    private string _userEnvironmentStatus = "Generated CurrentUser environment scripts let you opt in to persistent Locora variables without changing system PATH.";
+    private string _userEnvironmentApplyScriptPath = string.Empty;
+    private string _userEnvironmentRemoveScriptPath = string.Empty;
+    private string _userEnvironmentManifestPath = string.Empty;
+    private string _appUpdateState = "Not checked";
+    private string _appUpdateSummary = "App update checks have not run in this session.";
+    private string _appUpdateDetails = "Configure a release manifest in appsettings.json, then run Check for Updates.";
+    private string _appUpdateCurrentVersion = string.Empty;
+    private string _appUpdateLatestVersion = string.Empty;
+    private string _appUpdateCheckedAtLabel = "Never";
+    private string _appUpdateReleasePageUri = string.Empty;
+    private string _appUpdateDownloadUri = string.Empty;
+    private string _appUpdateSha256 = string.Empty;
+    private string _portableDistributionStatus = "Portable distribution files have not been generated in this session.";
+    private string _portableDistributionScriptPath = string.Empty;
+    private string _portableDistributionPlanPath = string.Empty;
+    private string _portableDistributionReadmePath = string.Empty;
+    private string _portableDistributionManifestTemplatePath = string.Empty;
 
     public MainWindowViewModel(
         IWorkbenchService workbenchService,
@@ -145,6 +185,10 @@ public sealed class MainWindowViewModel : ObservableObject
         IProjectPinStore projectPinStore,
         IOnboardingStateStore onboardingStateStore,
         IShellContextMenuRegistrationService shellContextMenuRegistrationService,
+        IUserEnvironmentChangeService userEnvironmentChangeService,
+        IAppUpdateService appUpdateService,
+        IPortableDistributionService portableDistributionService,
+        IUserConfirmationService userConfirmationService,
         IEnvironmentPaths environmentPaths,
         IOptions<AppSettings> settings,
         ILogger<MainWindowViewModel> logger)
@@ -157,9 +201,14 @@ public sealed class MainWindowViewModel : ObservableObject
         _projectPinStore = projectPinStore;
         _onboardingStateStore = onboardingStateStore;
         _shellContextMenuRegistrationService = shellContextMenuRegistrationService;
+        _userEnvironmentChangeService = userEnvironmentChangeService;
+        _appUpdateService = appUpdateService;
+        _portableDistributionService = portableDistributionService;
+        _userConfirmationService = userConfirmationService;
         _environmentPaths = environmentPaths;
         _settings = settings.Value;
         _logger = logger;
+        _profileTransferPath = Path.Combine(_environmentPaths.ProfilesRoot, "profiles-export.json");
 
         EnvironmentRoot = _environmentPaths.AppRoot;
         ConfigRoot = _environmentPaths.ConfigRoot;
@@ -185,7 +234,21 @@ public sealed class MainWindowViewModel : ObservableObject
             ShellContextMenuUninstallFilePath = _environmentPaths.ShellContextMenuUninstallFile;
         }
 
+        try
+        {
+            RefreshUserEnvironmentChangeFilesCore();
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "User environment change files could not be generated during startup.");
+            UserEnvironmentStatus = $"Environment script generation needs attention: {exception.Message}";
+            UserEnvironmentApplyScriptPath = _environmentPaths.UserEnvironmentApplyScriptFile;
+            UserEnvironmentRemoveScriptPath = _environmentPaths.UserEnvironmentRemoveScriptFile;
+            UserEnvironmentManifestPath = _environmentPaths.UserEnvironmentManifestFile;
+        }
+
         Services = new ObservableCollection<ServiceStatusCard>();
+        ServicePresets = new ObservableCollection<ServicePresetCard>();
         Projects = new ObservableCollection<ProjectCard>();
         HealthIssues = new ObservableCollection<HealthIssueCard>();
         ValidationResults = new ObservableCollection<ValidationResultCard>();
@@ -199,6 +262,11 @@ public sealed class MainWindowViewModel : ObservableObject
         SslCertificateDiagnostics = new ObservableCollection<SslCertificateDiagnosticCard>();
         Activity = new ObservableCollection<TimelineEntry>();
         TerminalCommands = new ObservableCollection<TerminalQuickCommand>();
+        CustomTools = new ObservableCollection<CustomToolMenuItem>();
+        LocalTunnels = new ObservableCollection<LocalTunnelProfileCard>();
+        ShareUrlSessions = new ObservableCollection<ShareUrlSessionCard>();
+        NetworkGuidance = new ObservableCollection<NetworkGuidanceCard>();
+        LaragonImportProjects = new ObservableCollection<LaragonImportProjectCard>();
         TerminalSessions = _terminalSessionService.Sessions;
         TerminalSessions.CollectionChanged += OnTerminalSessionsChanged;
 
@@ -209,6 +277,8 @@ public sealed class MainWindowViewModel : ObservableObject
         SaveDomainSettingsCommand = new AsyncRelayCommand(SaveDomainSettingsAsync, CanSaveDomainSettings);
         StartServiceCommand = new AsyncRelayCommand<ServiceStatusCard>(StartServiceAsync, CanRunServiceAction);
         StopServiceCommand = new AsyncRelayCommand<ServiceStatusCard>(StopServiceAsync, CanRunServiceAction);
+        StartServicePresetCommand = new AsyncRelayCommand<ServicePresetCard>(StartServicePresetAsync, CanRunServicePresetAction);
+        StopServicePresetCommand = new AsyncRelayCommand<ServicePresetCard>(StopServicePresetAsync, CanRunServicePresetAction);
         ToggleProjectPinCommand = new AsyncRelayCommand<ProjectCard>(ToggleProjectPinAsync, CanToggleProjectPin);
         RepairRuntimeCommand = new AsyncRelayCommand(RepairRuntimeAsync, CanRunAction);
         RepairDomainsCommand = new AsyncRelayCommand(RepairDomainsAsync, CanRunAction);
@@ -233,6 +303,9 @@ public sealed class MainWindowViewModel : ObservableObject
         OpenDatabaseConnectionDetailsCommand = new RelayCommand<ServiceStatusCard>(OpenDatabaseConnectionDetails, CanUseDatabaseAdminTool);
         OpenEnvironmentRootCommand = new RelayCommand(OpenEnvironmentRoot, CanUseDesktopPathAction);
         OpenConfigRootCommand = new RelayCommand(OpenConfigRoot, CanUseDesktopPathAction);
+        BackupConfigCommand = new AsyncRelayCommand(BackupConfigAsync, CanRunAction);
+        RestoreConfigCommand = new AsyncRelayCommand(RestoreConfigAsync, CanRestoreConfig);
+        OpenConfigBackupRootCommand = new RelayCommand(OpenConfigBackupRoot, CanUseDesktopPathAction);
         OpenProjectRootCommand = new RelayCommand(OpenProjectRoot, CanUseDesktopPathAction);
         OpenBinRootCommand = new RelayCommand(OpenBinRoot, CanUseDesktopPathAction);
         OpenDataRootCommand = new RelayCommand(OpenDataRoot, CanUseDesktopPathAction);
@@ -253,6 +326,12 @@ public sealed class MainWindowViewModel : ObservableObject
         RemovePackageInstallCommand = new AsyncRelayCommand<PackageDownloadCard>(RemovePackageInstallAsync, CanManagePackageInstall);
         SwitchRuntimeVersionCommand = new AsyncRelayCommand<RuntimePackageCard>(SwitchRuntimeVersionAsync, CanRunRuntimeSwitch);
         SelectStackProfileCommand = new AsyncRelayCommand<StackProfileCard>(SelectStackProfileAsync, CanSelectStackProfile);
+        SaveActiveEnvironmentCommand = new AsyncRelayCommand(SaveActiveEnvironmentAsync, CanSaveActiveEnvironment);
+        ExportStackProfilesCommand = new AsyncRelayCommand(ExportStackProfilesAsync, CanTransferStackProfiles);
+        ImportStackProfilesCommand = new AsyncRelayCommand(ImportStackProfilesAsync, CanTransferStackProfiles);
+        PreviewLaragonImportCommand = new AsyncRelayCommand(PreviewLaragonImportAsync, CanUseLaragonImport);
+        ImportLaragonProjectsCommand = new AsyncRelayCommand(ImportLaragonProjectsAsync, CanUseLaragonImport);
+        OpenLaragonRootCommand = new RelayCommand(OpenLaragonRoot, CanOpenLaragonRoot);
         OpenProjectUrlCommand = new RelayCommand<ProjectCard>(OpenProjectUrl, CanUseProject);
         OpenProjectFolderCommand = new RelayCommand<ProjectCard>(OpenProjectFolder, CanUseProject);
         RevealProjectInExplorerCommand = new RelayCommand<ProjectCard>(RevealProjectInExplorer, CanUseProject);
@@ -265,18 +344,74 @@ public sealed class MainWindowViewModel : ObservableObject
         CloseTerminalSessionCommand = new RelayCommand<TerminalSession>(CloseTerminalSession);
         RunTerminalCommandCommand = new RelayCommand<TerminalQuickCommand>(RunTerminalCommand, CanRunTerminalCommand);
         OpenTerminalCommandsSettingsFileCommand = new RelayCommand(OpenTerminalCommandsSettingsFile, CanUseDesktopPathAction);
+        RunCustomToolCommand = new RelayCommand<CustomToolMenuItem>(RunCustomTool, CanRunCustomTool);
+        ReloadCustomToolsCommand = new AsyncRelayCommand(ReloadCustomToolsAsync, CanRunAction);
+        OpenCustomToolsSettingsFileCommand = new RelayCommand(OpenCustomToolsSettingsFile, CanUseDesktopPathAction);
+        StartLocalTunnelCommand = new RelayCommand<LocalTunnelProfileCard>(StartLocalTunnel, CanStartLocalTunnel);
+        ReloadLocalTunnelsCommand = new AsyncRelayCommand(ReloadLocalTunnelsAsync, CanRunAction);
+        OpenLocalTunnelsSettingsFileCommand = new RelayCommand(OpenLocalTunnelsSettingsFile, CanUseDesktopPathAction);
+        CopyShareUrlCommand = new RelayCommand<ShareUrlSessionCard>(CopyShareUrl, CanUseShareUrl);
+        OpenShareUrlCommand = new RelayCommand<ShareUrlSessionCard>(OpenShareUrl, CanUseShareUrl);
+        StopShareUrlSessionCommand = new RelayCommand<ShareUrlSessionCard>(StopShareUrlSession, CanStopShareUrlSession);
+        ClearStoppedShareUrlsCommand = new RelayCommand(ClearStoppedShareUrls, CanClearStoppedShareUrls);
         OpenAliasesRootCommand = new RelayCommand(OpenAliasesRoot, CanUseDesktopPathAction);
+        OpenProfilesRootCommand = new RelayCommand(OpenProfilesRoot, CanUseDesktopPathAction);
         OpenEnvironmentRootInEditorCommand = new RelayCommand(OpenEnvironmentRootInEditor, CanUseDesktopPathAction);
         OpenProjectRootInEditorCommand = new RelayCommand(OpenProjectRootInEditor, CanUseDesktopPathAction);
         RefreshShellContextMenuFilesCommand = new RelayCommand(RefreshShellContextMenuFiles, CanUseDesktopPathAction);
         OpenShellIntegrationRootCommand = new RelayCommand(OpenShellIntegrationRoot, CanUseDesktopPathAction);
         OpenShellContextMenuInstallFileCommand = new RelayCommand(OpenShellContextMenuInstallFile, CanUseDesktopPathAction);
         OpenShellContextMenuUninstallFileCommand = new RelayCommand(OpenShellContextMenuUninstallFile, CanUseDesktopPathAction);
+        RefreshUserEnvironmentFilesCommand = new RelayCommand(RefreshUserEnvironmentFiles, CanUseDesktopPathAction);
+        OpenUserEnvironmentApplyScriptCommand = new RelayCommand(OpenUserEnvironmentApplyScript, CanUseDesktopPathAction);
+        OpenUserEnvironmentRemoveScriptCommand = new RelayCommand(OpenUserEnvironmentRemoveScript, CanUseDesktopPathAction);
+        OpenUserEnvironmentManifestCommand = new RelayCommand(OpenUserEnvironmentManifest, CanUseDesktopPathAction);
+        CheckForAppUpdatesCommand = new AsyncRelayCommand(CheckForAppUpdatesAsync, CanRunAction);
+        OpenAppUpdateReleasePageCommand = new RelayCommand(OpenAppUpdateReleasePage, CanOpenAppUpdateReleasePage);
+        OpenAppUpdateDownloadCommand = new RelayCommand(OpenAppUpdateDownload, CanOpenAppUpdateDownload);
+        OpenAppUpdatePlanCommand = new RelayCommand(OpenAppUpdatePlan, CanOpenAppUpdatePlan);
+        OpenAppUpdateManifestCacheCommand = new RelayCommand(OpenAppUpdateManifestCache, CanOpenAppUpdateManifestCache);
+        OpenAppUpdateManifestExampleCommand = new RelayCommand(OpenAppUpdateManifestExample, CanOpenAppUpdateManifestExample);
+        RefreshPortableDistributionFilesCommand = new RelayCommand(RefreshPortableDistributionFiles, CanUseDesktopPathAction);
+        OpenPortableDistributionRootCommand = new RelayCommand(OpenPortableDistributionRoot, CanUseDesktopPathAction);
+        OpenPortableDistributionArtifactsRootCommand = new RelayCommand(OpenPortableDistributionArtifactsRoot, CanUseDesktopPathAction);
+        OpenPortableDistributionScriptCommand = new RelayCommand(OpenPortableDistributionScript, CanUseDesktopPathAction);
+        OpenPortableDistributionPlanCommand = new RelayCommand(OpenPortableDistributionPlan, CanUseDesktopPathAction);
+        OpenPortableDistributionReadmeCommand = new RelayCommand(OpenPortableDistributionReadme, CanUseDesktopPathAction);
+        OpenPortableDistributionManifestTemplateCommand = new RelayCommand(OpenPortableDistributionManifestTemplate, CanUseDesktopPathAction);
+
+        try
+        {
+            ApplyAppUpdateStatus(_appUpdateService.GetCurrentStatus());
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "App update status could not be initialized.");
+            AppUpdateState = "Unavailable";
+            AppUpdateSummary = $"App update status could not be initialized: {exception.Message}";
+            AppUpdateDetails = "Open appsettings.json and verify the Updates section.";
+        }
+
+        try
+        {
+            RefreshPortableDistributionFilesCore();
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Portable distribution files could not be generated during startup.");
+            PortableDistributionStatus = $"Portable distribution files need attention: {exception.Message}";
+            PortableDistributionScriptPath = _environmentPaths.PortableDistributionScriptFile;
+            PortableDistributionPlanPath = _environmentPaths.PortableDistributionPlanFile;
+            PortableDistributionReadmePath = _environmentPaths.PortableDistributionReadmeFile;
+            PortableDistributionManifestTemplatePath = _environmentPaths.PortableDistributionManifestTemplateFile;
+        }
     }
 
     public event EventHandler<string>? NavigationRequested;
 
     public ObservableCollection<ServiceStatusCard> Services { get; }
+
+    public ObservableCollection<ServicePresetCard> ServicePresets { get; }
 
     public ObservableCollection<ProjectCard> Projects { get; }
 
@@ -304,6 +439,16 @@ public sealed class MainWindowViewModel : ObservableObject
 
     public ObservableCollection<TerminalQuickCommand> TerminalCommands { get; }
 
+    public ObservableCollection<CustomToolMenuItem> CustomTools { get; }
+
+    public ObservableCollection<LocalTunnelProfileCard> LocalTunnels { get; }
+
+    public ObservableCollection<ShareUrlSessionCard> ShareUrlSessions { get; }
+
+    public ObservableCollection<NetworkGuidanceCard> NetworkGuidance { get; }
+
+    public ObservableCollection<LaragonImportProjectCard> LaragonImportProjects { get; }
+
     public ObservableCollection<TerminalSession> TerminalSessions { get; }
 
     public IAsyncRelayCommand InitializeCommand { get; }
@@ -319,6 +464,10 @@ public sealed class MainWindowViewModel : ObservableObject
     public IAsyncRelayCommand<ServiceStatusCard> StartServiceCommand { get; }
 
     public IAsyncRelayCommand<ServiceStatusCard> StopServiceCommand { get; }
+
+    public IAsyncRelayCommand<ServicePresetCard> StartServicePresetCommand { get; }
+
+    public IAsyncRelayCommand<ServicePresetCard> StopServicePresetCommand { get; }
 
     public IAsyncRelayCommand<ProjectCard> ToggleProjectPinCommand { get; }
 
@@ -368,6 +517,12 @@ public sealed class MainWindowViewModel : ObservableObject
 
     public IRelayCommand OpenConfigRootCommand { get; }
 
+    public IAsyncRelayCommand BackupConfigCommand { get; }
+
+    public IAsyncRelayCommand RestoreConfigCommand { get; }
+
+    public IRelayCommand OpenConfigBackupRootCommand { get; }
+
     public IRelayCommand OpenProjectRootCommand { get; }
 
     public IRelayCommand OpenBinRootCommand { get; }
@@ -408,6 +563,18 @@ public sealed class MainWindowViewModel : ObservableObject
 
     public IAsyncRelayCommand<StackProfileCard> SelectStackProfileCommand { get; }
 
+    public IAsyncRelayCommand SaveActiveEnvironmentCommand { get; }
+
+    public IAsyncRelayCommand ExportStackProfilesCommand { get; }
+
+    public IAsyncRelayCommand ImportStackProfilesCommand { get; }
+
+    public IAsyncRelayCommand PreviewLaragonImportCommand { get; }
+
+    public IAsyncRelayCommand ImportLaragonProjectsCommand { get; }
+
+    public IRelayCommand OpenLaragonRootCommand { get; }
+
     public IRelayCommand<ProjectCard> OpenProjectUrlCommand { get; }
 
     public IRelayCommand<ProjectCard> OpenProjectFolderCommand { get; }
@@ -432,7 +599,29 @@ public sealed class MainWindowViewModel : ObservableObject
 
     public IRelayCommand OpenTerminalCommandsSettingsFileCommand { get; }
 
+    public IRelayCommand<CustomToolMenuItem> RunCustomToolCommand { get; }
+
+    public IAsyncRelayCommand ReloadCustomToolsCommand { get; }
+
+    public IRelayCommand OpenCustomToolsSettingsFileCommand { get; }
+
+    public IRelayCommand<LocalTunnelProfileCard> StartLocalTunnelCommand { get; }
+
+    public IAsyncRelayCommand ReloadLocalTunnelsCommand { get; }
+
+    public IRelayCommand OpenLocalTunnelsSettingsFileCommand { get; }
+
+    public IRelayCommand<ShareUrlSessionCard> CopyShareUrlCommand { get; }
+
+    public IRelayCommand<ShareUrlSessionCard> OpenShareUrlCommand { get; }
+
+    public IRelayCommand<ShareUrlSessionCard> StopShareUrlSessionCommand { get; }
+
+    public IRelayCommand ClearStoppedShareUrlsCommand { get; }
+
     public IRelayCommand OpenAliasesRootCommand { get; }
+
+    public IRelayCommand OpenProfilesRootCommand { get; }
 
     public IRelayCommand OpenEnvironmentRootInEditorCommand { get; }
 
@@ -446,9 +635,45 @@ public sealed class MainWindowViewModel : ObservableObject
 
     public IRelayCommand OpenShellContextMenuUninstallFileCommand { get; }
 
+    public IRelayCommand RefreshUserEnvironmentFilesCommand { get; }
+
+    public IRelayCommand OpenUserEnvironmentApplyScriptCommand { get; }
+
+    public IRelayCommand OpenUserEnvironmentRemoveScriptCommand { get; }
+
+    public IRelayCommand OpenUserEnvironmentManifestCommand { get; }
+
+    public IAsyncRelayCommand CheckForAppUpdatesCommand { get; }
+
+    public IRelayCommand OpenAppUpdateReleasePageCommand { get; }
+
+    public IRelayCommand OpenAppUpdateDownloadCommand { get; }
+
+    public IRelayCommand OpenAppUpdatePlanCommand { get; }
+
+    public IRelayCommand OpenAppUpdateManifestCacheCommand { get; }
+
+    public IRelayCommand OpenAppUpdateManifestExampleCommand { get; }
+
+    public IRelayCommand RefreshPortableDistributionFilesCommand { get; }
+
+    public IRelayCommand OpenPortableDistributionRootCommand { get; }
+
+    public IRelayCommand OpenPortableDistributionArtifactsRootCommand { get; }
+
+    public IRelayCommand OpenPortableDistributionScriptCommand { get; }
+
+    public IRelayCommand OpenPortableDistributionPlanCommand { get; }
+
+    public IRelayCommand OpenPortableDistributionReadmeCommand { get; }
+
+    public IRelayCommand OpenPortableDistributionManifestTemplateCommand { get; }
+
     public string EnvironmentRoot { get; }
 
     public string ConfigRoot { get; }
+
+    public string ConfigBackupRootPath => _environmentPaths.ConfigBackupRoot;
 
     public string ProjectRoot { get; }
 
@@ -514,6 +739,148 @@ public sealed class MainWindowViewModel : ObservableObject
                 OnPropertyChanged(nameof(ShellContextMenuRegistrationSummary));
             }
         }
+    }
+
+    public string UserEnvironmentStatus
+    {
+        get => _userEnvironmentStatus;
+        private set => SetProperty(ref _userEnvironmentStatus, value);
+    }
+
+    public string UserEnvironmentApplyScriptPath
+    {
+        get => _userEnvironmentApplyScriptPath;
+        private set => SetProperty(ref _userEnvironmentApplyScriptPath, value);
+    }
+
+    public string UserEnvironmentRemoveScriptPath
+    {
+        get => _userEnvironmentRemoveScriptPath;
+        private set => SetProperty(ref _userEnvironmentRemoveScriptPath, value);
+    }
+
+    public string UserEnvironmentManifestPath
+    {
+        get => _userEnvironmentManifestPath;
+        private set => SetProperty(ref _userEnvironmentManifestPath, value);
+    }
+
+    public string UserEnvironmentBackupRootPath => _environmentPaths.UserEnvironmentBackupRoot;
+
+    public string UserEnvironmentManagedPathEntriesLabel => $"Managed PATH entry: {AliasesRootPath}. Active runtime and tool paths stay session-scoped in built-in terminals.";
+
+    public string UserEnvironmentManagedVariablesLabel => "Managed variables: LOCORA_ROOT, LOCORA_ALIASES_ROOT, LOCORA_BIN, LOCORA_CONFIG, LOCORA_DATA, LOCORA_LOGS, LOCORA_TEMP, LOCORA_PACKAGE_CACHE.";
+
+    public string AppUpdateState
+    {
+        get => _appUpdateState;
+        private set => SetProperty(ref _appUpdateState, value);
+    }
+
+    public string AppUpdateSummary
+    {
+        get => _appUpdateSummary;
+        private set => SetProperty(ref _appUpdateSummary, value);
+    }
+
+    public string AppUpdateDetails
+    {
+        get => _appUpdateDetails;
+        private set => SetProperty(ref _appUpdateDetails, value);
+    }
+
+    public string AppUpdateCurrentVersion
+    {
+        get => _appUpdateCurrentVersion;
+        private set => SetProperty(ref _appUpdateCurrentVersion, value);
+    }
+
+    public string AppUpdateLatestVersion
+    {
+        get => _appUpdateLatestVersion;
+        private set => SetProperty(ref _appUpdateLatestVersion, value);
+    }
+
+    public string AppUpdateChannel => string.IsNullOrWhiteSpace(_settings.Updates.Channel)
+        ? "stable"
+        : _settings.Updates.Channel;
+
+    public string AppUpdateManifestUri => string.IsNullOrWhiteSpace(_settings.Updates.ManifestUri)
+        ? "(not configured)"
+        : _settings.Updates.ManifestUri;
+
+    public string AppUpdateCheckPolicy => $"Check on startup: {(_settings.Updates.CheckOnStartup ? "enabled" : "disabled")}. Prerelease builds: {(_settings.Updates.AllowPrerelease ? "included" : "skipped")}. Timeout: {Math.Max(1000, _settings.Updates.CheckTimeoutMs)} ms.";
+
+    public string AppUpdateCheckedAtLabel
+    {
+        get => _appUpdateCheckedAtLabel;
+        private set => SetProperty(ref _appUpdateCheckedAtLabel, value);
+    }
+
+    public string AppUpdateReleasePageUri
+    {
+        get => _appUpdateReleasePageUri;
+        private set => SetProperty(ref _appUpdateReleasePageUri, value);
+    }
+
+    public string AppUpdateDownloadUri
+    {
+        get => _appUpdateDownloadUri;
+        private set => SetProperty(ref _appUpdateDownloadUri, value);
+    }
+
+    public string AppUpdateSha256
+    {
+        get => _appUpdateSha256;
+        private set => SetProperty(ref _appUpdateSha256, value);
+    }
+
+    public string AppUpdateRootPath => _environmentPaths.AppUpdateRoot;
+
+    public string AppUpdateDownloadRootPath => _environmentPaths.AppUpdateDownloadRoot;
+
+    public string AppUpdatePlanPath => _environmentPaths.AppUpdatePlanFile;
+
+    public string AppUpdateManifestCachePath => _environmentPaths.AppUpdateManifestCacheFile;
+
+    public string AppUpdateManifestExamplePath => _environmentPaths.AppUpdateManifestExampleFile;
+
+    public string PortableDistributionStatus
+    {
+        get => _portableDistributionStatus;
+        private set => SetProperty(ref _portableDistributionStatus, value);
+    }
+
+    public string PortableDistributionModeLabel => $"Mode: portable ZIP, {_settings.Distribution.Configuration} configuration, {_settings.Distribution.RuntimeIdentifier} runtime identifier.";
+
+    public string PortableDistributionScopeLabel => $"Includes runtime binaries: {(_settings.Distribution.IncludeRuntimeBinaries ? "yes" : "no")}. Includes package cache: {(_settings.Distribution.IncludePackageCache ? "yes" : "no")}. Includes user data: {(_settings.Distribution.IncludeUserData ? "yes" : "no")}. Release manifest: {(_settings.Distribution.CreateReleaseManifest ? "generated" : "manual")}.";
+
+    public string PortableDistributionRootPath => _environmentPaths.PortableDistributionRoot;
+
+    public string PortableDistributionArtifactsRootPath => _environmentPaths.PortableDistributionArtifactsRoot;
+
+    public string PortableDistributionScriptPath
+    {
+        get => _portableDistributionScriptPath;
+        private set => SetProperty(ref _portableDistributionScriptPath, value);
+    }
+
+    public string PortableDistributionPlanPath
+    {
+        get => _portableDistributionPlanPath;
+        private set => SetProperty(ref _portableDistributionPlanPath, value);
+    }
+
+    public string PortableDistributionReadmePath
+    {
+        get => _portableDistributionReadmePath;
+        private set => SetProperty(ref _portableDistributionReadmePath, value);
+    }
+
+    public string PortableDistributionManifestTemplatePath
+    {
+        get => _portableDistributionManifestTemplatePath;
+        private set => SetProperty(ref _portableDistributionManifestTemplatePath, value);
     }
 
     public TerminalSession? SelectedTerminalSession
@@ -585,6 +952,56 @@ public sealed class MainWindowViewModel : ObservableObject
 
     public bool HasTerminalCommands => TerminalCommands.Count > 0;
 
+    public bool HasCustomTools => CustomTools.Count > 0;
+
+    public bool ShowCustomToolsEmptyState => !HasCustomTools;
+
+    public bool HasLocalTunnels => LocalTunnels.Count > 0;
+
+    public bool ShowLocalTunnelsEmptyState => !HasLocalTunnels;
+
+    public bool HasShareUrlSessions => ShareUrlSessions.Count > 0;
+
+    public bool ShowShareUrlSessionsEmptyState => !HasShareUrlSessions;
+
+    public bool HasNetworkGuidance => NetworkGuidance.Count > 0;
+
+    public bool ShowNetworkGuidanceEmptyState => !HasNetworkGuidance;
+
+    public string NetworkGuidanceSummary
+    {
+        get
+        {
+            var services = _lastSnapshot?.Services ?? Array.Empty<ServiceDescriptor>();
+            var servicePortCount = services.Count(service => service.Port is > 0);
+            var enabledTunnelCount = LocalTunnels.Count(profile => profile.IsEnabled);
+
+            if (servicePortCount == 0 && enabledTunnelCount == 0)
+            {
+                return "Network guidance will update after services and local tunnel profiles are loaded.";
+            }
+
+            var portLabel = servicePortCount == 1 ? "configured service port" : "configured service ports";
+            var tunnelLabel = enabledTunnelCount == 1 ? "enabled tunnel profile" : "enabled tunnel profiles";
+            return $"{servicePortCount} {portLabel} and {enabledTunnelCount} {tunnelLabel} covered. Keep inbound firewall rules limited to trusted private networks.";
+        }
+    }
+
+    public string ShareUrlLifecycleSummary
+    {
+        get
+        {
+            if (ShareUrlSessions.Count == 0)
+            {
+                return "No share URL sessions are active.";
+            }
+
+            var activeCount = ShareUrlSessions.Count(session => session.IsRunning);
+            var urlCount = ShareUrlSessions.Count(session => session.HasPublicUrl);
+            return $"{activeCount} share session{(activeCount == 1 ? string.Empty : "s")} running, {urlCount} public URL{(urlCount == 1 ? string.Empty : "s")} detected.";
+        }
+    }
+
     public bool HasSelectedTerminalCommand => SelectedTerminalCommand is not null;
 
     public bool HasSelectedTerminalSession => SelectedTerminalSession is not null;
@@ -610,9 +1027,23 @@ public sealed class MainWindowViewModel : ObservableObject
         ? string.Empty
         : ResolveTerminalCommandText(SelectedTerminalCommand);
 
+    public string CustomToolsStatus
+    {
+        get => _customToolsStatus;
+        private set => SetProperty(ref _customToolsStatus, value);
+    }
+
+    public string LocalTunnelsStatus
+    {
+        get => _localTunnelsStatus;
+        private set => SetProperty(ref _localTunnelsStatus, value);
+    }
+
     public string ProjectsSettingsFilePath => _environmentPaths.ProjectsSettingsFile;
 
     public string ProfilesSettingsFilePath => _environmentPaths.ProfilesSettingsFile;
+
+    public string ProfilesRootPath => _environmentPaths.ProfilesRoot;
 
     public string OnboardingSettingsFilePath => _environmentPaths.OnboardingSettingsFile;
 
@@ -628,6 +1059,10 @@ public sealed class MainWindowViewModel : ObservableObject
 
     public string TerminalCommandsSettingsFilePath => _environmentPaths.TerminalCommandsSettingsFile;
 
+    public string CustomToolsSettingsFilePath => _environmentPaths.CustomToolsSettingsFile;
+
+    public string LocalTunnelsSettingsFilePath => _environmentPaths.LocalTunnelsSettingsFile;
+
     public string AliasesRootPath => _environmentPaths.AliasesRoot;
 
     public string ProjectPinsSettingsFilePath => _environmentPaths.ProjectPinsSettingsFile;
@@ -637,6 +1072,47 @@ public sealed class MainWindowViewModel : ObservableObject
     public string PackageManifestsRootPath => _environmentPaths.PackageManifestsRoot;
 
     public string PackageCacheRootPath => _environmentPaths.PackageCacheRoot;
+
+    public string RuntimeBackupStatusLabel
+    {
+        get
+        {
+            if (_lastSnapshot is null)
+            {
+                return "Refresh the supervisor snapshot to include runtime and package counts in backup guidance.";
+            }
+
+            return $"Current runtime scope: {_activeRuntimePackageCount}/{_runtimePackageCount} active runtimes, {_installedRuntimePackageCount} installed runtimes, {_installedToolPackageCount} installed tools, {_cachedPackageDownloadCount} cached package artifacts.";
+        }
+    }
+
+    public string RuntimeBackupIncludeLabel => $"Back up configuration archives, service data, package lock state, and package manifests. Include runtime binaries and the package cache when the backup must restore without downloading packages again.";
+
+    public string RuntimeBackupRestoreOrderLabel => "Restore order: stop services, restore the config backup zip, copy service data, install or extract packages, refresh the snapshot, then start services.";
+
+    public string RuntimeBackupSkipLabel => "Skip temporary files. Keep logs only when you are preserving evidence for troubleshooting.";
+
+    public string PortableRelocationValidationStatusLabel
+    {
+        get
+        {
+            var validation = FindPortableRelocationValidation();
+            return validation is null
+                ? "Refresh the supervisor snapshot to validate whether configured paths can survive moving Locora to another folder or drive."
+                : $"{validation.State}: {validation.Summary}";
+        }
+    }
+
+    public string PortableRelocationValidationDetails
+    {
+        get
+        {
+            var validation = FindPortableRelocationValidation();
+            return validation is null
+                ? "The check reviews service definitions, project paths, package manifests, cached artifacts, installed runtime roots, and active tool aliases for absolute or external paths."
+                : validation.Details;
+        }
+    }
 
     public string GeneratedDomainSuffix
     {
@@ -678,6 +1154,10 @@ public sealed class MainWindowViewModel : ObservableObject
 
     public bool ShowServicesEmptyState => !HasServices;
 
+    public bool HasServicePresets => ServicePresets.Count > 0;
+
+    public bool ShowServicePresetsEmptyState => !HasServicePresets;
+
     public bool HasProjects => Projects.Count > 0;
 
     public bool ShowProjectsEmptyState => !HasProjects;
@@ -689,6 +1169,12 @@ public sealed class MainWindowViewModel : ObservableObject
     public bool HasValidationResults => ValidationResults.Count > 0;
 
     public bool ShowValidationResultsEmptyState => !HasValidationResults;
+
+    private ValidationResultCard? FindPortableRelocationValidation()
+    {
+        return ValidationResults.FirstOrDefault(validation =>
+            validation.Key.Equals("portable_relocation_readiness", StringComparison.OrdinalIgnoreCase));
+    }
 
     public bool HasPortDiagnostics => PortDiagnostics.Count > 0;
 
@@ -783,6 +1269,26 @@ public sealed class MainWindowViewModel : ObservableObject
     public string FirstRunValidationStepLabel => HasValidationResults
         ? ConfigValidationSummary
         : "Waiting: run Nginx validation before relying on generated vhosts.";
+
+    public bool ExternalAccessConsentAccepted
+    {
+        get => _externalAccessConsentAccepted;
+        set
+        {
+            if (SetProperty(ref _externalAccessConsentAccepted, value))
+            {
+                OnPropertyChanged(nameof(ExternalAccessConsentStatus));
+                OnPropertyChanged(nameof(ShowExternalAccessConsentWarning));
+                StartLocalTunnelCommand.NotifyCanExecuteChanged();
+            }
+        }
+    }
+
+    public bool ShowExternalAccessConsentWarning => !ExternalAccessConsentAccepted;
+
+    public string ExternalAccessConsentStatus => ExternalAccessConsentAccepted
+        ? "External access is enabled for this app session. Stop tunnel sessions when sharing is no longer needed."
+        : "Review the warning and confirm consent before starting a tunnel.";
 
     public bool IsGlobalNotificationOpen
     {
@@ -935,6 +1441,8 @@ public sealed class MainWindowViewModel : ObservableObject
                 SaveDomainSettingsCommand.NotifyCanExecuteChanged();
                 StartServiceCommand.NotifyCanExecuteChanged();
                 StopServiceCommand.NotifyCanExecuteChanged();
+                StartServicePresetCommand.NotifyCanExecuteChanged();
+                StopServicePresetCommand.NotifyCanExecuteChanged();
                 ToggleProjectPinCommand.NotifyCanExecuteChanged();
                 RepairRuntimeCommand.NotifyCanExecuteChanged();
                 RepairDomainsCommand.NotifyCanExecuteChanged();
@@ -959,6 +1467,9 @@ public sealed class MainWindowViewModel : ObservableObject
                 OpenDatabaseConnectionDetailsCommand.NotifyCanExecuteChanged();
                 OpenEnvironmentRootCommand.NotifyCanExecuteChanged();
                 OpenConfigRootCommand.NotifyCanExecuteChanged();
+                BackupConfigCommand.NotifyCanExecuteChanged();
+                RestoreConfigCommand.NotifyCanExecuteChanged();
+                OpenConfigBackupRootCommand.NotifyCanExecuteChanged();
                 OpenProjectRootCommand.NotifyCanExecuteChanged();
                 OpenBinRootCommand.NotifyCanExecuteChanged();
                 OpenDataRootCommand.NotifyCanExecuteChanged();
@@ -972,13 +1483,41 @@ public sealed class MainWindowViewModel : ObservableObject
                 OpenPackageSourcesSettingsFileCommand.NotifyCanExecuteChanged();
                 OpenPackagesLockSettingsFileCommand.NotifyCanExecuteChanged();
                 OpenTerminalCommandsSettingsFileCommand.NotifyCanExecuteChanged();
+                RunCustomToolCommand.NotifyCanExecuteChanged();
+                ReloadCustomToolsCommand.NotifyCanExecuteChanged();
+                OpenCustomToolsSettingsFileCommand.NotifyCanExecuteChanged();
+                StartLocalTunnelCommand.NotifyCanExecuteChanged();
+                ReloadLocalTunnelsCommand.NotifyCanExecuteChanged();
+                OpenLocalTunnelsSettingsFileCommand.NotifyCanExecuteChanged();
+                CopyShareUrlCommand.NotifyCanExecuteChanged();
+                OpenShareUrlCommand.NotifyCanExecuteChanged();
+                StopShareUrlSessionCommand.NotifyCanExecuteChanged();
+                ClearStoppedShareUrlsCommand.NotifyCanExecuteChanged();
                 OpenAliasesRootCommand.NotifyCanExecuteChanged();
+                OpenProfilesRootCommand.NotifyCanExecuteChanged();
                 OpenEnvironmentRootInEditorCommand.NotifyCanExecuteChanged();
                 OpenProjectRootInEditorCommand.NotifyCanExecuteChanged();
                 RefreshShellContextMenuFilesCommand.NotifyCanExecuteChanged();
                 OpenShellIntegrationRootCommand.NotifyCanExecuteChanged();
                 OpenShellContextMenuInstallFileCommand.NotifyCanExecuteChanged();
                 OpenShellContextMenuUninstallFileCommand.NotifyCanExecuteChanged();
+                RefreshUserEnvironmentFilesCommand.NotifyCanExecuteChanged();
+                OpenUserEnvironmentApplyScriptCommand.NotifyCanExecuteChanged();
+                OpenUserEnvironmentRemoveScriptCommand.NotifyCanExecuteChanged();
+                OpenUserEnvironmentManifestCommand.NotifyCanExecuteChanged();
+                CheckForAppUpdatesCommand.NotifyCanExecuteChanged();
+                OpenAppUpdateReleasePageCommand.NotifyCanExecuteChanged();
+                OpenAppUpdateDownloadCommand.NotifyCanExecuteChanged();
+                OpenAppUpdatePlanCommand.NotifyCanExecuteChanged();
+                OpenAppUpdateManifestCacheCommand.NotifyCanExecuteChanged();
+                OpenAppUpdateManifestExampleCommand.NotifyCanExecuteChanged();
+                RefreshPortableDistributionFilesCommand.NotifyCanExecuteChanged();
+                OpenPortableDistributionRootCommand.NotifyCanExecuteChanged();
+                OpenPortableDistributionArtifactsRootCommand.NotifyCanExecuteChanged();
+                OpenPortableDistributionScriptCommand.NotifyCanExecuteChanged();
+                OpenPortableDistributionPlanCommand.NotifyCanExecuteChanged();
+                OpenPortableDistributionReadmeCommand.NotifyCanExecuteChanged();
+                OpenPortableDistributionManifestTemplateCommand.NotifyCanExecuteChanged();
                 OpenPackageManifestsRootCommand.NotifyCanExecuteChanged();
                 OpenPackageCacheRootCommand.NotifyCanExecuteChanged();
                 SyncPackageDownloadsCommand.NotifyCanExecuteChanged();
@@ -987,6 +1526,12 @@ public sealed class MainWindowViewModel : ObservableObject
                 RemovePackageInstallCommand.NotifyCanExecuteChanged();
                 SwitchRuntimeVersionCommand.NotifyCanExecuteChanged();
                 SelectStackProfileCommand.NotifyCanExecuteChanged();
+                SaveActiveEnvironmentCommand.NotifyCanExecuteChanged();
+                ExportStackProfilesCommand.NotifyCanExecuteChanged();
+                ImportStackProfilesCommand.NotifyCanExecuteChanged();
+                PreviewLaragonImportCommand.NotifyCanExecuteChanged();
+                ImportLaragonProjectsCommand.NotifyCanExecuteChanged();
+                OpenLaragonRootCommand.NotifyCanExecuteChanged();
                 OpenProjectUrlCommand.NotifyCanExecuteChanged();
                 OpenProjectFolderCommand.NotifyCanExecuteChanged();
                 RevealProjectInExplorerCommand.NotifyCanExecuteChanged();
@@ -1306,6 +1851,103 @@ public sealed class MainWindowViewModel : ObservableObject
         }
     }
 
+    public string NewStackProfileName
+    {
+        get => _newStackProfileName;
+        set
+        {
+            if (SetProperty(ref _newStackProfileName, value))
+            {
+                SaveActiveEnvironmentCommand.NotifyCanExecuteChanged();
+            }
+        }
+    }
+
+    public string ActiveEnvironmentSaveStatus
+    {
+        get => _activeEnvironmentSaveStatus;
+        private set => SetProperty(ref _activeEnvironmentSaveStatus, value);
+    }
+
+    public string ProfileTransferPath
+    {
+        get => _profileTransferPath;
+        set
+        {
+            if (SetProperty(ref _profileTransferPath, value))
+            {
+                ExportStackProfilesCommand.NotifyCanExecuteChanged();
+                ImportStackProfilesCommand.NotifyCanExecuteChanged();
+            }
+        }
+    }
+
+    public string ProfileTransferStatus
+    {
+        get => _profileTransferStatus;
+        private set => SetProperty(ref _profileTransferStatus, value);
+    }
+
+    public string ConfigBackupStatus
+    {
+        get => _configBackupStatus;
+        private set => SetProperty(ref _configBackupStatus, value);
+    }
+
+    public string LatestConfigBackupPath
+    {
+        get => _latestConfigBackupPath;
+        private set => SetProperty(ref _latestConfigBackupPath, value);
+    }
+
+    public string ConfigRestorePath
+    {
+        get => _configRestorePath;
+        set
+        {
+            if (SetProperty(ref _configRestorePath, value))
+            {
+                RestoreConfigCommand.NotifyCanExecuteChanged();
+            }
+        }
+    }
+
+    public string ConfigRestoreStatus
+    {
+        get => _configRestoreStatus;
+        private set => SetProperty(ref _configRestoreStatus, value);
+    }
+
+    public string LaragonRootPath
+    {
+        get => _laragonRootPath;
+        set
+        {
+            if (SetProperty(ref _laragonRootPath, value))
+            {
+                PreviewLaragonImportCommand.NotifyCanExecuteChanged();
+                ImportLaragonProjectsCommand.NotifyCanExecuteChanged();
+                OpenLaragonRootCommand.NotifyCanExecuteChanged();
+            }
+        }
+    }
+
+    public string LaragonImportStatus
+    {
+        get => _laragonImportStatus;
+        private set => SetProperty(ref _laragonImportStatus, value);
+    }
+
+    public string LaragonImportSummary
+    {
+        get => _laragonImportSummary;
+        private set => SetProperty(ref _laragonImportSummary, value);
+    }
+
+    public bool HasLaragonImportProjects => LaragonImportProjects.Count > 0;
+
+    public bool ShowLaragonImportEmptyState => !HasLaragonImportProjects;
+
     public string HostsAccessDiagnosticLabel => FormatPermissionDiagnosticLabel(
         "hosts_write_path",
         "Hosts file update path",
@@ -1339,6 +1981,13 @@ public sealed class MainWindowViewModel : ObservableObject
         await LoadProjectPinsAsync();
         await LoadDomainSettingsAsync();
         await LoadTerminalCommandsAsync();
+        await LoadCustomToolsAsync();
+        await LoadLocalTunnelsAsync();
+        if (_settings.Updates.CheckOnStartup)
+        {
+            await CheckForAppUpdatesCoreAsync();
+        }
+
         await RefreshAsync();
     }
 
@@ -1349,9 +1998,111 @@ public sealed class MainWindowViewModel : ObservableObject
         return !IsBusy && TryNormalizeGeneratedDomainSettings(out _, out _, out _);
     }
 
+    private bool CanSaveActiveEnvironment()
+    {
+        return !IsBusy && !string.IsNullOrWhiteSpace(NewStackProfileName);
+    }
+
+    private bool CanTransferStackProfiles()
+    {
+        return !IsBusy && !string.IsNullOrWhiteSpace(ProfileTransferPath);
+    }
+
+    private bool CanOpenAppUpdateReleasePage()
+    {
+        return !IsBusy &&
+            Uri.TryCreate(AppUpdateReleasePageUri, UriKind.Absolute, out var uri) &&
+            (uri.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) ||
+             uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private bool CanOpenAppUpdateDownload()
+    {
+        return !IsBusy &&
+            Uri.TryCreate(AppUpdateDownloadUri, UriKind.Absolute, out var uri) &&
+            (uri.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) ||
+             uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private bool CanOpenAppUpdatePlan()
+    {
+        return !IsBusy && File.Exists(AppUpdatePlanPath);
+    }
+
+    private bool CanOpenAppUpdateManifestCache()
+    {
+        return !IsBusy && File.Exists(AppUpdateManifestCachePath);
+    }
+
+    private bool CanOpenAppUpdateManifestExample()
+    {
+        return !IsBusy && File.Exists(AppUpdateManifestExamplePath);
+    }
+
+    private bool CanRestoreConfig()
+    {
+        return !IsBusy && !string.IsNullOrWhiteSpace(ConfigRestorePath);
+    }
+
+    private bool CanUseLaragonImport()
+    {
+        return !IsBusy && !string.IsNullOrWhiteSpace(LaragonRootPath);
+    }
+
+    private bool CanOpenLaragonRoot()
+    {
+        return !IsBusy && TryResolveLaragonRootPath(out var rootPath, out _) && Directory.Exists(rootPath);
+    }
+
     private bool CanToggleProjectPin(ProjectCard? project) => !IsBusy && project is not null;
 
     private bool CanRunServiceAction(ServiceStatusCard? service) => !IsBusy && service is not null;
+
+    private bool CanRunServicePresetAction(ServicePresetCard? preset) => !IsBusy && preset?.CanRun == true;
+
+    private bool CanRunCustomTool(CustomToolMenuItem? tool)
+    {
+        if (IsBusy || tool?.CanRun != true)
+        {
+            return false;
+        }
+
+        return NormalizeCustomToolAction(tool.Action) != "terminal" ||
+            NormalizeTerminalCommandScope(tool.Scope) != "project" ||
+            TryGetProjectTerminalSessionForCommand() is not null;
+    }
+
+    private bool CanStartLocalTunnel(LocalTunnelProfileCard? profile)
+    {
+        if (IsBusy || !ExternalAccessConsentAccepted || profile?.CanStart != true)
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(profile.ProjectName))
+        {
+            return FindProjectCard(profile.ProjectName) is not null;
+        }
+
+        return NormalizeTerminalCommandScope(profile.Scope) != "project" ||
+            TryGetProjectTerminalSessionForCommand() is not null ||
+            Projects.Count > 0;
+    }
+
+    private bool CanUseShareUrl(ShareUrlSessionCard? session)
+    {
+        return !IsBusy && session?.HasPublicUrl == true;
+    }
+
+    private bool CanStopShareUrlSession(ShareUrlSessionCard? session)
+    {
+        return !IsBusy && session?.CanStop == true;
+    }
+
+    private bool CanClearStoppedShareUrls()
+    {
+        return !IsBusy && ShareUrlSessions.Any(session => !session.IsRunning);
+    }
 
     private bool CanManagePackageInstall(PackageDownloadCard? package) => !IsBusy && package is not null && package.CanRemoveInstall;
 
@@ -1424,6 +2175,30 @@ public sealed class MainWindowViewModel : ObservableObject
         await ExecuteAsync(
             $"Stop requested for {service.Name}",
             () => _workbenchService.StopServiceAsync(service.Key));
+    }
+
+    private async Task StartServicePresetAsync(ServicePresetCard? preset)
+    {
+        if (preset is null || !preset.CanRun)
+        {
+            return;
+        }
+
+        await ExecuteAsync(
+            $"Start requested for service preset {preset.DisplayName}",
+            () => _workbenchService.StartServicePresetAsync(preset.Key));
+    }
+
+    private async Task StopServicePresetAsync(ServicePresetCard? preset)
+    {
+        if (preset is null || !preset.CanRun)
+        {
+            return;
+        }
+
+        await ExecuteAsync(
+            $"Stop requested for service preset {preset.DisplayName}",
+            () => _workbenchService.StopServicePresetAsync(preset.Key));
     }
 
     private async Task ToggleProjectPinAsync(ProjectCard? project)
@@ -1603,6 +2378,316 @@ public sealed class MainWindowViewModel : ObservableObject
             () => _workbenchService.SelectStackProfileAsync(profile.Key));
     }
 
+    private async Task SaveActiveEnvironmentAsync()
+    {
+        var profileName = NewStackProfileName.Trim();
+        if (string.IsNullOrWhiteSpace(profileName))
+        {
+            ActiveEnvironmentSaveStatus = "Enter a stack profile name before saving the active environment.";
+            return;
+        }
+
+        ActiveEnvironmentSaveStatus = $"Saving active environment as {profileName}.";
+
+        var saved = await ExecuteAsync(
+            $"Saving active environment as stack profile {profileName}",
+            () => _workbenchService.SaveActiveEnvironmentAsync(profileName));
+
+        if (saved)
+        {
+            ActiveEnvironmentSaveStatus = $"Saved {profileName} as a stack profile. Load it from the profile list to restore its services and packages.";
+            NewStackProfileName = $"Saved Environment {DateTime.Now:yyyyMMdd HHmm}";
+        }
+        else
+        {
+            ActiveEnvironmentSaveStatus = $"Could not save {profileName}. Check the activity log and supervisor status, then try again.";
+        }
+    }
+
+    private async Task ExportStackProfilesAsync()
+    {
+        if (!TryResolveProfileTransferPath(out var targetPath, out var validationMessage))
+        {
+            ProfileTransferStatus = validationMessage;
+            RecordActivity("Warning", validationMessage);
+            return;
+        }
+
+        ProfileTransferStatus = $"Exporting stack profiles to {targetPath}.";
+
+        var exported = await ExecuteAsync(
+            $"Exporting stack profiles to {targetPath}",
+            () => _workbenchService.ExportStackProfilesAsync(targetPath));
+
+        ProfileTransferStatus = exported
+            ? $"Exported stack profiles to {targetPath}."
+            : $"Could not export stack profiles to {targetPath}. Check the activity log and supervisor status, then try again.";
+    }
+
+    private async Task ImportStackProfilesAsync()
+    {
+        if (!TryResolveProfileTransferPath(out var sourcePath, out var validationMessage))
+        {
+            ProfileTransferStatus = validationMessage;
+            RecordActivity("Warning", validationMessage);
+            return;
+        }
+
+        if (!File.Exists(sourcePath))
+        {
+            ProfileTransferStatus = $"Import file was not found: {sourcePath}";
+            RecordActivity("Warning", ProfileTransferStatus);
+            return;
+        }
+
+        ProfileTransferStatus = $"Importing stack profiles from {sourcePath}.";
+
+        var imported = await ExecuteAsync(
+            $"Importing stack profiles from {sourcePath}",
+            () => _workbenchService.ImportStackProfilesAsync(sourcePath));
+
+        ProfileTransferStatus = imported
+            ? $"Imported stack profiles from {sourcePath}. Existing profile keys were preserved; duplicates were added with unique keys."
+            : $"Could not import stack profiles from {sourcePath}. Check the activity log and supervisor status, then try again.";
+    }
+
+    private async Task BackupConfigAsync()
+    {
+        try
+        {
+            IsBusy = true;
+            var backup = await CreateConfigBackupArchiveAsync("locora-config");
+
+            LatestConfigBackupPath = backup.Path;
+            ConfigRestorePath = backup.Path;
+            ConfigBackupStatus = $"Backed up {backup.FileCount} config file{(backup.FileCount == 1 ? string.Empty : "s")} to {backup.Path}.";
+            RecordActivity("Info", ConfigBackupStatus);
+        }
+        catch (DirectoryNotFoundException exception)
+        {
+            _logger.LogWarning(exception, "Config backup failed.");
+            ConfigBackupStatus = $"Configuration folder was not found: {ConfigRoot}";
+            RecordActivity("Warning", ConfigBackupStatus);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Config backup failed.");
+            ConfigBackupStatus = $"Config backup failed: {exception.Message}";
+            RecordActivity("Error", ConfigBackupStatus);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task RestoreConfigAsync()
+    {
+        if (!TryResolveConfigRestorePath(out var restorePath, out var validationMessage))
+        {
+            ConfigRestoreStatus = validationMessage;
+            RecordActivity("Warning", validationMessage);
+            return;
+        }
+
+        if (!File.Exists(restorePath))
+        {
+            ConfigRestoreStatus = $"Config backup archive was not found: {restorePath}";
+            RecordActivity("Warning", ConfigRestoreStatus);
+            return;
+        }
+
+        try
+        {
+            IsBusy = true;
+            ConfigRestoreStatus = $"Restoring configuration backup from {restorePath}.";
+            RecordActivity("Info", ConfigRestoreStatus);
+
+            var preRestoreBackupPath = string.Empty;
+            var preRestoreBackupFileCount = 0;
+            if (Directory.Exists(ConfigRoot))
+            {
+                var preRestoreBackup = await CreateConfigBackupArchiveAsync("locora-config-before-restore");
+                preRestoreBackupPath = preRestoreBackup.Path;
+                preRestoreBackupFileCount = preRestoreBackup.FileCount;
+                LatestConfigBackupPath = preRestoreBackup.Path;
+                ConfigBackupStatus = $"Created pre-restore backup of {preRestoreBackup.FileCount} config file{(preRestoreBackup.FileCount == 1 ? string.Empty : "s")} at {preRestoreBackup.Path}.";
+                RecordActivity("Info", ConfigBackupStatus);
+            }
+            else
+            {
+                Directory.CreateDirectory(ConfigRoot);
+                ConfigBackupStatus = $"No pre-restore backup was created because the configuration folder did not exist: {ConfigRoot}";
+                RecordActivity("Warning", ConfigBackupStatus);
+            }
+
+            var restoreTempRoot = Path.Combine(_environmentPaths.TempRoot, "config-restore", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(restoreTempRoot);
+
+            int extractedFileCount;
+            int restoredFileCount;
+            try
+            {
+                extractedFileCount = ExtractConfigBackupArchive(restorePath, restoreTempRoot);
+                if (extractedFileCount == 0)
+                {
+                    ConfigRestoreStatus = $"Config backup archive did not contain restorable files: {restorePath}";
+                    RecordActivity("Warning", ConfigRestoreStatus);
+                    return;
+                }
+
+                restoredFileCount = ApplyExtractedConfigFiles(restoreTempRoot);
+            }
+            finally
+            {
+                TryDeleteRestoreTempRoot(restoreTempRoot);
+            }
+
+            var backupSuffix = string.IsNullOrWhiteSpace(preRestoreBackupPath)
+                ? "No previous config folder was found before restore."
+                : $"Pre-restore backup: {preRestoreBackupPath} ({preRestoreBackupFileCount} file{(preRestoreBackupFileCount == 1 ? string.Empty : "s")}).";
+            ConfigRestoreStatus = $"Restored {restoredFileCount} config file{(restoredFileCount == 1 ? string.Empty : "s")} from {restorePath}. {backupSuffix}";
+            RecordActivity("Info", ConfigRestoreStatus);
+
+            try
+            {
+                RecordActivity("Info", "Refreshing environment snapshot after config restore.");
+                var snapshot = await _workbenchService.GetSnapshotAsync();
+                ApplySnapshot(snapshot);
+            }
+            catch (Exception refreshException)
+            {
+                _logger.LogWarning(refreshException, "Environment snapshot refresh failed after config restore.");
+                RecordActivity("Warning", $"Config restored, but snapshot refresh failed: {refreshException.Message}");
+            }
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Config restore failed.");
+            ConfigRestoreStatus = $"Config restore failed: {exception.Message}";
+            RecordActivity("Error", ConfigRestoreStatus);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task PreviewLaragonImportAsync()
+    {
+        if (!TryResolveLaragonRootPath(out var rootPath, out var validationMessage))
+        {
+            LaragonImportStatus = validationMessage;
+            RecordActivity("Warning", validationMessage);
+            return;
+        }
+
+        try
+        {
+            IsBusy = true;
+            RecordActivity("Info", $"Previewing Laragon import from {rootPath}.");
+
+            var currentDocument = NormalizeProjectSettingsDocument(await ReadProjectSettingsDocumentAsync());
+            var plan = BuildLaragonImportPlan(rootPath, currentDocument);
+            ApplyLaragonImportPlan(plan);
+            LaragonImportSummary = CreateLaragonImportSummary(plan);
+            LaragonImportStatus = plan.Projects.Count == 0
+                ? $"No importable project folders were found in {plan.WwwRoot}."
+                : $"Preview ready from {plan.WwwRoot}. Domain suffix: {plan.DomainSuffix}; source: {plan.DomainSource}.";
+            RecordActivity("Info", $"Laragon import preview found {plan.Projects.Count} project(s).");
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Laragon import preview failed.");
+            ReplaceCollection(LaragonImportProjects, Array.Empty<LaragonImportProjectCard>());
+            NotifyLaragonImportCollectionProperties();
+            LaragonImportSummary = "Laragon import preview failed.";
+            LaragonImportStatus = $"Laragon import preview failed: {exception.Message}";
+            RecordActivity("Error", LaragonImportStatus);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task ImportLaragonProjectsAsync()
+    {
+        if (!TryResolveLaragonRootPath(out var rootPath, out var validationMessage))
+        {
+            LaragonImportStatus = validationMessage;
+            RecordActivity("Warning", validationMessage);
+            return;
+        }
+
+        LaragonImportPlan plan;
+        string? backupPath = null;
+        int addedCount;
+        int updatedCount;
+
+        try
+        {
+            IsBusy = true;
+            RecordActivity("Info", $"Importing Laragon projects from {rootPath}.");
+
+            var currentDocument = NormalizeProjectSettingsDocument(await ReadProjectSettingsDocumentAsync());
+            plan = BuildLaragonImportPlan(rootPath, currentDocument);
+            if (plan.Projects.Count == 0)
+            {
+                ApplyLaragonImportPlan(plan);
+                LaragonImportSummary = CreateLaragonImportSummary(plan);
+                LaragonImportStatus = $"No importable project folders were found in {plan.WwwRoot}.";
+                RecordActivity("Warning", LaragonImportStatus);
+                return;
+            }
+
+            var mergedOverrides = MergeLaragonProjectOverrides(
+                currentDocument.LocoraProjects.ProjectOverrides,
+                plan.Projects,
+                out addedCount,
+                out updatedCount);
+            var nextDocument = new ProjectSettingsDocument(
+                currentDocument.LocoraProjects with
+                {
+                    DomainSuffix = plan.DomainSuffix,
+                    DefaultScheme = plan.DefaultScheme,
+                    ProjectOverrides = mergedOverrides
+                });
+
+            backupPath = CreateLaragonProjectSettingsBackup();
+            Directory.CreateDirectory(Path.GetDirectoryName(_environmentPaths.ProjectsSettingsFile) ?? _environmentPaths.ConfigRoot);
+            var content = JsonSerializer.Serialize(nextDocument, ProjectSettingsSerializerOptions);
+            await File.WriteAllTextAsync(_environmentPaths.ProjectsSettingsFile, content);
+
+            GeneratedDomainSuffix = plan.DomainSuffix;
+            GeneratedDomainScheme = plan.DefaultScheme;
+            ApplyLaragonImportPlan(plan);
+            LaragonImportSummary = CreateLaragonImportSummary(plan);
+            LaragonImportStatus = $"Imported {plan.Projects.Count} Laragon project override{(plan.Projects.Count == 1 ? string.Empty : "s")} into projects.json ({addedCount} added, {updatedCount} updated).";
+            if (!string.IsNullOrWhiteSpace(backupPath))
+            {
+                LaragonImportStatus += $" Previous projects.json backup: {backupPath}";
+            }
+
+            RecordActivity("Info", LaragonImportStatus);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Laragon import failed.");
+            LaragonImportStatus = $"Laragon import failed: {exception.Message}";
+            RecordActivity("Error", LaragonImportStatus);
+            return;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+
+        await ExecuteAsync(
+            "Regenerating hosts and vhosts after Laragon import",
+            () => _workbenchService.RepairDomainsAsync());
+    }
+
     private async Task RepairLocalSslAsync()
     {
         await ExecuteAsync(
@@ -1612,6 +2697,15 @@ public sealed class MainWindowViewModel : ObservableObject
 
     private async Task ApplyHostsPreviewAsync()
     {
+        if (!await ConfirmPrivilegedActionAsync(
+                "Apply generated hosts entries?",
+                $"Locora will write the reviewed hosts preview into {WindowsHostsFilePath}. Windows may prompt for elevation.",
+                "Apply Hosts",
+                "Hosts preview apply cancelled."))
+        {
+            return;
+        }
+
         await ExecuteAsync(
             "Apply hosts preview requested",
             () => _workbenchService.ApplyHostsPreviewAsync());
@@ -1619,6 +2713,15 @@ public sealed class MainWindowViewModel : ObservableObject
 
     private async Task RollbackHostsAsync()
     {
+        if (!await ConfirmPrivilegedActionAsync(
+                "Restore previous hosts backup?",
+                $"Locora will restore the latest backup for {WindowsHostsFilePath}. Windows may prompt for elevation.",
+                "Restore Hosts",
+                "Hosts rollback cancelled."))
+        {
+            return;
+        }
+
         await ExecuteAsync(
             "Hosts rollback requested",
             () => _workbenchService.RollbackHostsAsync());
@@ -1626,6 +2729,15 @@ public sealed class MainWindowViewModel : ObservableObject
 
     private async Task RestartSupervisorElevatedAsync()
     {
+        if (!await ConfirmPrivilegedActionAsync(
+                "Restart supervisor with elevation?",
+                "Locora will relaunch the supervisor with administrator rights. Managed services may briefly recycle while the elevated process takes over.",
+                "Restart Elevated",
+                "Elevated supervisor restart cancelled."))
+        {
+            return;
+        }
+
         await ExecuteAsync(
             "Elevated supervisor restart requested",
             () => _workbenchService.RestartSupervisorElevatedAsync());
@@ -1647,6 +2759,15 @@ public sealed class MainWindowViewModel : ObservableObject
 
     private async Task TrustLocalSslCaAsync()
     {
+        if (!await ConfirmPrivilegedActionAsync(
+                "Trust the Locora certificate authority?",
+                "Locora will add its local certificate authority to the CurrentUser trusted root store so generated HTTPS domains stop warning in this profile.",
+                "Trust CA",
+                "Local SSL trust change cancelled."))
+        {
+            return;
+        }
+
         await ExecuteAsync(
             "Trust local SSL certificate authority requested",
             () => _workbenchService.TrustLocalSslCaAsync());
@@ -1654,6 +2775,15 @@ public sealed class MainWindowViewModel : ObservableObject
 
     private async Task RollbackLocalSslTrustAsync()
     {
+        if (!await ConfirmPrivilegedActionAsync(
+                "Remove the Locora certificate authority from trust?",
+                "Locora will remove its local certificate authority from the CurrentUser trusted root store. Locora HTTPS sites may warn again until you trust it later.",
+                "Remove Trust",
+                "Local SSL trust rollback cancelled."))
+        {
+            return;
+        }
+
         await ExecuteAsync(
             "Local SSL trust rollback requested",
             () => _workbenchService.RollbackLocalSslTrustAsync());
@@ -1843,6 +2973,15 @@ public sealed class MainWindowViewModel : ObservableObject
             () => _projectActionLauncher.OpenFolder(ConfigRoot));
     }
 
+    private void OpenConfigBackupRoot()
+    {
+        Directory.CreateDirectory(ConfigBackupRootPath);
+        ExecuteDesktopAction(
+            "Config backups folder opened.",
+            "Config backups folder could not be opened.",
+            () => _projectActionLauncher.OpenFolder(ConfigBackupRootPath));
+    }
+
     private void OpenProjectRoot()
     {
         ExecuteDesktopAction(
@@ -1923,6 +3062,31 @@ public sealed class MainWindowViewModel : ObservableObject
             () => _projectActionLauncher.OpenFile(ProfilesSettingsFilePath));
     }
 
+    private void OpenProfilesRoot()
+    {
+        ExecuteDesktopAction(
+            "Stack profiles folder opened.",
+            "Stack profiles folder could not be opened.",
+            () => _projectActionLauncher.OpenFolder(ProfilesRootPath));
+    }
+
+    private void OpenLaragonRoot()
+    {
+        if (!TryResolveLaragonRootPath(out var rootPath, out var validationMessage) || !Directory.Exists(rootPath))
+        {
+            LaragonImportStatus = string.IsNullOrWhiteSpace(validationMessage)
+                ? "Laragon root folder was not found."
+                : validationMessage;
+            RecordActivity("Warning", LaragonImportStatus);
+            return;
+        }
+
+        ExecuteDesktopAction(
+            "Laragon root folder opened.",
+            "Laragon root folder could not be opened.",
+            () => _projectActionLauncher.OpenFolder(rootPath));
+    }
+
     private void OpenPackageSourcesSettingsFile()
     {
         ExecuteDesktopAction(
@@ -1945,6 +3109,22 @@ public sealed class MainWindowViewModel : ObservableObject
             "Terminal commands file opened.",
             "Terminal commands file could not be opened.",
             () => _projectActionLauncher.OpenFile(TerminalCommandsSettingsFilePath));
+    }
+
+    private void OpenCustomToolsSettingsFile()
+    {
+        ExecuteDesktopAction(
+            "Custom tools file opened.",
+            "Custom tools file could not be opened.",
+            () => _projectActionLauncher.OpenFile(CustomToolsSettingsFilePath));
+    }
+
+    private void OpenLocalTunnelsSettingsFile()
+    {
+        ExecuteDesktopAction(
+            "Local tunnel profiles file opened.",
+            "Local tunnel profiles file could not be opened.",
+            () => _projectActionLauncher.OpenFile(LocalTunnelsSettingsFilePath));
     }
 
     private void OpenAliasesRoot()
@@ -1995,6 +3175,209 @@ public sealed class MainWindowViewModel : ObservableObject
         ShellContextMenuUninstallFilePath = files.UninstallFilePath;
         ShellContextMenuReadmeFilePath = files.ReadmeFilePath;
         ShellContextMenuExecutablePath = files.AppExecutablePath;
+    }
+
+    private void RefreshUserEnvironmentFiles()
+    {
+        ExecuteDesktopAction(
+            "PATH and environment scripts refreshed.",
+            "PATH and environment scripts could not be refreshed.",
+            RefreshUserEnvironmentChangeFilesCore);
+    }
+
+    private void OpenUserEnvironmentApplyScript()
+    {
+        ExecuteDesktopAction(
+            "Environment install script opened.",
+            "Environment install script could not be opened.",
+            () => _projectActionLauncher.OpenFile(UserEnvironmentApplyScriptPath));
+    }
+
+    private void OpenUserEnvironmentRemoveScript()
+    {
+        ExecuteDesktopAction(
+            "Environment uninstall script opened.",
+            "Environment uninstall script could not be opened.",
+            () => _projectActionLauncher.OpenFile(UserEnvironmentRemoveScriptPath));
+    }
+
+    private void OpenUserEnvironmentManifest()
+    {
+        ExecuteDesktopAction(
+            "Environment manifest opened.",
+            "Environment manifest could not be opened.",
+            () => _projectActionLauncher.OpenFile(UserEnvironmentManifestPath));
+    }
+
+    private void RefreshUserEnvironmentChangeFilesCore()
+    {
+        var files = _userEnvironmentChangeService.RefreshChangeFiles();
+        UserEnvironmentApplyScriptPath = files.ApplyScriptPath;
+        UserEnvironmentRemoveScriptPath = files.RemoveScriptPath;
+        UserEnvironmentManifestPath = files.ManifestPath;
+        UserEnvironmentStatus = $"Generated CurrentUser scripts for {files.ManagedPathEntries.Count} PATH entry and {files.ManagedVariables.Count} LOCORA variables. Each script writes a backup before changing user environment values.";
+    }
+
+    private async Task CheckForAppUpdatesAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            await CheckForAppUpdatesCoreAsync();
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task CheckForAppUpdatesCoreAsync()
+    {
+        RecordActivity("Info", "Checking for Locora app updates.");
+        var status = await _appUpdateService.CheckForUpdatesAsync();
+        ApplyAppUpdateStatus(status);
+
+        var level = status.State.Equals("Check failed", StringComparison.OrdinalIgnoreCase)
+            ? "Error"
+            : status.IsUpdateAvailable
+                ? "Warning"
+                : "Info";
+        RecordActivity(level, status.Summary);
+    }
+
+    private void OpenAppUpdateReleasePage()
+    {
+        ExecuteDesktopAction(
+            "App update release page opened.",
+            "App update release page could not be opened.",
+            () => _projectActionLauncher.OpenUrl(AppUpdateReleasePageUri));
+    }
+
+    private void OpenAppUpdateDownload()
+    {
+        ExecuteDesktopAction(
+            "App update download opened.",
+            "App update download could not be opened.",
+            () => _projectActionLauncher.OpenUrl(AppUpdateDownloadUri));
+    }
+
+    private void OpenAppUpdatePlan()
+    {
+        ExecuteDesktopAction(
+            "App update plan opened.",
+            "App update plan could not be opened.",
+            () => _projectActionLauncher.OpenFile(AppUpdatePlanPath));
+    }
+
+    private void OpenAppUpdateManifestCache()
+    {
+        ExecuteDesktopAction(
+            "Cached app update manifest opened.",
+            "Cached app update manifest could not be opened.",
+            () => _projectActionLauncher.OpenFile(AppUpdateManifestCachePath));
+    }
+
+    private void OpenAppUpdateManifestExample()
+    {
+        ExecuteDesktopAction(
+            "Example app update manifest opened.",
+            "Example app update manifest could not be opened.",
+            () => _projectActionLauncher.OpenFile(AppUpdateManifestExamplePath));
+    }
+
+    private void ApplyAppUpdateStatus(AppUpdateStatus status)
+    {
+        AppUpdateState = status.State;
+        AppUpdateSummary = status.Summary;
+        AppUpdateDetails = status.Details;
+        AppUpdateCurrentVersion = status.CurrentVersion;
+        AppUpdateLatestVersion = string.IsNullOrWhiteSpace(status.LatestVersion) ? "(unknown)" : status.LatestVersion;
+        AppUpdateCheckedAtLabel = status.CheckedAt.LocalDateTime.ToString("yyyy-MM-dd HH:mm:ss");
+        AppUpdateReleasePageUri = status.ReleasePageUri;
+        AppUpdateDownloadUri = status.DownloadUri;
+        AppUpdateSha256 = string.IsNullOrWhiteSpace(status.Sha256) ? "(not provided)" : status.Sha256;
+        NotifyAppUpdateCommandProperties();
+    }
+
+    private void NotifyAppUpdateCommandProperties()
+    {
+        CheckForAppUpdatesCommand.NotifyCanExecuteChanged();
+        OpenAppUpdateReleasePageCommand.NotifyCanExecuteChanged();
+        OpenAppUpdateDownloadCommand.NotifyCanExecuteChanged();
+        OpenAppUpdatePlanCommand.NotifyCanExecuteChanged();
+        OpenAppUpdateManifestCacheCommand.NotifyCanExecuteChanged();
+        OpenAppUpdateManifestExampleCommand.NotifyCanExecuteChanged();
+    }
+
+    private void RefreshPortableDistributionFiles()
+    {
+        ExecuteDesktopAction(
+            "Portable distribution files refreshed.",
+            "Portable distribution files could not be refreshed.",
+            RefreshPortableDistributionFilesCore);
+    }
+
+    private void OpenPortableDistributionRoot()
+    {
+        ExecuteDesktopAction(
+            "Portable distribution folder opened.",
+            "Portable distribution folder could not be opened.",
+            () => _projectActionLauncher.OpenFolder(PortableDistributionRootPath));
+    }
+
+    private void OpenPortableDistributionArtifactsRoot()
+    {
+        ExecuteDesktopAction(
+            "Portable distribution artifacts folder opened.",
+            "Portable distribution artifacts folder could not be opened.",
+            () => _projectActionLauncher.OpenFolder(PortableDistributionArtifactsRootPath));
+    }
+
+    private void OpenPortableDistributionScript()
+    {
+        ExecuteDesktopAction(
+            "Portable distribution script opened.",
+            "Portable distribution script could not be opened.",
+            () => _projectActionLauncher.OpenFile(PortableDistributionScriptPath));
+    }
+
+    private void OpenPortableDistributionPlan()
+    {
+        ExecuteDesktopAction(
+            "Portable distribution plan opened.",
+            "Portable distribution plan could not be opened.",
+            () => _projectActionLauncher.OpenFile(PortableDistributionPlanPath));
+    }
+
+    private void OpenPortableDistributionReadme()
+    {
+        ExecuteDesktopAction(
+            "Portable distribution README opened.",
+            "Portable distribution README could not be opened.",
+            () => _projectActionLauncher.OpenFile(PortableDistributionReadmePath));
+    }
+
+    private void OpenPortableDistributionManifestTemplate()
+    {
+        ExecuteDesktopAction(
+            "Portable distribution release manifest template opened.",
+            "Portable distribution release manifest template could not be opened.",
+            () => _projectActionLauncher.OpenFile(PortableDistributionManifestTemplatePath));
+    }
+
+    private void RefreshPortableDistributionFilesCore()
+    {
+        var files = _portableDistributionService.RefreshDistributionFiles();
+        PortableDistributionScriptPath = files.ScriptPath;
+        PortableDistributionPlanPath = files.PlanPath;
+        PortableDistributionReadmePath = files.ReadmePath;
+        PortableDistributionManifestTemplatePath = files.ManifestTemplatePath;
+        PortableDistributionStatus = $"Generated portable distribution automation for {files.Configuration}/{files.RuntimeIdentifier}. The script stages a portable ZIP, checksums, and release manifest under {files.ArtifactsRootPath}.";
     }
 
     private void OpenEnvironmentRootInEditor()
@@ -2157,6 +3540,233 @@ public sealed class MainWindowViewModel : ObservableObject
         }
     }
 
+    private void RunCustomTool(CustomToolMenuItem? tool)
+    {
+        if (tool is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var action = NormalizeCustomToolAction(tool.Action);
+            if (action == "terminal")
+            {
+                RunCustomTerminalTool(tool);
+                return;
+            }
+
+            var target = ResolveCustomToolTarget(tool);
+            switch (action)
+            {
+                case "url":
+                    _projectActionLauncher.OpenUrl(target);
+                    break;
+                case "folder":
+                    _projectActionLauncher.OpenFolder(ResolveCustomToolPath(target));
+                    break;
+                case "file":
+                    _projectActionLauncher.OpenFile(ResolveCustomToolPath(target));
+                    break;
+                case "editor":
+                    _projectActionLauncher.OpenEditor(ResolveCustomToolPath(target));
+                    break;
+                default:
+                    RecordActivity("Warning", $"Unsupported custom tool action: {tool.Action}");
+                    return;
+            }
+
+            RecordActivity("Info", $"Ran custom tool: {tool.DisplayName}");
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Custom tool failed for {Tool}.", tool.DisplayName);
+            RecordActivity("Error", $"Custom tool failed for {tool.DisplayName}: {exception.Message}");
+        }
+    }
+
+    private void RunCustomTerminalTool(CustomToolMenuItem tool)
+    {
+        var command = new TerminalQuickCommand(
+            tool.Key,
+            tool.DisplayName,
+            string.Empty,
+            tool.Description,
+            tool.Target,
+            NormalizeTerminalCommandScope(tool.Scope),
+            tool.Tags);
+        var session = ResolveTerminalSessionForCommand(command);
+        if (session is null)
+        {
+            RecordActivity("Warning", "Open a project terminal tab before running this custom tool.");
+            return;
+        }
+
+        var commandText = ResolveTerminalCommandText(command, session);
+        if (string.IsNullOrWhiteSpace(commandText))
+        {
+            RecordActivity("Warning", $"Custom tool '{tool.DisplayName}' resolved to an empty command.");
+            return;
+        }
+
+        SelectedTerminalSession = session;
+        NavigationRequested?.Invoke(this, "terminal");
+        _terminalSessionService.SendInput(session, commandText);
+        RecordActivity("Info", $"Ran custom tool: {tool.DisplayName}");
+    }
+
+    private void StartLocalTunnel(LocalTunnelProfileCard? profile)
+    {
+        if (profile is null)
+        {
+            return;
+        }
+
+        if (!ExternalAccessConsentAccepted)
+        {
+            RecordActivity("Warning", "Confirm external access consent before starting a local tunnel.");
+            return;
+        }
+
+        try
+        {
+            var project = ResolveLocalTunnelProject(profile);
+            var session = ResolveLocalTunnelSession(profile, project);
+            if (session is null)
+            {
+                RecordActivity("Warning", "Open or discover a project before starting this local tunnel.");
+                return;
+            }
+
+            var commandText = ResolveLocalTunnelCommandText(profile, session, project);
+            if (string.IsNullOrWhiteSpace(commandText))
+            {
+                RecordActivity("Warning", $"Local tunnel '{profile.DisplayName}' resolved to an empty command.");
+                return;
+            }
+
+            RegisterShareUrlSession(profile, session, project, commandText);
+            SelectedTerminalSession = session;
+            NavigationRequested?.Invoke(this, "terminal");
+            _terminalSessionService.SendInput(session, commandText);
+            RecordActivity("Warning", $"Started local tunnel profile: {profile.DisplayName}. Review the terminal output for the public URL.");
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Local tunnel profile failed for {Profile}.", profile.DisplayName);
+            RecordActivity("Error", $"Local tunnel failed for {profile.DisplayName}: {exception.Message}");
+        }
+    }
+
+    private void CopyShareUrl(ShareUrlSessionCard? session)
+    {
+        if (session?.HasPublicUrl != true)
+        {
+            return;
+        }
+
+        ExecuteDesktopAction(
+            $"Copied share URL: {session.ProfileName}",
+            $"Share URL could not be copied: {session.ProfileName}",
+            () => _clipboardService.CopyText(session.PublicUrl));
+    }
+
+    private void OpenShareUrl(ShareUrlSessionCard? session)
+    {
+        if (session?.HasPublicUrl != true)
+        {
+            return;
+        }
+
+        ExecuteDesktopAction(
+            $"Opened share URL: {session.ProfileName}",
+            $"Share URL could not be opened: {session.ProfileName}",
+            () => _projectActionLauncher.OpenUrl(session.PublicUrl));
+    }
+
+    private void StopShareUrlSession(ShareUrlSessionCard? shareSession)
+    {
+        if (shareSession is null)
+        {
+            return;
+        }
+
+        var terminalSession = TerminalSessions.FirstOrDefault(session =>
+            session.Id.Equals(shareSession.SessionId, StringComparison.OrdinalIgnoreCase));
+        if (terminalSession is not null)
+        {
+            _terminalSessionService.StopSession(terminalSession);
+            shareSession.MarkStopped("Stop requested from share URL lifecycle controls.");
+            RecordActivity("Info", $"Stopped share URL session: {shareSession.ProfileName}");
+        }
+        else
+        {
+            shareSession.MarkStopped("The terminal session for this share URL is no longer available.");
+            RecordActivity("Warning", $"Share URL session already stopped: {shareSession.ProfileName}");
+        }
+
+        NotifyShareUrlSessionStateChanged();
+    }
+
+    private void ClearStoppedShareUrls()
+    {
+        var stoppedSessions = ShareUrlSessions.Where(session => !session.IsRunning).ToList();
+        foreach (var stoppedSession in stoppedSessions)
+        {
+            var terminalSession = TerminalSessions.FirstOrDefault(session =>
+                session.Id.Equals(stoppedSession.SessionId, StringComparison.OrdinalIgnoreCase));
+            if (terminalSession is not null)
+            {
+                RemoveShareSessionMonitoring(terminalSession);
+            }
+
+            ShareUrlSessions.Remove(stoppedSession);
+            _shareSessionsByTerminalId.Remove(stoppedSession.SessionId);
+            _shareMonitoredTerminalIds.Remove(stoppedSession.SessionId);
+        }
+
+        NotifyShareUrlSessionCollectionProperties();
+        RecordActivity("Info", $"Cleared {stoppedSessions.Count} stopped share URL session{(stoppedSessions.Count == 1 ? string.Empty : "s")}.");
+    }
+
+    private async Task ReloadCustomToolsAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        try
+        {
+            IsBusy = true;
+            await LoadCustomToolsAsync();
+            RecordActivity("Info", "Custom tools menu reloaded.");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task ReloadLocalTunnelsAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        try
+        {
+            IsBusy = true;
+            await LoadLocalTunnelsAsync();
+            RecordActivity("Info", "Local tunnel profiles reloaded.");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
     private bool CanSendTerminalInput()
     {
         return SelectedTerminalSession?.IsRunning == true &&
@@ -2251,6 +3861,79 @@ public sealed class MainWindowViewModel : ObservableObject
         return TerminalSessions.LastOrDefault(session => session.IsProjectScoped);
     }
 
+    private TerminalSession? ResolveLocalTunnelSession(LocalTunnelProfileCard profile, ProjectCard? project)
+    {
+        var scope = NormalizeTerminalCommandScope(profile.Scope);
+        if (project is not null)
+        {
+            return StartTerminalSession(
+                CreateLocalTunnelTerminalTitle(profile, project),
+                project.TerminalLaunchProfile,
+                $"Opened local tunnel terminal: {profile.DisplayName}");
+        }
+
+        if (scope == "root")
+        {
+            return StartTerminalSession(
+                CreateLocalTunnelTerminalTitle(profile, null),
+                CreateRootTerminalLaunchProfile(),
+                $"Opened local tunnel terminal: {profile.DisplayName}");
+        }
+
+        if (scope == "project")
+        {
+            var projectSession = TryGetProjectTerminalSessionForCommand();
+            if (projectSession is not null)
+            {
+                return StartTerminalSession(
+                    CreateLocalTunnelTerminalTitle(profile, null),
+                    projectSession.LaunchProfile,
+                    $"Opened local tunnel terminal: {profile.DisplayName}");
+            }
+
+            var fallbackProject = Projects.FirstOrDefault(project => project.IsPinned) ?? Projects.FirstOrDefault();
+            return fallbackProject is null
+                ? null
+                : StartTerminalSession(
+                    CreateLocalTunnelTerminalTitle(profile, fallbackProject),
+                    fallbackProject.TerminalLaunchProfile,
+                    $"Opened local tunnel terminal: {profile.DisplayName}");
+        }
+
+        if (SelectedTerminalSession is not null)
+        {
+            return StartTerminalSession(
+                CreateLocalTunnelTerminalTitle(profile, null),
+                SelectedTerminalSession.LaunchProfile,
+                $"Opened local tunnel terminal: {profile.DisplayName}");
+        }
+
+        return StartTerminalSession(
+            CreateLocalTunnelTerminalTitle(profile, null),
+            CreateRootTerminalLaunchProfile(),
+            $"Opened local tunnel terminal: {profile.DisplayName}");
+    }
+
+    private TerminalSession? ResolveOrStartProjectTerminalSession(ProjectCard project)
+    {
+        if (SelectedTerminalSession is not null && IsTerminalSessionForProject(SelectedTerminalSession, project))
+        {
+            return EnsureRunningTerminalSession(SelectedTerminalSession);
+        }
+
+        var existingProjectSession = TerminalSessions.LastOrDefault(session => IsTerminalSessionForProject(session, project));
+        return existingProjectSession is not null
+            ? EnsureRunningTerminalSession(existingProjectSession)
+            : StartTerminalSession(project.Name, project.TerminalLaunchProfile, $"Opened built-in terminal: {project.Name}");
+    }
+
+    private static bool IsTerminalSessionForProject(TerminalSession session, ProjectCard project)
+    {
+        return session.IsProjectScoped &&
+            session.LaunchProfile.EnvironmentVariables.TryGetValue("LOCORA_PROJECT_ROOT", out var projectRoot) &&
+            string.Equals(projectRoot, project.Folder, StringComparison.OrdinalIgnoreCase);
+    }
+
     private TerminalSession? EnsureRunningTerminalSession(TerminalSession session)
     {
         if (session.IsRunning)
@@ -2280,11 +3963,85 @@ public sealed class MainWindowViewModel : ObservableObject
         }
     }
 
-    private async Task ExecuteAsync(string activityMessage, Func<Task<EnvironmentSnapshot>> action)
+    private void RegisterShareUrlSession(
+        LocalTunnelProfileCard profile,
+        TerminalSession terminalSession,
+        ProjectCard? project,
+        string commandText)
+    {
+        var localUrl = ResolveLocalTunnelLocalUrl(profile, terminalSession, project);
+        var key = $"{terminalSession.Id}-{profile.Key}";
+        var shareSession = new ShareUrlSessionCard(
+            key,
+            profile.Key,
+            profile.DisplayName,
+            profile.Provider,
+            localUrl,
+            commandText,
+            terminalSession.Id,
+            terminalSession.Title,
+            project?.Name ?? GetTerminalLaunchProfileValue(terminalSession.LaunchProfile, "LOCORA_PROJECT_NAME", string.Empty),
+            DateTimeOffset.Now,
+            CopyShareUrlCommand,
+            OpenShareUrlCommand,
+            StopShareUrlSessionCommand);
+
+        _shareSessionsByTerminalId[terminalSession.Id] = shareSession;
+        ShareUrlSessions.Insert(0, shareSession);
+        EnsureShareSessionMonitoring(terminalSession);
+        ExtractShareUrlFromTerminalSession(terminalSession);
+        NotifyShareUrlSessionCollectionProperties();
+    }
+
+    private void EnsureShareSessionMonitoring(TerminalSession terminalSession)
+    {
+        if (_shareMonitoredTerminalIds.Add(terminalSession.Id))
+        {
+            terminalSession.PropertyChanged += OnShareTerminalSessionPropertyChanged;
+        }
+    }
+
+    private void RemoveShareSessionMonitoring(TerminalSession terminalSession)
+    {
+        if (_shareMonitoredTerminalIds.Remove(terminalSession.Id))
+        {
+            terminalSession.PropertyChanged -= OnShareTerminalSessionPropertyChanged;
+        }
+    }
+
+    private void ExtractShareUrlFromTerminalSession(TerminalSession terminalSession)
+    {
+        if (!_shareSessionsByTerminalId.TryGetValue(terminalSession.Id, out var shareSession))
+        {
+            return;
+        }
+
+        var matches = PublicShareUrlRegex.Matches(terminalSession.Output);
+        for (var index = matches.Count - 1; index >= 0; index--)
+        {
+            var candidate = CleanShareUrl(matches[index].Value);
+            if (!IsPublicShareUrl(candidate))
+            {
+                continue;
+            }
+
+            shareSession.MarkPublicUrl(candidate);
+            NotifyShareUrlSessionStateChanged();
+            return;
+        }
+
+        if (!terminalSession.IsRunning && !shareSession.HasPublicUrl)
+        {
+            shareSession.MarkStopped("The tunnel terminal stopped before a public URL was detected.");
+            NotifyShareUrlSessionStateChanged();
+        }
+    }
+
+    private async Task<bool> ExecuteAsync(string activityMessage, Func<Task<EnvironmentSnapshot>> action)
     {
         if (IsBusy)
         {
-            return;
+            return false;
         }
 
         try
@@ -2294,16 +4051,42 @@ public sealed class MainWindowViewModel : ObservableObject
 
             var snapshot = await action();
             ApplySnapshot(snapshot);
+            return true;
         }
         catch (Exception exception)
         {
             _logger.LogError(exception, "Workbench action failed.");
             RecordActivity("Error", exception.Message);
+            return false;
         }
         finally
         {
             IsBusy = false;
         }
+    }
+
+    private async Task<bool> ConfirmPrivilegedActionAsync(
+        string title,
+        string message,
+        string primaryButtonText,
+        string cancellationMessage)
+    {
+        try
+        {
+            if (await _userConfirmationService.ConfirmAsync(title, message, primaryButtonText))
+            {
+                return true;
+            }
+
+            RecordActivity("Warning", cancellationMessage);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Could not show privileged action confirmation for {Title}.", title);
+            RecordActivity("Error", $"Privileged action confirmation failed: {exception.Message}");
+        }
+
+        return false;
     }
 
     private void ApplySnapshot(EnvironmentSnapshot snapshot)
@@ -2326,6 +4109,21 @@ public sealed class MainWindowViewModel : ObservableObject
                 service.Note ?? "No notes yet",
                 service.AutoStart)));
 
+        ReplaceCollection(
+            ServicePresets,
+            snapshot.ServicePresets.Select(preset => new ServicePresetCard(
+                preset.Key,
+                preset.DisplayName,
+                preset.Description,
+                preset.State,
+                preset.ServicesLabel,
+                CreateTagsLabel(preset.Tags),
+                preset.IsValid,
+                preset.Summary,
+                preset.Details,
+                StartServicePresetCommand,
+                StopServicePresetCommand)));
+
         ApplyProjects(snapshot.Projects);
 
         ReplaceCollection(
@@ -2343,7 +4141,8 @@ public sealed class MainWindowViewModel : ObservableObject
                 validation.IsValid ? "Valid" : "Invalid",
                 validation.Summary,
                 validation.Details,
-                validation.CheckedAt.LocalDateTime.ToString("g"))));
+                validation.CheckedAt.LocalDateTime.ToString("g"),
+                validation.Key)));
 
         ReplaceCollection(
             PortDiagnostics,
@@ -2531,6 +4330,7 @@ public sealed class MainWindowViewModel : ObservableObject
         _invalidStackProfileCount = snapshot.StackProfileSummary.InvalidProfileCount;
         _activeStackProfileKey = snapshot.StackProfileSummary.ActiveProfileKey;
         ApplyMailpitIntegration(snapshot);
+        RefreshNetworkGuidance();
 
         OnPropertyChanged(nameof(RunningServicesCount));
         OnPropertyChanged(nameof(TotalServicesCount));
@@ -2550,6 +4350,9 @@ public sealed class MainWindowViewModel : ObservableObject
         OnPropertyChanged(nameof(PackageDownloadChecksumLabel));
         OnPropertyChanged(nameof(PackageExtractionStatusLabel));
         OnPropertyChanged(nameof(RuntimePackageStatusLabel));
+        OnPropertyChanged(nameof(RuntimeBackupStatusLabel));
+        OnPropertyChanged(nameof(PortableRelocationValidationStatusLabel));
+        OnPropertyChanged(nameof(PortableRelocationValidationDetails));
         OnPropertyChanged(nameof(ToolPackageStatusLabel));
         OnPropertyChanged(nameof(StackProfileStatusLabel));
         OnPropertyChanged(nameof(HostsAccessDiagnosticLabel));
@@ -2576,6 +4379,7 @@ public sealed class MainWindowViewModel : ObservableObject
         ReplaceCollection(Projects, CreateProjectCards(projects));
         OnPropertyChanged(nameof(HasProjects));
         OnPropertyChanged(nameof(ShowProjectsEmptyState));
+        StartLocalTunnelCommand.NotifyCanExecuteChanged();
         NotifyFirstRunOnboardingProperties();
     }
 
@@ -2596,6 +4400,7 @@ public sealed class MainWindowViewModel : ObservableObject
                     CreateProjectTerminalLaunchProfile(project),
                     project.Description,
                     CreateTagsLabel(project.Tags),
+                    project.OverrideSummary,
                     isPinned,
                     isPinned ? "Unpin" : "Pin",
                     ToggleProjectPinCommand,
@@ -2623,13 +4428,17 @@ public sealed class MainWindowViewModel : ObservableObject
             ["LOCORA_DATA"] = _environmentPaths.DataRoot,
             ["LOCORA_LOGS"] = _environmentPaths.LogsRoot,
             ["LOCORA_TEMP"] = _environmentPaths.TempRoot,
+            ["LOCORA_PACKAGE_CACHE"] = _environmentPaths.PackageCacheRoot,
             ["LOCORA_TERMINAL_COMMANDS_FILE"] = _environmentPaths.TerminalCommandsSettingsFile,
+            ["LOCORA_CUSTOM_TOOLS_FILE"] = _environmentPaths.CustomToolsSettingsFile,
+            ["LOCORA_LOCAL_TUNNELS_FILE"] = _environmentPaths.LocalTunnelsSettingsFile,
             ["LOCORA_PROFILE"] = _lastSnapshot?.ActiveProfile ?? "Bootstrap",
             ["LOCORA_PROJECT_NAME"] = project.Name,
             ["LOCORA_PROJECT_ROOT"] = project.Path,
             ["LOCORA_PROJECT_URL"] = project.Url,
             ["LOCORA_PROJECT_RUNTIME"] = project.Runtime,
             ["LOCORA_PROJECT_HTTPS"] = project.UsesHttps ? "1" : "0",
+            ["LOCORA_PROJECT_OVERRIDES"] = project.OverrideSummary,
             ["LOCORA_PROJECT_TAGS"] = string.Join(",", project.Tags)
         };
 
@@ -2660,7 +4469,10 @@ public sealed class MainWindowViewModel : ObservableObject
             ["LOCORA_DATA"] = _environmentPaths.DataRoot,
             ["LOCORA_LOGS"] = _environmentPaths.LogsRoot,
             ["LOCORA_TEMP"] = _environmentPaths.TempRoot,
+            ["LOCORA_PACKAGE_CACHE"] = _environmentPaths.PackageCacheRoot,
             ["LOCORA_TERMINAL_COMMANDS_FILE"] = _environmentPaths.TerminalCommandsSettingsFile,
+            ["LOCORA_CUSTOM_TOOLS_FILE"] = _environmentPaths.CustomToolsSettingsFile,
+            ["LOCORA_LOCAL_TUNNELS_FILE"] = _environmentPaths.LocalTunnelsSettingsFile,
             ["LOCORA_PROFILE"] = _lastSnapshot?.ActiveProfile ?? "Bootstrap"
         };
         var pathEntries = new List<string>();
@@ -2684,7 +4496,10 @@ public sealed class MainWindowViewModel : ObservableObject
             ["LOCORA_DATA"] = _environmentPaths.DataRoot,
             ["LOCORA_LOGS"] = _environmentPaths.LogsRoot,
             ["LOCORA_TEMP"] = _environmentPaths.TempRoot,
+            ["LOCORA_PACKAGE_CACHE"] = _environmentPaths.PackageCacheRoot,
             ["LOCORA_TERMINAL_COMMANDS_FILE"] = _environmentPaths.TerminalCommandsSettingsFile,
+            ["LOCORA_CUSTOM_TOOLS_FILE"] = _environmentPaths.CustomToolsSettingsFile,
+            ["LOCORA_LOCAL_TUNNELS_FILE"] = _environmentPaths.LocalTunnelsSettingsFile,
             ["LOCORA_PROFILE"] = _lastSnapshot?.ActiveProfile ?? "Bootstrap",
             ["LOCORA_SHELL_CONTEXT_ROOT"] = folderPath,
             ["LOCORA_WORKING_DIRECTORY"] = folderPath
@@ -3218,6 +5033,15 @@ public sealed class MainWindowViewModel : ObservableObject
 
     private void OnTerminalSessionsChanged(object? sender, NotifyCollectionChangedEventArgs args)
     {
+        if (args.OldItems is not null)
+        {
+            foreach (var oldItem in args.OldItems.OfType<TerminalSession>())
+            {
+                MarkShareSessionStopped(oldItem, "The terminal session for this share URL was closed.");
+                RemoveShareSessionMonitoring(oldItem);
+            }
+        }
+
         if (SelectedTerminalSession is null && TerminalSessions.Count > 0)
         {
             SelectedTerminalSession = TerminalSessions[^1];
@@ -3229,6 +5053,7 @@ public sealed class MainWindowViewModel : ObservableObject
 
         NotifyTerminalCollectionProperties();
         NotifySelectedTerminalCommandProperties();
+        NotifyShareUrlSessionStateChanged();
     }
 
     private void OnSelectedTerminalSessionPropertyChanged(object? sender, PropertyChangedEventArgs args)
@@ -3249,6 +5074,35 @@ public sealed class MainWindowViewModel : ObservableObject
         }
     }
 
+    private void OnShareTerminalSessionPropertyChanged(object? sender, PropertyChangedEventArgs args)
+    {
+        if (sender is not TerminalSession terminalSession)
+        {
+            return;
+        }
+
+        if (args.PropertyName is nameof(TerminalSession.Output))
+        {
+            ExtractShareUrlFromTerminalSession(terminalSession);
+        }
+
+        if (args.PropertyName is nameof(TerminalSession.IsRunning) && !terminalSession.IsRunning)
+        {
+            MarkShareSessionStopped(terminalSession, "The tunnel terminal process stopped.");
+        }
+    }
+
+    private void MarkShareSessionStopped(TerminalSession terminalSession, string details)
+    {
+        if (!_shareSessionsByTerminalId.TryGetValue(terminalSession.Id, out var shareSession) || !shareSession.IsRunning)
+        {
+            return;
+        }
+
+        shareSession.MarkStopped(details);
+        NotifyShareUrlSessionStateChanged();
+    }
+
     private void NotifyTerminalCollectionProperties()
     {
         OnPropertyChanged(nameof(TerminalSessionSummary));
@@ -3264,12 +5118,129 @@ public sealed class MainWindowViewModel : ObservableObject
         OnPropertyChanged(nameof(SelectedTerminalCommandResolvedText));
     }
 
+    private void NotifyCustomToolsCollectionProperties()
+    {
+        OnPropertyChanged(nameof(HasCustomTools));
+        OnPropertyChanged(nameof(ShowCustomToolsEmptyState));
+        RunCustomToolCommand.NotifyCanExecuteChanged();
+    }
+
+    private void NotifyLocalTunnelsCollectionProperties()
+    {
+        OnPropertyChanged(nameof(HasLocalTunnels));
+        OnPropertyChanged(nameof(ShowLocalTunnelsEmptyState));
+        StartLocalTunnelCommand.NotifyCanExecuteChanged();
+    }
+
+    private void NotifyShareUrlSessionCollectionProperties()
+    {
+        OnPropertyChanged(nameof(HasShareUrlSessions));
+        OnPropertyChanged(nameof(ShowShareUrlSessionsEmptyState));
+        NotifyShareUrlSessionStateChanged();
+    }
+
+    private void NotifyShareUrlSessionStateChanged()
+    {
+        OnPropertyChanged(nameof(ShareUrlLifecycleSummary));
+        CopyShareUrlCommand.NotifyCanExecuteChanged();
+        OpenShareUrlCommand.NotifyCanExecuteChanged();
+        StopShareUrlSessionCommand.NotifyCanExecuteChanged();
+        ClearStoppedShareUrlsCommand.NotifyCanExecuteChanged();
+    }
+
+    private void NotifyNetworkGuidanceCollectionProperties()
+    {
+        OnPropertyChanged(nameof(HasNetworkGuidance));
+        OnPropertyChanged(nameof(ShowNetworkGuidanceEmptyState));
+        OnPropertyChanged(nameof(NetworkGuidanceSummary));
+    }
+
+    private void RefreshNetworkGuidance()
+    {
+        ReplaceCollection(NetworkGuidance, CreateNetworkGuidanceCards());
+        NotifyNetworkGuidanceCollectionProperties();
+    }
+
+    private IEnumerable<NetworkGuidanceCard> CreateNetworkGuidanceCards()
+    {
+        var services = (_lastSnapshot?.Services ?? Array.Empty<ServiceDescriptor>())
+            .Where(service => service.Port is > 0)
+            .OrderBy(service => service.Port)
+            .ThenBy(service => service.DisplayName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var enabledTunnels = LocalTunnels
+            .Where(profile => profile.IsEnabled)
+            .OrderBy(profile => profile.DisplayName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        yield return new NetworkGuidanceCard(
+            "local-only-default",
+            "Local-only default",
+            "Baseline",
+            CreatePortListLabel(services.Select(service => service.Port!.Value)),
+            "Locora project domains and managed services are intended for local development by default.",
+            "The generated hosts entries resolve to this Windows machine. Keep services bound to localhost unless another device on your private network needs temporary access.",
+            "Use normal project URLs for local browser testing and avoid broad inbound firewall rules for everyday development.",
+            "Info");
+
+        yield return new NetworkGuidanceCard(
+            "windows-firewall-inbound",
+            "Windows Firewall inbound rules",
+            "LAN testing",
+            CreatePortListLabel(services.Select(service => service.Port!.Value)),
+            CreateServicePortSummary(services),
+            "Inbound Windows Firewall rules are only needed when another device connects directly to a Locora service over the LAN.",
+            "Allow only the required TCP ports on the Private network profile, then remove or disable the rule after testing.",
+            "Warning");
+
+        yield return new NetworkGuidanceCard(
+            "local-tunnel-outbound",
+            "Local tunnel network path",
+            "Public URL",
+            CreateTunnelTargetLabel(enabledTunnels),
+            CreateTunnelProfileSummary(enabledTunnels),
+            "Tunnel CLIs usually create outbound connections to their provider, so provider-generated public URLs normally do not require Windows Firewall inbound rules.",
+            "Allow outbound DNS and HTTPS or WebSocket traffic for the tunnel CLI, and stop the tunnel terminal when sharing is finished.",
+            "Warning");
+
+        var dataServices = services
+            .Where(IsDataService)
+            .ToList();
+        if (dataServices.Count > 0)
+        {
+            yield return new NetworkGuidanceCard(
+                "data-service-exposure",
+                "Database and cache exposure",
+                "Data services",
+                CreatePortListLabel(dataServices.Select(service => service.Port!.Value)),
+                $"{dataServices.Count} database, cache, SMTP, or data-service port{(dataServices.Count == 1 ? string.Empty : "s")} configured.",
+                "Database, cache, and test-mail services can expose credentials, test data, or captured mail if shared directly.",
+                "Share only the HTTP or HTTPS app port unless you explicitly need data-service access on a trusted private network.",
+                "Warning");
+        }
+
+        if (_lastSnapshot?.SslStatus.HttpsProjectCount > 0)
+        {
+            yield return new NetworkGuidanceCard(
+                "https-trust-boundary",
+                "HTTPS trust boundary",
+                "Certificates",
+                $"{_lastSnapshot.SslStatus.HttpsProjectCount} HTTPS project{(_lastSnapshot.SslStatus.HttpsProjectCount == 1 ? string.Empty : "s")}",
+                "Locora's local CA trust applies to this Windows user and machine.",
+                "Other LAN devices and public tunnel visitors will not automatically trust local project certificates.",
+                "Use provider-managed tunnel TLS for public URLs, or install the Locora CA only on trusted test devices.",
+                "Info");
+        }
+    }
+
     private void NotifySelectedTerminalCommandProperties()
     {
         OnPropertyChanged(nameof(HasSelectedTerminalCommand));
         OnPropertyChanged(nameof(SelectedTerminalCommandHint));
         OnPropertyChanged(nameof(SelectedTerminalCommandResolvedText));
         RunTerminalCommandCommand.NotifyCanExecuteChanged();
+        RunCustomToolCommand.NotifyCanExecuteChanged();
+        StartLocalTunnelCommand.NotifyCanExecuteChanged();
     }
 
     private void NotifySelectedTerminalProperties()
@@ -3282,6 +5253,7 @@ public sealed class MainWindowViewModel : ObservableObject
         SendTerminalInputCommand.NotifyCanExecuteChanged();
         StopTerminalSessionCommand.NotifyCanExecuteChanged();
         RunTerminalCommandCommand.NotifyCanExecuteChanged();
+        StartLocalTunnelCommand.NotifyCanExecuteChanged();
     }
 
     private void ExecuteProjectAction(ProjectCard? project, string level, string activityPrefix, Action<ProjectCard> action)
@@ -3340,6 +5312,8 @@ public sealed class MainWindowViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(HasServices));
         OnPropertyChanged(nameof(ShowServicesEmptyState));
+        OnPropertyChanged(nameof(HasServicePresets));
+        OnPropertyChanged(nameof(ShowServicePresetsEmptyState));
         OnPropertyChanged(nameof(HasProjects));
         OnPropertyChanged(nameof(ShowProjectsEmptyState));
         OnPropertyChanged(nameof(HasHealthIssues));
@@ -3457,6 +5431,50 @@ public sealed class MainWindowViewModel : ObservableObject
         }
     }
 
+    private async Task LoadCustomToolsAsync()
+    {
+        try
+        {
+            var document = NormalizeCustomToolsDocument(await ReadCustomToolsDocumentAsync());
+            ReplaceCollection(CustomTools, CreateCustomToolMenuItems(document));
+            CustomToolsStatus = CustomTools.Count == 0
+                ? "No custom tools are configured."
+                : $"{CustomTools.Count} custom tool{(CustomTools.Count == 1 ? string.Empty : "s")} loaded from custom-tools.json.";
+            NotifyCustomToolsCollectionProperties();
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Failed to load custom tool settings.");
+            ReplaceCollection(CustomTools, Array.Empty<CustomToolMenuItem>());
+            CustomToolsStatus = $"Custom tool settings could not be loaded: {exception.Message}";
+            NotifyCustomToolsCollectionProperties();
+            RecordActivity("Warning", CustomToolsStatus);
+        }
+    }
+
+    private async Task LoadLocalTunnelsAsync()
+    {
+        try
+        {
+            var document = NormalizeLocalTunnelsDocument(await ReadLocalTunnelsDocumentAsync());
+            ReplaceCollection(LocalTunnels, CreateLocalTunnelProfileCards(document));
+            LocalTunnelsStatus = LocalTunnels.Count == 0
+                ? "No local tunnel profiles are configured."
+                : $"{LocalTunnels.Count} local tunnel profile{(LocalTunnels.Count == 1 ? string.Empty : "s")} loaded from local-tunnels.json.";
+            NotifyLocalTunnelsCollectionProperties();
+            RefreshNetworkGuidance();
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Failed to load local tunnel profiles.");
+            ReplaceCollection(LocalTunnels, Array.Empty<LocalTunnelProfileCard>());
+            LocalTunnelsStatus = $"Local tunnel profiles could not be loaded: {exception.Message}";
+            NotifyLocalTunnelsCollectionProperties();
+            RefreshNetworkGuidance();
+            RecordActivity("Warning", LocalTunnelsStatus);
+        }
+    }
+
     private async Task LoadProjectPinsAsync()
     {
         try
@@ -3511,6 +5529,30 @@ public sealed class MainWindowViewModel : ObservableObject
         return await JsonSerializer.DeserializeAsync<TerminalCommandsDocument>(stream, ProjectSettingsSerializerOptions);
     }
 
+    private async Task<CustomToolsDocument?> ReadCustomToolsDocumentAsync()
+    {
+        var settingsPath = _environmentPaths.CustomToolsSettingsFile;
+        if (!File.Exists(settingsPath))
+        {
+            return null;
+        }
+
+        await using var stream = File.OpenRead(settingsPath);
+        return await JsonSerializer.DeserializeAsync<CustomToolsDocument>(stream, ProjectSettingsSerializerOptions);
+    }
+
+    private async Task<LocalTunnelsDocument?> ReadLocalTunnelsDocumentAsync()
+    {
+        var settingsPath = _environmentPaths.LocalTunnelsSettingsFile;
+        if (!File.Exists(settingsPath))
+        {
+            return null;
+        }
+
+        await using var stream = File.OpenRead(settingsPath);
+        return await JsonSerializer.DeserializeAsync<LocalTunnelsDocument>(stream, ProjectSettingsSerializerOptions);
+    }
+
     private static ProjectSettingsDocument NormalizeProjectSettingsDocument(ProjectSettingsDocument? document)
     {
         if (document?.LocoraProjects is null)
@@ -3527,7 +5569,8 @@ public sealed class MainWindowViewModel : ObservableObject
                     : settings.DomainSuffix.Trim(),
                 DefaultScheme = NormalizeGeneratedDomainScheme(settings.DefaultScheme),
                 IndexFileNames = NormalizeConfiguredNames(settings.IndexFileNames, DefaultIndexFileNames),
-                IgnoredDirectoryNames = NormalizeConfiguredNames(settings.IgnoredDirectoryNames, DefaultIgnoredDirectoryNames)
+                IgnoredDirectoryNames = NormalizeConfiguredNames(settings.IgnoredDirectoryNames, DefaultIgnoredDirectoryNames),
+                ProjectOverrides = settings.ProjectOverrides ?? Array.Empty<ProjectOverrideSettings>()
             });
     }
 
@@ -3539,6 +5582,26 @@ public sealed class MainWindowViewModel : ObservableObject
         }
 
         return CreateDefaultTerminalCommandsDocument();
+    }
+
+    private static CustomToolsDocument NormalizeCustomToolsDocument(CustomToolsDocument? document)
+    {
+        if (document?.LocoraTools?.Tools is { Count: > 0 })
+        {
+            return document;
+        }
+
+        return CreateDefaultCustomToolsDocument();
+    }
+
+    private static LocalTunnelsDocument NormalizeLocalTunnelsDocument(LocalTunnelsDocument? document)
+    {
+        if (document?.LocoraTunnels?.Profiles is { Count: > 0 })
+        {
+            return document;
+        }
+
+        return CreateDefaultLocalTunnelsDocument();
     }
 
     private static TerminalCommandsDocument CreateDefaultTerminalCommandsDocument()
@@ -3556,6 +5619,30 @@ public sealed class MainWindowViewModel : ObservableObject
                     new TerminalCommandSettings("composer-install", "Composer install", "cinst", "Install PHP project dependencies in the selected project terminal tab.", "composer install", "project", new[] { "composer", "php", "dependencies", "project" }),
                     new TerminalCommandSettings("npm-install", "NPM install", "npmi", "Install Node.js project dependencies in the selected project terminal tab.", "npm install", "project", new[] { "npm", "node", "dependencies", "project" }),
                     new TerminalCommandSettings("npm-dev", "NPM dev server", "npmdev", "Start the common npm development server in the selected project terminal tab.", "npm run dev", "project", new[] { "npm", "node", "dev", "project" })
+                }));
+    }
+
+    private static CustomToolsDocument CreateDefaultCustomToolsDocument()
+    {
+        return new CustomToolsDocument(
+            new CustomToolsSection(
+                new[]
+                {
+                    new CustomToolSettings("open-localhost", "Open localhost", "Open the default local HTTP endpoint in the browser.", "url", "http://localhost/", "root", new[] { "browser", "web" }, true),
+                    new CustomToolSettings("open-config-folder", "Open config folder", "Open Locora's portable configuration folder.", "folder", "{configRoot}", "root", new[] { "config", "folder" }, true),
+                    new CustomToolSettings("composer-diagnose", "Composer diagnose", "Run Composer diagnostics in the selected project terminal tab.", "terminal", "composer diagnose", "project", new[] { "composer", "php", "diagnostics" }, true)
+                }));
+    }
+
+    private static LocalTunnelsDocument CreateDefaultLocalTunnelsDocument()
+    {
+        return new LocalTunnelsDocument(
+            new LocalTunnelsSection(
+                new[]
+                {
+                    new LocalTunnelSettings("cloudflared-selected-project", "Cloudflared quick tunnel", "cloudflared", "Expose the selected project URL through a temporary Cloudflare Tunnel.", "cloudflared tunnel --url {localUrl}", "project", string.Empty, "{projectUrl}", 80, new[] { "share", "cloudflared", "temporary" }, true),
+                    new LocalTunnelSettings("ngrok-http-80", "Ngrok HTTP 80", "ngrok", "Expose the default local web server port with ngrok.", "ngrok http {port}", "root", string.Empty, "http://127.0.0.1:{port}", 80, new[] { "share", "ngrok", "http" }, true),
+                    new LocalTunnelSettings("dev-tunnel-http-80", "Dev Tunnel HTTP 80", "devtunnel", "Expose the default local web server port with Microsoft dev tunnels.", "devtunnel host -p {port} --allow-anonymous", "root", string.Empty, "http://127.0.0.1:{port}", 80, new[] { "share", "devtunnel", "http" }, true)
                 }));
     }
 
@@ -3591,6 +5678,77 @@ public sealed class MainWindowViewModel : ObservableObject
         }
     }
 
+    private IEnumerable<CustomToolMenuItem> CreateCustomToolMenuItems(CustomToolsDocument document)
+    {
+        var uniqueKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var tool in document.LocoraTools.Tools)
+        {
+            var target = tool.Target?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(target))
+            {
+                continue;
+            }
+
+            var displayName = string.IsNullOrWhiteSpace(tool.DisplayName)
+                ? target
+                : tool.DisplayName.Trim();
+            var key = CreateTerminalCommandKey(tool.Key, displayName, string.Empty);
+            if (!uniqueKeys.Add(key))
+            {
+                continue;
+            }
+
+            yield return new CustomToolMenuItem(
+                key,
+                displayName,
+                tool.Description?.Trim() ?? string.Empty,
+                NormalizeCustomToolAction(tool.Action),
+                target,
+                NormalizeTerminalCommandScope(tool.Scope),
+                NormalizeConfiguredNames(tool.Tags, Array.Empty<string>()),
+                tool.IsEnabled ?? true,
+                RunCustomToolCommand);
+        }
+    }
+
+    private IEnumerable<LocalTunnelProfileCard> CreateLocalTunnelProfileCards(LocalTunnelsDocument document)
+    {
+        var uniqueKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var profile in document.LocoraTunnels.Profiles)
+        {
+            var commandText = profile.CommandText?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(commandText))
+            {
+                continue;
+            }
+
+            var displayName = string.IsNullOrWhiteSpace(profile.DisplayName)
+                ? commandText
+                : profile.DisplayName.Trim();
+            var key = CreateTerminalCommandKey(profile.Key, displayName, string.Empty);
+            if (!uniqueKeys.Add(key))
+            {
+                continue;
+            }
+
+            yield return new LocalTunnelProfileCard(
+                key,
+                displayName,
+                profile.Provider?.Trim() ?? string.Empty,
+                profile.Description?.Trim() ?? string.Empty,
+                commandText,
+                NormalizeTerminalCommandScope(profile.Scope),
+                profile.ProjectName?.Trim() ?? string.Empty,
+                profile.LocalUrl?.Trim() ?? string.Empty,
+                profile.Port,
+                NormalizeConfiguredNames(profile.Tags, Array.Empty<string>()),
+                profile.IsEnabled ?? true,
+                StartLocalTunnelCommand);
+        }
+    }
+
     private static string CreateTerminalCommandKey(string? key, string displayName, string? alias)
     {
         var preferred = string.IsNullOrWhiteSpace(key)
@@ -3616,6 +5774,211 @@ public sealed class MainWindowViewModel : ObservableObject
         return string.IsNullOrWhiteSpace(normalized)
             ? "command"
             : normalized;
+    }
+
+    private string ResolveLocalTunnelCommandText(LocalTunnelProfileCard profile, TerminalSession session, ProjectCard? project)
+    {
+        var launchProfile = session.LaunchProfile;
+        var localUrl = ResolveLocalTunnelLocalUrl(profile, session, project);
+        var port = profile.Port?.ToString() ?? ExtractPortFromUrl(localUrl) ?? "80";
+        var extraReplacements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["{localUrl}"] = localUrl,
+            ["{port}"] = port,
+            ["{tunnelKey}"] = profile.Key,
+            ["{tunnelName}"] = profile.DisplayName,
+            ["{tunnelProvider}"] = profile.Provider
+        };
+
+        return ResolveLocalTunnelTemplate(
+            profile.CommandText,
+            launchProfile,
+            session,
+            profile,
+            project,
+            extraReplacements).Trim();
+    }
+
+    private string ResolveLocalTunnelLocalUrl(LocalTunnelProfileCard profile, TerminalSession session, ProjectCard? project)
+    {
+        var resolvedLocalUrl = ResolveLocalTunnelTemplate(
+            string.IsNullOrWhiteSpace(profile.LocalUrl) ? "{projectUrl}" : profile.LocalUrl,
+            session.LaunchProfile,
+            session,
+            profile,
+            project,
+            extraReplacements: null);
+        var port = profile.Port?.ToString() ?? ExtractPortFromUrl(resolvedLocalUrl) ?? "80";
+
+        return string.IsNullOrWhiteSpace(resolvedLocalUrl)
+            ? $"http://127.0.0.1:{port}"
+            : resolvedLocalUrl;
+    }
+
+    private string ResolveLocalTunnelTemplate(
+        string template,
+        ProjectTerminalLaunchProfile launchProfile,
+        TerminalSession? session,
+        LocalTunnelProfileCard profile,
+        ProjectCard? project,
+        IReadOnlyDictionary<string, string>? extraReplacements)
+    {
+        if (string.IsNullOrWhiteSpace(template))
+        {
+            return string.Empty;
+        }
+
+        var environmentVariables = launchProfile.EnvironmentVariables;
+        var workingDirectory = session?.WorkingDirectory ?? launchProfile.WorkingDirectory;
+        var projectRoot = project?.Folder ?? GetTerminalLaunchProfileValue(launchProfile, "LOCORA_PROJECT_ROOT", workingDirectory);
+        var projectName = project?.Name ?? GetTerminalLaunchProfileValue(launchProfile, "LOCORA_PROJECT_NAME", Path.GetFileName(projectRoot));
+        var appUrl = GetTerminalLaunchProfileValue(launchProfile, "APP_URL", string.Empty);
+        var projectUrl = project?.Url ?? GetTerminalLaunchProfileValue(launchProfile, "LOCORA_PROJECT_URL", appUrl);
+        var replacements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["{aliasesRoot}"] = _environmentPaths.AliasesRoot,
+            ["{appUrl}"] = appUrl,
+            ["{binRoot}"] = _environmentPaths.BinRoot,
+            ["{configRoot}"] = _environmentPaths.ConfigRoot,
+            ["{cwd}"] = workingDirectory,
+            ["{customToolsFile}"] = _environmentPaths.CustomToolsSettingsFile,
+            ["{dataRoot}"] = _environmentPaths.DataRoot,
+            ["{localTunnelsFile}"] = _environmentPaths.LocalTunnelsSettingsFile,
+            ["{locoraProfile}"] = GetTerminalLaunchProfileValue(launchProfile, "LOCORA_PROFILE", _lastSnapshot?.ActiveProfile ?? "Bootstrap"),
+            ["{locoraRoot}"] = _environmentPaths.AppRoot,
+            ["{logsRoot}"] = _environmentPaths.LogsRoot,
+            ["{projectName}"] = projectName,
+            ["{projectRoot}"] = projectRoot,
+            ["{projectUrl}"] = projectUrl,
+            ["{sessionTitle}"] = session?.Title ?? "Locora root",
+            ["{tempRoot}"] = _environmentPaths.TempRoot,
+            ["{terminalCommandsFile}"] = _environmentPaths.TerminalCommandsSettingsFile,
+            ["{userRoot}"] = _environmentPaths.UserRoot,
+            ["{workingDirectory}"] = workingDirectory
+        };
+
+        if (Uri.TryCreate(projectUrl, UriKind.Absolute, out var projectUri))
+        {
+            replacements["{projectHost}"] = projectUri.Host;
+            replacements["{projectScheme}"] = projectUri.Scheme;
+        }
+
+        if (profile.Port is { } port)
+        {
+            replacements["{port}"] = port.ToString();
+        }
+
+        if (extraReplacements is not null)
+        {
+            foreach (var pair in extraReplacements)
+            {
+                replacements[pair.Key] = pair.Value;
+            }
+        }
+
+        var resolved = template;
+        foreach (var pair in replacements)
+        {
+            resolved = resolved.Replace(pair.Key, pair.Value, StringComparison.OrdinalIgnoreCase);
+        }
+
+        resolved = Regex.Replace(
+            resolved,
+            @"\{env:([A-Za-z0-9_]+)\}",
+            match =>
+            {
+                var key = match.Groups[1].Value;
+                return environmentVariables.TryGetValue(key, out var value)
+                    ? value
+                    : Environment.GetEnvironmentVariable(key) ?? match.Value;
+            },
+            RegexOptions.IgnoreCase);
+
+        return resolved.Trim();
+    }
+
+    private ProjectCard? ResolveLocalTunnelProject(LocalTunnelProfileCard profile)
+    {
+        if (!string.IsNullOrWhiteSpace(profile.ProjectName))
+        {
+            return FindProjectCard(profile.ProjectName);
+        }
+
+        if (NormalizeTerminalCommandScope(profile.Scope) != "project")
+        {
+            return null;
+        }
+
+        if (SelectedTerminalSession?.IsProjectScoped == true &&
+            SelectedTerminalSession.LaunchProfile.EnvironmentVariables.TryGetValue("LOCORA_PROJECT_ROOT", out var selectedProjectRoot))
+        {
+            var selectedProject = Projects.FirstOrDefault(project =>
+                string.Equals(project.Folder, selectedProjectRoot, StringComparison.OrdinalIgnoreCase));
+            if (selectedProject is not null)
+            {
+                return selectedProject;
+            }
+        }
+
+        return Projects.FirstOrDefault(project => project.IsPinned) ?? Projects.FirstOrDefault();
+    }
+
+    private ProjectCard? FindProjectCard(string value)
+    {
+        var normalized = value.Trim();
+        return Projects.FirstOrDefault(project =>
+            project.Key.Equals(normalized, StringComparison.OrdinalIgnoreCase) ||
+            project.Name.Equals(normalized, StringComparison.OrdinalIgnoreCase) ||
+            project.Folder.Equals(normalized, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string? ExtractPortFromUrl(string value)
+    {
+        return Uri.TryCreate(value, UriKind.Absolute, out var uri) && !uri.IsDefaultPort
+            ? uri.Port.ToString()
+            : null;
+    }
+
+    private static string CleanShareUrl(string value)
+    {
+        return value.Trim().TrimEnd('.', ',', ';', ':', ')', ']', '}', '"', '\'');
+    }
+
+    private static bool IsPublicShareUrl(string value)
+    {
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var uri) ||
+            (!uri.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase) &&
+                !uri.Scheme.Equals("https", StringComparison.OrdinalIgnoreCase)) ||
+            string.IsNullOrWhiteSpace(uri.Host))
+        {
+            return false;
+        }
+
+        var host = uri.Host.Trim('[', ']').ToLowerInvariant();
+        if (host is "localhost" or "127.0.0.1" or "::1" ||
+            host.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase) ||
+            host.EndsWith(".test", StringComparison.OrdinalIgnoreCase) ||
+            host.EndsWith(".local", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (!System.Net.IPAddress.TryParse(host, out var address))
+        {
+            return true;
+        }
+
+        if (System.Net.IPAddress.IsLoopback(address))
+        {
+            return false;
+        }
+
+        var bytes = address.GetAddressBytes();
+        return bytes.Length != 4 ||
+            (bytes[0] != 10 &&
+                bytes[0] != 127 &&
+                !(bytes[0] == 172 && bytes[1] is >= 16 and <= 31) &&
+                !(bytes[0] == 192 && bytes[1] == 168));
     }
 
     private string ResolveTerminalCommandText(TerminalQuickCommand command, TerminalSession? session = null)
@@ -3669,6 +6032,72 @@ public sealed class MainWindowViewModel : ObservableObject
         return resolved.Trim();
     }
 
+    private string ResolveCustomToolTarget(CustomToolMenuItem tool)
+    {
+        var targetSession = NormalizeTerminalCommandScope(tool.Scope) == "project"
+            ? TryGetProjectTerminalSessionForCommand()
+            : SelectedTerminalSession;
+        var launchProfile = targetSession?.LaunchProfile ?? CreateRootTerminalLaunchProfile();
+        var environmentVariables = launchProfile.EnvironmentVariables;
+        var workingDirectory = targetSession?.WorkingDirectory ?? launchProfile.WorkingDirectory;
+        var projectRoot = GetTerminalLaunchProfileValue(launchProfile, "LOCORA_PROJECT_ROOT", workingDirectory);
+        var projectName = GetTerminalLaunchProfileValue(launchProfile, "LOCORA_PROJECT_NAME", Path.GetFileName(projectRoot));
+        var appUrl = GetTerminalLaunchProfileValue(launchProfile, "APP_URL", string.Empty);
+        var projectUrl = GetTerminalLaunchProfileValue(launchProfile, "LOCORA_PROJECT_URL", appUrl);
+        var replacements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["{aliasesRoot}"] = _environmentPaths.AliasesRoot,
+            ["{appUrl}"] = appUrl,
+            ["{binRoot}"] = _environmentPaths.BinRoot,
+            ["{configRoot}"] = _environmentPaths.ConfigRoot,
+            ["{cwd}"] = workingDirectory,
+            ["{customToolsFile}"] = _environmentPaths.CustomToolsSettingsFile,
+            ["{dataRoot}"] = _environmentPaths.DataRoot,
+            ["{locoraProfile}"] = GetTerminalLaunchProfileValue(launchProfile, "LOCORA_PROFILE", _lastSnapshot?.ActiveProfile ?? "Bootstrap"),
+            ["{locoraRoot}"] = _environmentPaths.AppRoot,
+            ["{logsRoot}"] = _environmentPaths.LogsRoot,
+            ["{projectName}"] = projectName,
+            ["{projectRoot}"] = projectRoot,
+            ["{projectUrl}"] = projectUrl,
+            ["{tempRoot}"] = _environmentPaths.TempRoot,
+            ["{terminalCommandsFile}"] = _environmentPaths.TerminalCommandsSettingsFile,
+            ["{userRoot}"] = _environmentPaths.UserRoot,
+            ["{workingDirectory}"] = workingDirectory
+        };
+
+        var resolved = tool.Target;
+        foreach (var pair in replacements)
+        {
+            resolved = resolved.Replace(pair.Key, pair.Value, StringComparison.OrdinalIgnoreCase);
+        }
+
+        resolved = Regex.Replace(
+            resolved,
+            @"\{env:([A-Za-z0-9_]+)\}",
+            match =>
+            {
+                var key = match.Groups[1].Value;
+                return environmentVariables.TryGetValue(key, out var value)
+                    ? value
+                    : Environment.GetEnvironmentVariable(key) ?? match.Value;
+            },
+            RegexOptions.IgnoreCase);
+
+        return resolved.Trim();
+    }
+
+    private string ResolveCustomToolPath(string target)
+    {
+        if (string.IsNullOrWhiteSpace(target))
+        {
+            return target;
+        }
+
+        return Path.GetFullPath(Path.IsPathRooted(target)
+            ? target
+            : Path.Combine(_environmentPaths.AppRoot, target));
+    }
+
     private static string GetTerminalLaunchProfileValue(ProjectTerminalLaunchProfile launchProfile, string key, string fallback)
     {
         return launchProfile.EnvironmentVariables.TryGetValue(key, out var value) &&
@@ -3689,6 +6118,28 @@ public sealed class MainWindowViewModel : ObservableObject
             "project" => "project",
             "root" => "root",
             _ => "any"
+        };
+    }
+
+    private static string NormalizeCustomToolAction(string? action)
+    {
+        if (string.IsNullOrWhiteSpace(action))
+        {
+            return "terminal";
+        }
+
+        return action.Trim().ToLowerInvariant() switch
+        {
+            "url" => "url",
+            "browser" => "url",
+            "folder" => "folder",
+            "directory" => "folder",
+            "file" => "file",
+            "editor" => "editor",
+            "terminal" => "terminal",
+            "command" => "terminal",
+            "shell" => "terminal",
+            _ => action.Trim().ToLowerInvariant()
         };
     }
 
@@ -3733,6 +6184,727 @@ public sealed class MainWindowViewModel : ObservableObject
         return true;
     }
 
+    private bool TryResolveProfileTransferPath(out string resolvedPath, out string validationMessage)
+    {
+        resolvedPath = string.Empty;
+        validationMessage = string.Empty;
+
+        var candidate = (ProfileTransferPath ?? string.Empty).Trim().Trim('"');
+        if (string.IsNullOrWhiteSpace(candidate))
+        {
+            validationMessage = "Enter a profile import/export JSON file path.";
+            return false;
+        }
+
+        try
+        {
+            resolvedPath = Path.GetFullPath(Path.IsPathRooted(candidate)
+                ? candidate
+                : Path.Combine(_environmentPaths.ProfilesRoot, candidate));
+            return true;
+        }
+        catch (Exception exception)
+        {
+            validationMessage = $"Profile import/export path is invalid: {exception.Message}";
+            return false;
+        }
+    }
+
+    private bool TryResolveConfigRestorePath(out string resolvedPath, out string validationMessage)
+    {
+        resolvedPath = string.Empty;
+        validationMessage = string.Empty;
+
+        var candidate = (ConfigRestorePath ?? string.Empty).Trim().Trim('"');
+        if (string.IsNullOrWhiteSpace(candidate))
+        {
+            validationMessage = "Enter a config backup zip path to restore.";
+            return false;
+        }
+
+        try
+        {
+            resolvedPath = Path.GetFullPath(Path.IsPathRooted(candidate)
+                ? candidate
+                : Path.Combine(ConfigBackupRootPath, candidate));
+        }
+        catch (Exception exception)
+        {
+            validationMessage = $"Config restore path is invalid: {exception.Message}";
+            return false;
+        }
+
+        if (!string.Equals(Path.GetExtension(resolvedPath), ".zip", StringComparison.OrdinalIgnoreCase))
+        {
+            validationMessage = $"Config restore expects a .zip archive: {resolvedPath}";
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task<ConfigBackupArchiveResult> CreateConfigBackupArchiveAsync(string fileNamePrefix)
+    {
+        Directory.CreateDirectory(ConfigBackupRootPath);
+
+        if (!Directory.Exists(ConfigRoot))
+        {
+            throw new DirectoryNotFoundException($"Configuration folder was not found: {ConfigRoot}");
+        }
+
+        var backupPath = CreateUniqueConfigBackupArchivePath(fileNamePrefix);
+        var files = EnumerateConfigBackupFiles().ToList();
+
+        using (var archive = ZipFile.Open(backupPath, ZipArchiveMode.Create))
+        {
+            foreach (var file in files)
+            {
+                var relativePath = Path.GetRelativePath(ConfigRoot, file).Replace('\\', '/');
+                archive.CreateEntryFromFile(file, relativePath, CompressionLevel.Optimal);
+            }
+
+            var manifest = archive.CreateEntry("locora-backup-manifest.txt", CompressionLevel.Fastest);
+            await using var stream = manifest.Open();
+            await using var writer = new StreamWriter(stream, Encoding.UTF8);
+            await writer.WriteAsync(CreateConfigBackupManifest(backupPath, files.Count));
+        }
+
+        return new ConfigBackupArchiveResult(backupPath, files.Count);
+    }
+
+    private string CreateUniqueConfigBackupArchivePath(string fileNamePrefix)
+    {
+        var prefix = string.IsNullOrWhiteSpace(fileNamePrefix)
+            ? "locora-config"
+            : fileNamePrefix.Trim();
+        var timestamp = DateTimeOffset.Now.ToString("yyyyMMdd-HHmmss");
+
+        for (var attempt = 0; attempt < 100; attempt++)
+        {
+            var suffix = attempt == 0 ? string.Empty : $"-{attempt:D2}";
+            var backupPath = Path.Combine(ConfigBackupRootPath, $"{prefix}-{timestamp}{suffix}.zip");
+            if (!File.Exists(backupPath))
+            {
+                return backupPath;
+            }
+        }
+
+        throw new IOException($"Could not create a unique config backup archive path in {ConfigBackupRootPath}.");
+    }
+
+    private IEnumerable<string> EnumerateConfigBackupFiles()
+    {
+        var configRoot = Path.GetFullPath(ConfigRoot);
+        var backupRoot = Path.GetFullPath(ConfigBackupRootPath);
+
+        foreach (var file in Directory.EnumerateFiles(configRoot, "*", SearchOption.AllDirectories))
+        {
+            if (IsPathWithinDirectory(file, backupRoot))
+            {
+                continue;
+            }
+
+            yield return Path.GetFullPath(file);
+        }
+    }
+
+    private string CreateConfigBackupManifest(string backupPath, int fileCount)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine("Locora configuration backup");
+        builder.AppendLine($"Created local: {DateTimeOffset.Now:yyyy-MM-dd HH:mm:ss zzz}");
+        builder.AppendLine($"Created UTC: {DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm:ss}Z");
+        builder.AppendLine($"App root: {_environmentPaths.AppRoot}");
+        builder.AppendLine($"Config root: {ConfigRoot}");
+        builder.AppendLine($"Backup path: {backupPath}");
+        builder.AppendLine($"File count: {fileCount}");
+        builder.AppendLine("Scope: usr/config recursive contents plus this manifest.");
+        return builder.ToString();
+    }
+
+    private int ExtractConfigBackupArchive(string archivePath, string extractRoot)
+    {
+        var extractedFileCount = 0;
+        var fullExtractRoot = Path.GetFullPath(extractRoot);
+
+        using var archive = ZipFile.OpenRead(archivePath);
+        foreach (var entry in archive.Entries)
+        {
+            if (string.IsNullOrWhiteSpace(entry.Name))
+            {
+                continue;
+            }
+
+            var normalizedEntryName = entry.FullName.Replace('\\', '/');
+            if (string.Equals(normalizedEntryName, "locora-backup-manifest.txt", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (Path.IsPathRooted(normalizedEntryName))
+            {
+                throw new InvalidDataException($"Config backup archive contains an absolute path entry: {entry.FullName}");
+            }
+
+            var destinationPath = Path.GetFullPath(Path.Combine(fullExtractRoot, normalizedEntryName));
+            if (!IsPathWithinDirectory(destinationPath, fullExtractRoot))
+            {
+                throw new InvalidDataException($"Config backup archive contains an unsafe path entry: {entry.FullName}");
+            }
+
+            var destinationDirectory = Path.GetDirectoryName(destinationPath);
+            if (!string.IsNullOrWhiteSpace(destinationDirectory))
+            {
+                Directory.CreateDirectory(destinationDirectory);
+            }
+
+            entry.ExtractToFile(destinationPath, overwrite: true);
+            extractedFileCount++;
+        }
+
+        return extractedFileCount;
+    }
+
+    private int ApplyExtractedConfigFiles(string extractRoot)
+    {
+        var restoredFileCount = 0;
+        var fullExtractRoot = Path.GetFullPath(extractRoot);
+        var fullConfigRoot = Path.GetFullPath(ConfigRoot);
+        Directory.CreateDirectory(fullConfigRoot);
+
+        foreach (var file in Directory.EnumerateFiles(fullExtractRoot, "*", SearchOption.AllDirectories))
+        {
+            var relativePath = Path.GetRelativePath(fullExtractRoot, file);
+            var destinationPath = Path.GetFullPath(Path.Combine(fullConfigRoot, relativePath));
+            if (!IsPathWithinDirectory(destinationPath, fullConfigRoot))
+            {
+                throw new InvalidDataException($"Extracted config file resolved outside the configuration folder: {relativePath}");
+            }
+
+            var destinationDirectory = Path.GetDirectoryName(destinationPath);
+            if (!string.IsNullOrWhiteSpace(destinationDirectory))
+            {
+                Directory.CreateDirectory(destinationDirectory);
+            }
+
+            File.Copy(file, destinationPath, overwrite: true);
+            restoredFileCount++;
+        }
+
+        return restoredFileCount;
+    }
+
+    private void TryDeleteRestoreTempRoot(string restoreTempRoot)
+    {
+        try
+        {
+            var restoreTempBase = Path.GetFullPath(Path.Combine(_environmentPaths.TempRoot, "config-restore"));
+            var fullRestoreTempRoot = Path.GetFullPath(restoreTempRoot);
+            if (Directory.Exists(fullRestoreTempRoot) && IsPathWithinDirectory(fullRestoreTempRoot, restoreTempBase))
+            {
+                Directory.Delete(fullRestoreTempRoot, recursive: true);
+            }
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Temporary config restore folder could not be removed.");
+        }
+    }
+
+    private static bool IsPathWithinDirectory(string candidatePath, string directoryPath)
+    {
+        var directory = EnsureTrailingDirectorySeparator(Path.GetFullPath(directoryPath));
+        var candidate = Path.GetFullPath(candidatePath);
+        return candidate.Equals(directory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), StringComparison.OrdinalIgnoreCase) ||
+            candidate.StartsWith(directory, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool TryResolveLaragonRootPath(out string resolvedPath, out string validationMessage)
+    {
+        resolvedPath = string.Empty;
+        validationMessage = string.Empty;
+
+        var candidate = (LaragonRootPath ?? string.Empty).Trim().Trim('"');
+        if (string.IsNullOrWhiteSpace(candidate))
+        {
+            validationMessage = "Enter the Laragon root path, for example C:\\laragon.";
+            return false;
+        }
+
+        try
+        {
+            resolvedPath = Path.GetFullPath(candidate);
+        }
+        catch (Exception exception)
+        {
+            validationMessage = $"Laragon root path is invalid: {exception.Message}";
+            return false;
+        }
+
+        if (!Directory.Exists(resolvedPath))
+        {
+            validationMessage = $"Laragon root folder was not found: {resolvedPath}";
+            return false;
+        }
+
+        return true;
+    }
+
+    private LaragonImportPlan BuildLaragonImportPlan(string rootPath, ProjectSettingsDocument currentDocument)
+    {
+        var wwwRoot = ResolveLaragonWwwRoot(rootPath);
+        var configRoot = ResolveLaragonConfigRoot(rootPath, wwwRoot);
+        var detection = DetectLaragonDomainSuffix(configRoot);
+        var ignoredNames = currentDocument.LocoraProjects.IgnoredDirectoryNames
+            .Concat(DefaultIgnoredDirectoryNames)
+            .Concat(["tmp", "temp"])
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var projects = Directory.EnumerateDirectories(wwwRoot)
+            .Where(directory => IsImportableLaragonProjectDirectory(directory, ignoredNames))
+            .OrderBy(directory => Path.GetFileName(directory), StringComparer.OrdinalIgnoreCase)
+            .Select(directory => CreateLaragonImportedProject(directory, detection.DomainSuffix, currentDocument.LocoraProjects.ProjectOverrides))
+            .ToList();
+
+        return new LaragonImportPlan(configRoot, wwwRoot, detection.DomainSuffix, "http", detection.Source, projects);
+    }
+
+    private void ApplyLaragonImportPlan(LaragonImportPlan plan)
+    {
+        ReplaceCollection(LaragonImportProjects, plan.Projects.Select(project => project.ToCard()));
+        NotifyLaragonImportCollectionProperties();
+    }
+
+    private void NotifyLaragonImportCollectionProperties()
+    {
+        OnPropertyChanged(nameof(HasLaragonImportProjects));
+        OnPropertyChanged(nameof(ShowLaragonImportEmptyState));
+    }
+
+    private static string CreateLaragonImportSummary(LaragonImportPlan plan)
+    {
+        if (plan.Projects.Count == 0)
+        {
+            return $"No projects found under {plan.WwwRoot}.";
+        }
+
+        var updateCount = plan.Projects.Count(project => project.Status.StartsWith("Will update", StringComparison.OrdinalIgnoreCase));
+        var addCount = plan.Projects.Count - updateCount;
+        return $"{plan.Projects.Count} project{(plan.Projects.Count == 1 ? string.Empty : "s")} ready from {plan.WwwRoot}; {addCount} add, {updateCount} update; domains use *.{plan.DomainSuffix}.";
+    }
+
+    private static string ResolveLaragonWwwRoot(string rootPath)
+    {
+        var childWww = Path.Combine(rootPath, "www");
+        if (Directory.Exists(childWww))
+        {
+            return Path.GetFullPath(childWww);
+        }
+
+        if (Path.GetFileName(rootPath).Equals("www", StringComparison.OrdinalIgnoreCase))
+        {
+            return Path.GetFullPath(rootPath);
+        }
+
+        throw new DirectoryNotFoundException($"Laragon www folder was not found under {rootPath}.");
+    }
+
+    private static string ResolveLaragonConfigRoot(string rootPath, string wwwRoot)
+    {
+        var fullRoot = Path.GetFullPath(rootPath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var fullWww = Path.GetFullPath(wwwRoot).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        if (!fullRoot.Equals(fullWww, StringComparison.OrdinalIgnoreCase))
+        {
+            return fullRoot;
+        }
+
+        return Directory.GetParent(fullWww)?.FullName ?? fullWww;
+    }
+
+    private LaragonImportedProject CreateLaragonImportedProject(
+        string projectPath,
+        string domainSuffix,
+        IReadOnlyList<ProjectOverrideSettings> existingOverrides)
+    {
+        var name = Path.GetFileName(projectPath);
+        var key = CreateImportSlug(name);
+        var documentRoot = DetectLaragonDocumentRoot(projectPath);
+        var framework = DetectLaragonFramework(projectPath);
+        var runtime = DetectLaragonRuntime(projectPath, framework);
+        var tags = CreateLaragonTags(framework);
+        var status = HasMatchingProjectOverride(existingOverrides, projectPath, key, name)
+            ? "Will update existing override"
+            : "Will add project override";
+
+        return new LaragonImportedProject(
+            key,
+            name,
+            Path.GetFullPath(projectPath),
+            $"{key}.{domainSuffix}",
+            documentRoot,
+            runtime,
+            framework,
+            $"Imported from Laragon: {projectPath}",
+            tags,
+            status);
+    }
+
+    private bool HasMatchingProjectOverride(
+        IReadOnlyList<ProjectOverrideSettings> existingOverrides,
+        string projectPath,
+        string key,
+        string name)
+    {
+        return existingOverrides.Any(existing => MatchesLaragonImportOverride(existing, projectPath, key, name));
+    }
+
+    private bool MatchesLaragonImportOverride(ProjectOverrideSettings existing, string projectPath, string key, string name)
+    {
+        if (!string.IsNullOrWhiteSpace(existing.Path) &&
+            TryResolveProjectOverridePath(existing.Path, out var existingPath) &&
+            existingPath.Equals(Path.GetFullPath(projectPath), StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return (!string.IsNullOrWhiteSpace(existing.Key) && existing.Key.Equals(key, StringComparison.OrdinalIgnoreCase)) ||
+            (!string.IsNullOrWhiteSpace(existing.Name) && existing.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private bool TryResolveProjectOverridePath(string candidate, out string resolvedPath)
+    {
+        resolvedPath = string.Empty;
+        if (string.IsNullOrWhiteSpace(candidate))
+        {
+            return false;
+        }
+
+        try
+        {
+            resolvedPath = Path.GetFullPath(Path.IsPathRooted(candidate)
+                ? candidate
+                : Path.Combine(_environmentPaths.ProjectRoot, candidate));
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private IReadOnlyList<ProjectOverrideSettings> MergeLaragonProjectOverrides(
+        IReadOnlyList<ProjectOverrideSettings> existingOverrides,
+        IReadOnlyList<LaragonImportedProject> importedProjects,
+        out int addedCount,
+        out int updatedCount)
+    {
+        var merged = existingOverrides.ToList();
+        addedCount = 0;
+        updatedCount = 0;
+
+        foreach (var importedProject in importedProjects)
+        {
+            var replacement = importedProject.ToProjectOverride();
+            var existingIndex = merged.FindIndex(existing => MatchesLaragonImportOverride(
+                existing,
+                importedProject.SourcePath,
+                importedProject.Key,
+                importedProject.Name));
+
+            if (existingIndex >= 0)
+            {
+                merged[existingIndex] = replacement;
+                updatedCount++;
+            }
+            else
+            {
+                merged.Add(replacement);
+                addedCount++;
+            }
+        }
+
+        return merged;
+    }
+
+    private string? CreateLaragonProjectSettingsBackup()
+    {
+        if (!File.Exists(_environmentPaths.ProjectsSettingsFile))
+        {
+            return null;
+        }
+
+        var backupRoot = Path.Combine(_environmentPaths.ConfigRoot, "migration-backups");
+        Directory.CreateDirectory(backupRoot);
+        var backupPath = Path.Combine(backupRoot, $"projects-before-laragon-{DateTimeOffset.Now:yyyyMMdd-HHmmss}.json");
+        File.Copy(_environmentPaths.ProjectsSettingsFile, backupPath, overwrite: false);
+        return backupPath;
+    }
+
+    private static bool IsImportableLaragonProjectDirectory(string directory, ISet<string> ignoredNames)
+    {
+        var name = Path.GetFileName(directory);
+        return !string.IsNullOrWhiteSpace(name) &&
+            !name.StartsWith(".", StringComparison.Ordinal) &&
+            !ignoredNames.Contains(name);
+    }
+
+    private static string DetectLaragonDocumentRoot(string projectPath)
+    {
+        var publicRoot = Path.Combine(projectPath, "public");
+        return Directory.Exists(publicRoot) && HasAnyIndexFile(publicRoot)
+            ? "public"
+            : string.Empty;
+    }
+
+    private static bool HasAnyIndexFile(string directory)
+    {
+        return DefaultIndexFileNames.Any(fileName => File.Exists(Path.Combine(directory, fileName)));
+    }
+
+    private static string DetectLaragonFramework(string projectPath)
+    {
+        if (File.Exists(Path.Combine(projectPath, "artisan")))
+        {
+            return "Laravel";
+        }
+
+        if (File.Exists(Path.Combine(projectPath, "wp-config.php")) ||
+            Directory.Exists(Path.Combine(projectPath, "wp-content")))
+        {
+            return "WordPress";
+        }
+
+        if (File.Exists(Path.Combine(projectPath, "symfony.lock")))
+        {
+            return "Symfony";
+        }
+
+        if (File.Exists(Path.Combine(projectPath, "next.config.js")) ||
+            File.Exists(Path.Combine(projectPath, "next.config.mjs")) ||
+            Directory.Exists(Path.Combine(projectPath, ".next")))
+        {
+            return "Next.js";
+        }
+
+        if (File.Exists(Path.Combine(projectPath, "pyproject.toml")) ||
+            File.Exists(Path.Combine(projectPath, "requirements.txt")))
+        {
+            return "Python";
+        }
+
+        if (File.Exists(Path.Combine(projectPath, "pom.xml")) ||
+            File.Exists(Path.Combine(projectPath, "build.gradle")) ||
+            File.Exists(Path.Combine(projectPath, "build.gradle.kts")) ||
+            File.Exists(Path.Combine(projectPath, "mvnw")) ||
+            File.Exists(Path.Combine(projectPath, "gradlew")))
+        {
+            return "Java";
+        }
+
+        if (File.Exists(Path.Combine(projectPath, "composer.json")))
+        {
+            return "Composer";
+        }
+
+        if (File.Exists(Path.Combine(projectPath, "package.json")))
+        {
+            return "Node";
+        }
+
+        if (File.Exists(Path.Combine(projectPath, "index.php")))
+        {
+            return "PHP";
+        }
+
+        return "Static";
+    }
+
+    private static string DetectLaragonRuntime(string projectPath, string framework)
+    {
+        if (framework is "Laravel" or "WordPress" or "Symfony" or "Composer" or "PHP")
+        {
+            return "PHP";
+        }
+
+        if (framework is "Next.js" or "Node" || File.Exists(Path.Combine(projectPath, "package.json")))
+        {
+            return "Node.js";
+        }
+
+        if (framework == "Python")
+        {
+            return "Python";
+        }
+
+        if (framework == "Java")
+        {
+            return "Java";
+        }
+
+        return "Static";
+    }
+
+    private static IReadOnlyList<string> CreateLaragonTags(string framework)
+    {
+        return string.IsNullOrWhiteSpace(framework) || framework.Equals("Static", StringComparison.OrdinalIgnoreCase)
+            ? ["laragon", "imported"]
+            : ["laragon", "imported", framework.ToLowerInvariant()];
+    }
+
+    private static string CreateImportSlug(string name)
+    {
+        var normalized = (name ?? string.Empty).Trim().ToLowerInvariant().Replace(' ', '-').Replace('_', '-');
+        normalized = Regex.Replace(normalized, "[^a-z0-9-]+", "-").Trim('-');
+        return string.IsNullOrWhiteSpace(normalized) ? "project" : normalized;
+    }
+
+    private static LaragonDomainDetection DetectLaragonDomainSuffix(string rootPath)
+    {
+        foreach (var settingsFile in EnumerateLaragonSettingsFiles(rootPath))
+        {
+            if (!File.Exists(settingsFile))
+            {
+                continue;
+            }
+
+            foreach (var line in File.ReadLines(settingsFile))
+            {
+                if (TryExtractLaragonDomainSuffixFromSettingsLine(line, out var domainSuffix))
+                {
+                    return new LaragonDomainDetection(domainSuffix, settingsFile);
+                }
+            }
+        }
+
+        foreach (var vhostDirectory in EnumerateLaragonVHostDirectories(rootPath))
+        {
+            if (!Directory.Exists(vhostDirectory))
+            {
+                continue;
+            }
+
+            foreach (var file in Directory.EnumerateFiles(vhostDirectory, "*.*", SearchOption.TopDirectoryOnly))
+            {
+                if (TryExtractLaragonDomainSuffixFromVHost(file, out var domainSuffix))
+                {
+                    return new LaragonDomainDetection(domainSuffix, vhostDirectory);
+                }
+            }
+        }
+
+        return new LaragonDomainDetection("test", "default Laragon convention");
+    }
+
+    private static IEnumerable<string> EnumerateLaragonSettingsFiles(string rootPath)
+    {
+        yield return Path.Combine(rootPath, "usr", "laragon.ini");
+        yield return Path.Combine(rootPath, "usr", "settings.ini");
+        yield return Path.Combine(rootPath, "laragon.ini");
+    }
+
+    private static IEnumerable<string> EnumerateLaragonVHostDirectories(string rootPath)
+    {
+        yield return Path.Combine(rootPath, "etc", "nginx", "sites-enabled");
+        yield return Path.Combine(rootPath, "etc", "apache2", "sites-enabled");
+        yield return Path.Combine(rootPath, "etc", "apache2", "sites-available");
+    }
+
+    private static bool TryExtractLaragonDomainSuffixFromSettingsLine(string line, out string domainSuffix)
+    {
+        domainSuffix = string.Empty;
+        var trimmed = line.Trim();
+        if (string.IsNullOrWhiteSpace(trimmed) ||
+            trimmed.StartsWith(';') ||
+            trimmed.StartsWith('#') ||
+            trimmed.StartsWith('[') ||
+            !trimmed.Contains('='))
+        {
+            return false;
+        }
+
+        var parts = trimmed.Split('=', 2, StringSplitOptions.TrimEntries);
+        var key = parts[0];
+        var value = parts[1];
+        if (!key.Contains("tld", StringComparison.OrdinalIgnoreCase) &&
+            !key.Contains("domain", StringComparison.OrdinalIgnoreCase) &&
+            !key.Contains("hostname", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return TryNormalizeLaragonDomainSuffix(value, out domainSuffix);
+    }
+
+    private static bool TryExtractLaragonDomainSuffixFromVHost(string file, out string domainSuffix)
+    {
+        domainSuffix = string.Empty;
+        string content;
+        try
+        {
+            content = File.ReadAllText(file);
+        }
+        catch
+        {
+            return false;
+        }
+
+        foreach (Match match in Regex.Matches(content, @"\b(?:server_name|ServerName)\s+([^;\s]+)", RegexOptions.IgnoreCase))
+        {
+            if (TryNormalizeLaragonDomainSuffix(match.Groups[1].Value, out domainSuffix))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool TryNormalizeLaragonDomainSuffix(string candidate, out string domainSuffix)
+    {
+        domainSuffix = string.Empty;
+        var value = (candidate ?? string.Empty).Trim().Trim('"', '\'').Trim('.');
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        value = value
+            .Replace("{name}", "project", StringComparison.OrdinalIgnoreCase)
+            .Replace("{project}", "project", StringComparison.OrdinalIgnoreCase)
+            .Replace("*.", "project.", StringComparison.OrdinalIgnoreCase);
+
+        if (Uri.TryCreate(value, UriKind.Absolute, out var uri))
+        {
+            value = uri.Host;
+        }
+
+        value = value.Trim().Trim('.').ToLowerInvariant();
+        if (value.Equals("localhost", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var firstDotIndex = value.IndexOf('.');
+        if (firstDotIndex > 0)
+        {
+            value = value[(firstDotIndex + 1)..];
+        }
+
+        if (value.IndexOfAny(new[] { '/', '\\', '?', '#', ':' }) >= 0 ||
+            value.Any(char.IsWhiteSpace) ||
+            Uri.CheckHostName(value) == UriHostNameType.Unknown)
+        {
+            return false;
+        }
+
+        domainSuffix = value;
+        return true;
+    }
+
+    private static string ResolveDefaultLaragonRootPath()
+    {
+        return Directory.Exists(@"C:\laragon") ? @"C:\laragon" : string.Empty;
+    }
+
     private static ProjectSettingsDocument CreateDefaultProjectSettingsDocument()
     {
         return new ProjectSettingsDocument(
@@ -3744,7 +6916,8 @@ public sealed class MainWindowViewModel : ObservableObject
                 DomainSuffix: DefaultGeneratedDomainSuffix,
                 DefaultScheme: DefaultGeneratedDomainScheme,
                 IndexFileNames: DefaultIndexFileNames,
-                IgnoredDirectoryNames: DefaultIgnoredDirectoryNames));
+                IgnoredDirectoryNames: DefaultIgnoredDirectoryNames,
+                ProjectOverrides: Array.Empty<ProjectOverrideSettings>()));
     }
 
     private string CreateProjectKey(string projectPath)
@@ -3916,8 +7089,8 @@ public sealed class MainWindowViewModel : ObservableObject
         }
 
         var port = TryParsePort(values.TryGetValue("Port", out var portText) ? portText : null, defaultPort);
-        var url = values.TryGetValue("URL", out var value) && !string.IsNullOrWhiteSpace(value)
-            ? value
+        var url = values.TryGetValue("URL", out var urlText) && !string.IsNullOrWhiteSpace(urlText)
+            ? urlText
             : isPostgreSql
                 ? $"postgresql://postgres@127.0.0.1:{port}/postgres"
                 : $"mysql://127.0.0.1:{port}/";
@@ -4015,11 +7188,121 @@ public sealed class MainWindowViewModel : ObservableObject
             : $"Explorer: {directoryName}";
     }
 
+    private static string CreateLocalTunnelTerminalTitle(LocalTunnelProfileCard profile, ProjectCard? project)
+    {
+        return project is null
+            ? $"Tunnel: {profile.DisplayName}"
+            : $"Tunnel: {profile.DisplayName} ({project.Name})";
+    }
+
+    private static string CreatePortListLabel(IEnumerable<int> ports)
+    {
+        var distinctPorts = ports
+            .Where(port => port > 0)
+            .Distinct()
+            .OrderBy(port => port)
+            .Select(port => port.ToString())
+            .ToArray();
+
+        return distinctPorts.Length == 0
+            ? "No configured ports"
+            : $"TCP {string.Join(", ", distinctPorts)}";
+    }
+
+    private static string CreateServicePortSummary(IReadOnlyList<ServiceDescriptor> services)
+    {
+        if (services.Count == 0)
+        {
+            return "No service ports are currently reported by the supervisor.";
+        }
+
+        var runningServices = services
+            .Where(service => service.State == ServiceState.Running)
+            .Select(service => $"{service.DisplayName} {service.Port}")
+            .ToArray();
+
+        return runningServices.Length == 0
+            ? $"{services.Count} configured service port{(services.Count == 1 ? string.Empty : "s")} reported; none are currently running."
+            : $"Running service ports: {string.Join(", ", runningServices)}.";
+    }
+
+    private static string CreateTunnelProfileSummary(IReadOnlyList<LocalTunnelProfileCard> profiles)
+    {
+        if (profiles.Count == 0)
+        {
+            return "No enabled local tunnel profiles are configured.";
+        }
+
+        var names = profiles
+            .Take(4)
+            .Select(profile => profile.DisplayName)
+            .ToArray();
+        var suffix = profiles.Count > names.Length ? $", +{profiles.Count - names.Length} more" : string.Empty;
+        return $"Enabled tunnel profiles: {string.Join(", ", names)}{suffix}.";
+    }
+
+    private static string CreateTunnelTargetLabel(IReadOnlyList<LocalTunnelProfileCard> profiles)
+    {
+        var ports = profiles
+            .Select(profile => profile.Port ?? TryGetPortFromUrl(profile.LocalUrl))
+            .Where(port => port is > 0)
+            .Select(port => port!.Value)
+            .ToArray();
+
+        if (ports.Length > 0)
+        {
+            return CreatePortListLabel(ports);
+        }
+
+        return profiles.Count == 0
+            ? "No tunnel targets"
+            : $"{profiles.Count} tunnel target{(profiles.Count == 1 ? string.Empty : "s")}";
+    }
+
+    private static int? TryGetPortFromUrl(string localUrl)
+    {
+        if (!Uri.TryCreate(localUrl, UriKind.Absolute, out var uri))
+        {
+            return null;
+        }
+
+        if (!uri.IsDefaultPort)
+        {
+            return uri.Port;
+        }
+
+        return uri.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase)
+            ? 80
+            : uri.Scheme.Equals("https", StringComparison.OrdinalIgnoreCase)
+                ? 443
+                : null;
+    }
+
+    private static bool IsDataService(ServiceDescriptor service)
+    {
+        var key = service.Key.ToLowerInvariant();
+        return key.Contains("mysql", StringComparison.Ordinal) ||
+            key.Contains("mariadb", StringComparison.Ordinal) ||
+            key.Contains("postgres", StringComparison.Ordinal) ||
+            key.Contains("redis", StringComparison.Ordinal) ||
+            key.Contains("memcached", StringComparison.Ordinal) ||
+            key.Contains("mailpit", StringComparison.Ordinal);
+    }
+
     private static string EnsureTrailingSlash(string value)
     {
-        return string.IsNullOrWhiteSpace(value) || value.EndsWith('/', StringComparison.Ordinal)
+        return string.IsNullOrWhiteSpace(value) || value.EndsWith("/", StringComparison.Ordinal)
             ? value
             : $"{value}/";
+    }
+
+    private static string EnsureTrailingDirectorySeparator(string value)
+    {
+        return string.IsNullOrWhiteSpace(value) ||
+            value.EndsWith(Path.DirectorySeparatorChar) ||
+            value.EndsWith(Path.AltDirectorySeparatorChar)
+                ? value
+                : $"{value}{Path.DirectorySeparatorChar}";
     }
 
     private static int TryParsePort(string? text, int fallback)
@@ -4052,11 +7335,73 @@ public sealed class MainWindowViewModel : ObservableObject
         string ConnectionDetailsPath,
         bool ConnectionDetailsExists);
 
+    private sealed record ConfigBackupArchiveResult(string Path, int FileCount);
+
+    private sealed record LaragonImportPlan(
+        string RootPath,
+        string WwwRoot,
+        string DomainSuffix,
+        string DefaultScheme,
+        string DomainSource,
+        IReadOnlyList<LaragonImportedProject> Projects);
+
+    private sealed record LaragonImportedProject(
+        string Key,
+        string Name,
+        string SourcePath,
+        string Domain,
+        string DocumentRoot,
+        string Runtime,
+        string Framework,
+        string Description,
+        IReadOnlyList<string> Tags,
+        string Status)
+    {
+        public LaragonImportProjectCard ToCard()
+        {
+            return new LaragonImportProjectCard(
+                Key,
+                Name,
+                SourcePath,
+                Domain,
+                DocumentRoot,
+                Runtime,
+                Framework,
+                Status,
+                Tags);
+        }
+
+        public ProjectOverrideSettings ToProjectOverride()
+        {
+            return new ProjectOverrideSettings(
+                Key,
+                Name,
+                SourcePath,
+                Domain,
+                "http",
+                DocumentRoot,
+                Runtime,
+                Framework,
+                Description,
+                JsonSerializer.SerializeToElement(Tags));
+        }
+    }
+
+    private sealed record LaragonDomainDetection(string DomainSuffix, string Source);
+
     private sealed record ProjectSettingsDocument(ProjectSettingsSection LocoraProjects);
 
     private sealed record TerminalCommandsDocument(TerminalCommandsSection LocoraTerminal);
 
+    private sealed record CustomToolsDocument(CustomToolsSection LocoraTools);
+
+    private sealed record LocalTunnelsDocument(LocalTunnelsSection LocoraTunnels);
+
     private sealed record TerminalCommandsSection(IReadOnlyList<TerminalCommandSettings> Commands);
+
+    private sealed record CustomToolsSection(IReadOnlyList<CustomToolSettings> Tools);
+
+    private sealed record LocalTunnelsSection(IReadOnlyList<LocalTunnelSettings> Profiles);
 
     private sealed record TerminalCommandSettings(
         string Key,
@@ -4067,6 +7412,29 @@ public sealed class MainWindowViewModel : ObservableObject
         string Scope,
         IReadOnlyList<string> Tags);
 
+    private sealed record CustomToolSettings(
+        string Key,
+        string DisplayName,
+        string Description,
+        string Action,
+        string Target,
+        string Scope,
+        IReadOnlyList<string> Tags,
+        bool? IsEnabled);
+
+    private sealed record LocalTunnelSettings(
+        string Key,
+        string DisplayName,
+        string Provider,
+        string Description,
+        string CommandText,
+        string Scope,
+        string ProjectName,
+        string LocalUrl,
+        int? Port,
+        IReadOnlyList<string> Tags,
+        bool? IsEnabled);
+
     private sealed record ProjectSettingsSection(
         bool EnableAutoDiscovery,
         bool GenerateNginxVHosts,
@@ -4075,7 +7443,20 @@ public sealed class MainWindowViewModel : ObservableObject
         string DomainSuffix,
         string DefaultScheme,
         IReadOnlyList<string> IndexFileNames,
-        IReadOnlyList<string> IgnoredDirectoryNames);
+        IReadOnlyList<string> IgnoredDirectoryNames,
+        IReadOnlyList<ProjectOverrideSettings> ProjectOverrides);
+
+    private sealed record ProjectOverrideSettings(
+        string Key,
+        string Name,
+        string Path,
+        string Domain,
+        string Scheme,
+        string DocumentRoot,
+        string Runtime,
+        string Framework,
+        string Description,
+        JsonElement Tags);
 
     private static string ResolveWindowsHostsFilePath()
     {

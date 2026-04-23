@@ -53,6 +53,16 @@ public sealed class NamedPipeSupervisorClient : ISupervisorClient
         await SendAsync(SupervisorCommandNames.StopService, cancellationToken, serviceKey);
     }
 
+    public async Task StartServicePresetAsync(string presetKey, CancellationToken cancellationToken = default)
+    {
+        await SendAsync(SupervisorCommandNames.StartServicePreset, cancellationToken, presetKey);
+    }
+
+    public async Task StopServicePresetAsync(string presetKey, CancellationToken cancellationToken = default)
+    {
+        await SendAsync(SupervisorCommandNames.StopServicePreset, cancellationToken, presetKey);
+    }
+
     public async Task ApplyHostsPreviewAsync(CancellationToken cancellationToken = default)
     {
         await SendAsync(SupervisorCommandNames.ApplyHostsPreview, cancellationToken);
@@ -116,6 +126,21 @@ public sealed class NamedPipeSupervisorClient : ISupervisorClient
     public async Task SelectStackProfileAsync(string profileKey, CancellationToken cancellationToken = default)
     {
         await SendAsync(SupervisorCommandNames.SelectStackProfile, cancellationToken, profileKey);
+    }
+
+    public async Task SaveActiveEnvironmentAsync(string profileName, CancellationToken cancellationToken = default)
+    {
+        await SendAsync(SupervisorCommandNames.SaveActiveEnvironment, cancellationToken, profileName);
+    }
+
+    public async Task ExportStackProfilesAsync(string targetPath, CancellationToken cancellationToken = default)
+    {
+        await SendAsync(SupervisorCommandNames.ExportStackProfiles, cancellationToken, targetPath);
+    }
+
+    public async Task ImportStackProfilesAsync(string sourcePath, CancellationToken cancellationToken = default)
+    {
+        await SendAsync(SupervisorCommandNames.ImportStackProfiles, cancellationToken, sourcePath);
     }
 
     public async Task RepairLocalSslAsync(CancellationToken cancellationToken = default)

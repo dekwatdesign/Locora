@@ -1,6 +1,9 @@
+using System.Reflection;
 using System.Text;
 using Locora.Application.Abstractions;
 using Locora.Domain.Entities;
+using Locora.Infrastructure.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace Locora.App.Services;
 
@@ -8,11 +11,18 @@ public sealed class DiagnosticReportService : IDiagnosticReportService
 {
     private readonly IEnvironmentPaths _paths;
     private readonly IClipboardService _clipboardService;
+    private readonly AppUpdateSettings _appUpdateSettings;
+    private readonly PortableDistributionSettings _distributionSettings;
 
-    public DiagnosticReportService(IEnvironmentPaths paths, IClipboardService clipboardService)
+    public DiagnosticReportService(
+        IEnvironmentPaths paths,
+        IClipboardService clipboardService,
+        IOptions<AppSettings> settings)
     {
         _paths = paths;
         _clipboardService = clipboardService;
+        _appUpdateSettings = settings.Value.Updates;
+        _distributionSettings = settings.Value.Distribution;
     }
 
     public string BuildReport(EnvironmentSnapshot snapshot)
@@ -26,17 +36,23 @@ public sealed class DiagnosticReportService : IDiagnosticReportService
 
         AppendEnvironment(builder, snapshot);
         AppendServices(builder, snapshot);
+        AppendServicePresets(builder, snapshot);
         AppendHealthIssues(builder, snapshot);
         AppendValidationResults(builder, snapshot);
         AppendPortDiagnostics(builder, snapshot);
+        AppendNetworkAndFirewallGuidance(builder, snapshot);
         AppendPermissionDiagnostics(builder, snapshot);
         AppendPackageSources(builder, snapshot);
         AppendPackageDownloads(builder, snapshot);
         AppendRuntimePackages(builder, snapshot);
         AppendToolPackages(builder, snapshot);
+        AppendRuntimeBackupGuidance(builder, snapshot);
         AppendStackProfiles(builder, snapshot);
         AppendSslStatus(builder, snapshot);
         AppendProjects(builder, snapshot);
+        AppendPortableDistributionAutomation(builder);
+        AppendAppUpdateMechanism(builder);
+        AppendPathEnvironmentChangeManagement(builder);
         AppendKeyPaths(builder);
 
         return builder.ToString();
@@ -90,6 +106,29 @@ public sealed class DiagnosticReportService : IDiagnosticReportService
         {
             builder.AppendLine(
                 $"| {EscapeTable(service.DisplayName)} | {EscapeTable(service.State.ToString())} | {EscapeTable(service.Version)} | {EscapeTable(service.Port?.ToString() ?? "None")} | {EscapeTable(FormatBool(service.AutoStart))} | {EscapeTable(service.Note ?? "No note")} |");
+        }
+
+        builder.AppendLine();
+    }
+
+    private static void AppendServicePresets(StringBuilder builder, EnvironmentSnapshot snapshot)
+    {
+        AppendSection(builder, "Service Presets");
+
+        if (snapshot.ServicePresets.Count == 0)
+        {
+            builder.AppendLine("No service presets reported.");
+            builder.AppendLine();
+            return;
+        }
+
+        builder.AppendLine("| Preset | State | Valid | Services | Tags | Summary |");
+        builder.AppendLine("| --- | --- | --- | --- | --- | --- |");
+
+        foreach (var preset in snapshot.ServicePresets.OrderBy(preset => preset.DisplayName, StringComparer.OrdinalIgnoreCase))
+        {
+            builder.AppendLine(
+                $"| {EscapeTable(preset.DisplayName)} | {EscapeTable(preset.State)} | {EscapeTable(FormatBool(preset.IsValid))} | {EscapeTable(preset.ServicesLabel)} | {EscapeTable(preset.Tags.Count == 0 ? "None" : string.Join(", ", preset.Tags))} | {EscapeTable(preset.Summary)} |");
         }
 
         builder.AppendLine();
@@ -159,6 +198,47 @@ public sealed class DiagnosticReportService : IDiagnosticReportService
         {
             builder.AppendLine(
                 $"| {EscapeTable(diagnostic.DisplayName)} | {EscapeTable(diagnostic.Port.ToString())} | {EscapeTable(diagnostic.State.ToString())} | {EscapeTable(FormatOwner(diagnostic.OwnerProcessId, diagnostic.OwnerProcessName))} | {EscapeTable(diagnostic.Summary)} | {EscapeTable(diagnostic.SuggestedAction)} |");
+        }
+
+        builder.AppendLine();
+    }
+
+    private static void AppendNetworkAndFirewallGuidance(StringBuilder builder, EnvironmentSnapshot snapshot)
+    {
+        AppendSection(builder, "Network and Firewall Guidance");
+
+        var servicesWithPorts = snapshot.Services
+            .Where(service => service.Port is > 0)
+            .OrderBy(service => service.Port)
+            .ThenBy(service => service.DisplayName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var dataServices = servicesWithPorts.Where(IsDataService).ToList();
+
+        AppendField(builder, "Default stance", "Keep Locora services local unless another trusted device needs temporary LAN access.");
+        AppendField(builder, "Service ports", servicesWithPorts.Count == 0 ? "No configured service ports reported." : string.Join(", ", servicesWithPorts.Select(service => $"{service.DisplayName} TCP {service.Port}")));
+        AppendField(builder, "Inbound firewall rules", "Only add Windows Firewall inbound rules for the exact TCP ports needed on the Private network profile.");
+        AppendField(builder, "Local tunnels", "Provider tunnel CLIs usually need outbound DNS and HTTPS/WebSocket access, not broad inbound Windows Firewall rules.");
+        AppendField(builder, "Data services", dataServices.Count == 0 ? "No database, cache, SMTP, or data-service ports reported." : string.Join(", ", dataServices.Select(service => $"{service.DisplayName} TCP {service.Port}")));
+        AppendField(builder, "HTTPS trust", snapshot.SslStatus.HttpsProjectCount == 0 ? "No HTTPS project certificates reported." : "Locora CA trust is local to this Windows user and machine; other devices do not automatically trust it.");
+        builder.AppendLine();
+
+        if (servicesWithPorts.Count == 0)
+        {
+            builder.AppendLine("No service port table is available.");
+            builder.AppendLine();
+            return;
+        }
+
+        builder.AppendLine("| Service | Port | State | Exposure guidance |");
+        builder.AppendLine("| --- | --- | --- | --- |");
+
+        foreach (var service in servicesWithPorts)
+        {
+            var guidance = IsDataService(service)
+                ? "Keep local unless deliberate data-service access is required on a trusted private network."
+                : "Expose only for temporary LAN testing or through an explicit local tunnel profile.";
+            builder.AppendLine(
+                $"| {EscapeTable(service.DisplayName)} | {EscapeTable($"TCP {service.Port}")} | {EscapeTable(service.State.ToString())} | {EscapeTable(guidance)} |");
         }
 
         builder.AppendLine();
@@ -366,6 +446,32 @@ public sealed class DiagnosticReportService : IDiagnosticReportService
         builder.AppendLine();
     }
 
+    private void AppendRuntimeBackupGuidance(StringBuilder builder, EnvironmentSnapshot snapshot)
+    {
+        AppendSection(builder, "Runtime Backup Guidance");
+        AppendField(
+            builder,
+            "Current runtime scope",
+            $"{snapshot.RuntimePackageSummary.ActiveCount}/{snapshot.RuntimePackageSummary.RuntimeCount} active runtimes, {snapshot.RuntimePackageSummary.InstalledCount} installed runtimes, {snapshot.ToolPackageSummary.InstalledCount} installed tools, {snapshot.PackageDownloadsSummary.CachedCount} cached package artifacts");
+        AppendField(
+            builder,
+            "Back up first",
+            $"Configuration backup archives ({FormatInlineCode(_paths.ConfigBackupRoot)}), service data ({FormatInlineCode(_paths.DataRoot)}), package lock state ({FormatInlineCode(_paths.PackagesLockSettingsFile)}), and package manifests ({FormatInlineCode(_paths.PackageManifestsRoot)})");
+        AppendField(
+            builder,
+            "Back up for offline restore",
+            $"Runtime binaries ({FormatInlineCode(_paths.BinRoot)}) and package cache ({FormatInlineCode(_paths.PackageCacheRoot)})");
+        AppendField(
+            builder,
+            "Skip by default",
+            $"Temporary files ({FormatInlineCode(_paths.TempRoot)}); logs ({FormatInlineCode(_paths.LogsRoot)}) unless troubleshooting evidence is needed");
+        AppendField(
+            builder,
+            "Restore order",
+            "Stop services, restore the config backup zip, copy service data, install or extract packages, refresh the snapshot, then start services.");
+        builder.AppendLine();
+    }
+
     private static void AppendStackProfiles(StringBuilder builder, EnvironmentSnapshot snapshot)
     {
         AppendSection(builder, "Stack Profiles");
@@ -414,15 +520,66 @@ public sealed class DiagnosticReportService : IDiagnosticReportService
             return;
         }
 
-        builder.AppendLine("| Project | Runtime | URL | HTTPS | Tags | Description | Path |");
-        builder.AppendLine("| --- | --- | --- | --- | --- | --- | --- |");
+        builder.AppendLine("| Project | Runtime | URL | HTTPS | Overrides | Tags | Description | Path |");
+        builder.AppendLine("| --- | --- | --- | --- | --- | --- | --- | --- |");
 
         foreach (var project in snapshot.Projects.OrderBy(project => project.Name, StringComparer.OrdinalIgnoreCase))
         {
             builder.AppendLine(
-                $"| {EscapeTable(project.Name)} | {EscapeTable(project.Runtime)} | {EscapeTable(project.Url)} | {EscapeTable(FormatBool(project.UsesHttps))} | {EscapeTable(project.Tags.Count == 0 ? "None" : string.Join(", ", project.Tags))} | {EscapeTable(project.Description)} | {EscapeTable(project.Path)} |");
+                $"| {EscapeTable(project.Name)} | {EscapeTable(project.Runtime)} | {EscapeTable(project.Url)} | {EscapeTable(FormatBool(project.UsesHttps))} | {EscapeTable(project.OverrideSummary)} | {EscapeTable(project.Tags.Count == 0 ? "None" : string.Join(", ", project.Tags))} | {EscapeTable(project.Description)} | {EscapeTable(project.Path)} |");
         }
 
+        builder.AppendLine();
+    }
+
+    private void AppendPathEnvironmentChangeManagement(StringBuilder builder)
+    {
+        AppendSection(builder, "PATH and Environment Change Management");
+        AppendField(builder, "Persistent change mode", "Generated CurrentUser PowerShell scripts only");
+        AppendField(builder, "Managed PATH entries", FormatInlineCode(_paths.AliasesRoot));
+        AppendField(builder, "Session-scoped PATH", "Built-in Locora terminals prepend active runtime and tool executable folders per launch.");
+        AppendField(builder, "Managed variables", "`LOCORA_ROOT`, `LOCORA_ALIASES_ROOT`, `LOCORA_BIN`, `LOCORA_CONFIG`, `LOCORA_DATA`, `LOCORA_LOGS`, `LOCORA_TEMP`, `LOCORA_PACKAGE_CACHE`");
+        AppendField(builder, "Install script", FormatInlineCode(_paths.UserEnvironmentApplyScriptFile));
+        AppendField(builder, "Uninstall script", FormatInlineCode(_paths.UserEnvironmentRemoveScriptFile));
+        AppendField(builder, "Manifest", FormatInlineCode(_paths.UserEnvironmentManifestFile));
+        AppendField(builder, "Backup root", FormatInlineCode(_paths.UserEnvironmentBackupRoot));
+        builder.AppendLine();
+    }
+
+    private void AppendAppUpdateMechanism(StringBuilder builder)
+    {
+        AppendSection(builder, "App Update Mechanism");
+        AppendField(builder, "Current version", ResolveCurrentVersion());
+        AppendField(builder, "Channel", string.IsNullOrWhiteSpace(_appUpdateSettings.Channel) ? "stable" : _appUpdateSettings.Channel);
+        AppendField(builder, "Manifest URI", string.IsNullOrWhiteSpace(_appUpdateSettings.ManifestUri) ? "Not configured" : _appUpdateSettings.ManifestUri);
+        AppendField(builder, "Release page", string.IsNullOrWhiteSpace(_appUpdateSettings.ReleasePageUri) ? "Not configured" : _appUpdateSettings.ReleasePageUri);
+        AppendField(builder, "Prerelease builds", _appUpdateSettings.AllowPrerelease ? "Included" : "Skipped");
+        AppendField(builder, "Check on startup", FormatBool(_appUpdateSettings.CheckOnStartup));
+        AppendField(builder, "Check timeout", $"{Math.Max(1000, _appUpdateSettings.CheckTimeoutMs)} ms");
+        AppendField(builder, "Update root", FormatInlineCode(_paths.AppUpdateRoot));
+        AppendField(builder, "Download root", FormatInlineCode(_paths.AppUpdateDownloadRoot));
+        AppendField(builder, "Cached manifest", FormatInlineCode(_paths.AppUpdateManifestCacheFile));
+        AppendField(builder, "Update plan", FormatInlineCode(_paths.AppUpdatePlanFile));
+        AppendField(builder, "Example manifest", FormatInlineCode(_paths.AppUpdateManifestExampleFile));
+        builder.AppendLine();
+    }
+
+    private void AppendPortableDistributionAutomation(StringBuilder builder)
+    {
+        AppendSection(builder, "Portable Distribution Automation");
+        AppendField(builder, "Mode", "Portable ZIP script and release manifest template");
+        AppendField(builder, "Configuration", string.IsNullOrWhiteSpace(_distributionSettings.Configuration) ? "Release" : _distributionSettings.Configuration);
+        AppendField(builder, "Runtime identifier", string.IsNullOrWhiteSpace(_distributionSettings.RuntimeIdentifier) ? "win-x64" : _distributionSettings.RuntimeIdentifier);
+        AppendField(builder, "Include runtime binaries", FormatBool(_distributionSettings.IncludeRuntimeBinaries));
+        AppendField(builder, "Include package cache", FormatBool(_distributionSettings.IncludePackageCache));
+        AppendField(builder, "Include user data", FormatBool(_distributionSettings.IncludeUserData));
+        AppendField(builder, "Create release manifest", FormatBool(_distributionSettings.CreateReleaseManifest));
+        AppendField(builder, "Distribution root", FormatInlineCode(_paths.PortableDistributionRoot));
+        AppendField(builder, "Artifacts root", FormatInlineCode(_paths.PortableDistributionArtifactsRoot));
+        AppendField(builder, "Build script", FormatInlineCode(_paths.PortableDistributionScriptFile));
+        AppendField(builder, "Distribution plan", FormatInlineCode(_paths.PortableDistributionPlanFile));
+        AppendField(builder, "README", FormatInlineCode(_paths.PortableDistributionReadmeFile));
+        AppendField(builder, "Release manifest template", FormatInlineCode(_paths.PortableDistributionManifestTemplateFile));
         builder.AppendLine();
     }
 
@@ -432,6 +589,7 @@ public sealed class DiagnosticReportService : IDiagnosticReportService
         AppendField(builder, "App root", FormatInlineCode(_paths.AppRoot));
         AppendField(builder, "User root", FormatInlineCode(_paths.UserRoot));
         AppendField(builder, "Config root", FormatInlineCode(_paths.ConfigRoot));
+        AppendField(builder, "Config backup root", FormatInlineCode(_paths.ConfigBackupRoot));
         AppendField(builder, "Logs root", FormatInlineCode(_paths.LogsRoot));
         AppendField(builder, "Projects root", FormatInlineCode(_paths.ProjectRoot));
         AppendField(builder, "Data root", FormatInlineCode(_paths.DataRoot));
@@ -441,10 +599,26 @@ public sealed class DiagnosticReportService : IDiagnosticReportService
         AppendField(builder, "Services settings", FormatInlineCode(_paths.ServicesSettingsFile));
         AppendField(builder, "Project settings", FormatInlineCode(_paths.ProjectsSettingsFile));
         AppendField(builder, "Stack profiles", FormatInlineCode(_paths.ProfilesSettingsFile));
+        AppendField(builder, "Stack profile transfer folder", FormatInlineCode(_paths.ProfilesRoot));
         AppendField(builder, "Package sources", FormatInlineCode(_paths.PackageSourcesSettingsFile));
         AppendField(builder, "Packages lock", FormatInlineCode(_paths.PackagesLockSettingsFile));
+        AppendField(builder, "Custom tools", FormatInlineCode(_paths.CustomToolsSettingsFile));
+        AppendField(builder, "Local tunnels", FormatInlineCode(_paths.LocalTunnelsSettingsFile));
         AppendField(builder, "Package manifests", FormatInlineCode(_paths.PackageManifestsRoot));
         AppendField(builder, "Package cache", FormatInlineCode(_paths.PackageCacheRoot));
+        AppendField(builder, "Shell integration root", FormatInlineCode(_paths.ShellIntegrationRoot));
+        AppendField(builder, "Environment install script", FormatInlineCode(_paths.UserEnvironmentApplyScriptFile));
+        AppendField(builder, "Environment uninstall script", FormatInlineCode(_paths.UserEnvironmentRemoveScriptFile));
+        AppendField(builder, "Environment manifest", FormatInlineCode(_paths.UserEnvironmentManifestFile));
+        AppendField(builder, "Environment backup root", FormatInlineCode(_paths.UserEnvironmentBackupRoot));
+        AppendField(builder, "App update root", FormatInlineCode(_paths.AppUpdateRoot));
+        AppendField(builder, "App update download root", FormatInlineCode(_paths.AppUpdateDownloadRoot));
+        AppendField(builder, "App update plan", FormatInlineCode(_paths.AppUpdatePlanFile));
+        AppendField(builder, "App update manifest cache", FormatInlineCode(_paths.AppUpdateManifestCacheFile));
+        AppendField(builder, "Portable distribution root", FormatInlineCode(_paths.PortableDistributionRoot));
+        AppendField(builder, "Portable distribution artifacts", FormatInlineCode(_paths.PortableDistributionArtifactsRoot));
+        AppendField(builder, "Portable distribution script", FormatInlineCode(_paths.PortableDistributionScriptFile));
+        AppendField(builder, "Portable distribution plan", FormatInlineCode(_paths.PortableDistributionPlanFile));
         builder.AppendLine();
     }
 
@@ -486,8 +660,28 @@ public sealed class DiagnosticReportService : IDiagnosticReportService
             .ReplaceLineEndings(" ");
     }
 
+    private static bool IsDataService(ServiceDescriptor service)
+    {
+        var key = service.Key.ToLowerInvariant();
+        return key.Contains("mysql", StringComparison.Ordinal) ||
+            key.Contains("mariadb", StringComparison.Ordinal) ||
+            key.Contains("postgres", StringComparison.Ordinal) ||
+            key.Contains("redis", StringComparison.Ordinal) ||
+            key.Contains("memcached", StringComparison.Ordinal) ||
+            key.Contains("mailpit", StringComparison.Ordinal);
+    }
+
     private static string NormalizeValue(string? value)
     {
         return string.IsNullOrWhiteSpace(value) ? "Unavailable" : value.Trim();
+    }
+
+    private static string ResolveCurrentVersion()
+    {
+        var assembly = typeof(DiagnosticReportService).Assembly;
+        var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        return string.IsNullOrWhiteSpace(informationalVersion)
+            ? assembly.GetName().Version?.ToString() ?? "0.0.0"
+            : informationalVersion;
     }
 }

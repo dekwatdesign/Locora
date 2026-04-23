@@ -16,11 +16,11 @@ public sealed record StackProfileCard(
     string Details,
     ICommand SelectProfileCommand)
 {
-    public string SelectButtonLabel => IsActive ? "Active" : "Select";
+    public string SelectButtonLabel => IsActive ? "Loaded" : "Load";
 
     public bool CanSelect => !IsActive && IsValid;
 
     public string SelectAutomationName => IsActive
-        ? $"{DisplayName} stack profile is active"
-        : $"Select {DisplayName} stack profile";
+        ? $"{DisplayName} stack profile is loaded"
+        : $"Load {DisplayName} stack profile";
 }

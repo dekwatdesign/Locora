@@ -290,6 +290,20 @@ public sealed class PackageDownloadManager
             packageSelections.Count);
     }
 
+    public async Task<IReadOnlyDictionary<string, string>> GetActivePackageSelectionsAsync(CancellationToken cancellationToken = default)
+    {
+        var lockState = await GetLockStateAsync(cancellationToken);
+        return lockState.ActiveSelections
+            .Where(selection => !string.IsNullOrWhiteSpace(selection.PackageId))
+            .GroupBy(selection => selection.PackageId, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.Last())
+            .OrderBy(selection => selection.PackageId, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                selection => selection.PackageId,
+                selection => selection.RequestedVersion,
+                StringComparer.OrdinalIgnoreCase);
+    }
+
     private async Task RunDownloadSyncAsync(
         IReadOnlyList<PackageDownloadWorkItem> workItems,
         CancellationToken cancellationToken)

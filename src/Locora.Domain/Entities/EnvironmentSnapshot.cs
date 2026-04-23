@@ -4,6 +4,7 @@ public sealed record EnvironmentSnapshot(
     string EnvironmentRoot,
     string ActiveProfile,
     IReadOnlyList<ServiceDescriptor> Services,
+    IReadOnlyList<ServicePresetStatus> ServicePresets,
     IReadOnlyList<ProjectDescriptor> Projects,
     IReadOnlyList<HealthIssue> Issues,
     IReadOnlyList<ValidationResult> ValidationResults,

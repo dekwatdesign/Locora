@@ -42,12 +42,12 @@ public sealed class ProjectDiscoveryService
         var projects = new List<DiscoveredProject>();
         var usedSlugs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var directory in Directory.EnumerateDirectories(_paths.ProjectRoot))
+        foreach (var directory in EnumerateProjectDirectories(options, ignoredNames))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             var name = Path.GetFileName(directory);
-            if (string.IsNullOrWhiteSpace(name) || ignoredNames.Contains(name) || name.StartsWith('.'))
+            if (string.IsNullOrWhiteSpace(name))
             {
                 continue;
             }
@@ -65,16 +65,80 @@ public sealed class ProjectDiscoveryService
         return Task.FromResult<IReadOnlyList<DiscoveredProject>>(projects.OrderBy(project => project.Name).ToList());
     }
 
+    private IEnumerable<string> EnumerateProjectDirectories(ProjectDiscoveryOptions options, ISet<string> ignoredNames)
+    {
+        var yieldedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var directory in Directory.EnumerateDirectories(_paths.ProjectRoot))
+        {
+            var name = Path.GetFileName(directory);
+            if (string.IsNullOrWhiteSpace(name) || ignoredNames.Contains(name) || name.StartsWith('.'))
+            {
+                continue;
+            }
+
+            var fullPath = Path.GetFullPath(directory);
+            if (yieldedPaths.Add(fullPath))
+            {
+                yield return fullPath;
+            }
+        }
+
+        foreach (var projectOverride in options.ProjectOverrides)
+        {
+            if (!TryResolveProjectOverrideDirectory(projectOverride.Path, out var overridePath) ||
+                !Directory.Exists(overridePath) ||
+                !yieldedPaths.Add(overridePath))
+            {
+                continue;
+            }
+
+            yield return overridePath;
+        }
+    }
+
+    private bool TryResolveProjectOverrideDirectory(string? candidate, out string resolvedPath)
+    {
+        resolvedPath = string.Empty;
+        if (string.IsNullOrWhiteSpace(candidate))
+        {
+            return false;
+        }
+
+        try
+        {
+            resolvedPath = Path.GetFullPath(Path.IsPathRooted(candidate)
+                ? candidate
+                : Path.Combine(_paths.ProjectRoot, candidate));
+            return true;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Ignoring invalid project override path '{Path}'.", candidate);
+            return false;
+        }
+    }
+
     private DiscoveredProject CreateProject(string projectPath, string name, HashSet<string> usedSlugs, ProjectDiscoveryOptions options)
     {
         var slug = CreateUniqueSlug(name, usedSlugs);
         var metadata = LoadProjectMetadata(projectPath);
-        var host = ResolveHost(projectPath, slug, metadata, options);
-        var framework = DetectFramework(projectPath);
-        var runtime = DetectRuntime(projectPath, framework);
-        var documentRoot = DetectDocumentRoot(projectPath, framework, options);
-        var usesHttps = options.DefaultScheme.Equals("https", StringComparison.OrdinalIgnoreCase);
-        var url = $"{options.DefaultScheme}://{host}";
+        var projectOverride = ResolveProjectOverride(projectPath, name, slug, options);
+        var appliedOverrides = new List<string>();
+        var framework = ResolveTextOverride(projectOverride?.Framework, metadata?.Framework, DetectFramework(projectPath), "framework", appliedOverrides);
+        var runtime = ResolveTextOverride(projectOverride?.Runtime, metadata?.Runtime, DetectRuntime(projectPath, framework), "runtime", appliedOverrides);
+        var documentRoot = ResolveDocumentRoot(projectPath, framework, metadata, projectOverride, options, appliedOverrides);
+        var scheme = ResolveScheme(projectPath, metadata, projectOverride, options, appliedOverrides);
+        var host = ResolveHost(projectPath, slug, metadata, projectOverride, options, appliedOverrides);
+        var usesHttps = scheme.Equals("https", StringComparison.OrdinalIgnoreCase);
+        var url = $"{scheme}://{host}";
+        var description = ResolveTextOverride(
+            projectOverride?.Description,
+            metadata?.Description,
+            string.Empty,
+            "description",
+            appliedOverrides);
+        var tags = NormalizeTags(metadata, projectOverride, appliedOverrides);
 
         return new DiscoveredProject(
             name,
@@ -84,28 +148,37 @@ public sealed class ProjectDiscoveryService
             url,
             runtime,
             framework,
-            NormalizeDescription(metadata?.Description),
-            NormalizeTags(metadata),
-            usesHttps);
+            description,
+            tags,
+            usesHttps,
+            CreateOverrideSummary(appliedOverrides));
     }
 
-    private string ResolveHost(string projectPath, string slug, ProjectMetadata? metadata, ProjectDiscoveryOptions options)
+    private string ResolveHost(
+        string projectPath,
+        string slug,
+        ProjectMetadata? metadata,
+        ProjectOverrideDefinition? projectOverride,
+        ProjectDiscoveryOptions options,
+        List<string> appliedOverrides)
     {
         var defaultHost = $"{slug}.{options.DomainSuffix}";
+        var domainOverride = FirstNonWhiteSpace(projectOverride?.Domain, metadata?.Domain);
 
-        if (string.IsNullOrWhiteSpace(metadata?.Domain))
+        if (string.IsNullOrWhiteSpace(domainOverride))
         {
             return defaultHost;
         }
 
-        if (TryNormalizeDomain(metadata.Domain, out var normalizedDomain))
+        if (TryNormalizeDomain(domainOverride, out var normalizedDomain))
         {
+            appliedOverrides.Add("domain");
             return normalizedDomain;
         }
 
         _logger.LogWarning(
             "Ignoring invalid Locora domain override '{Domain}' in {MetadataPath}",
-            metadata.Domain,
+            domainOverride,
             Path.Combine(projectPath, ProjectMetadataFileName));
 
         return defaultHost;
@@ -131,30 +204,59 @@ public sealed class ProjectDiscoveryService
         }
     }
 
-    private static string NormalizeDescription(string? description)
+    private static string ResolveTextOverride(
+        string? primary,
+        string? secondary,
+        string fallback,
+        string overrideName,
+        List<string> appliedOverrides)
     {
-        return string.IsNullOrWhiteSpace(description) ? string.Empty : description.Trim();
-    }
-
-    private static IReadOnlyList<string> NormalizeTags(ProjectMetadata? metadata)
-    {
-        if (metadata is null || metadata.Tags.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+        if (!string.IsNullOrWhiteSpace(primary))
         {
-            return Array.Empty<string>();
+            appliedOverrides.Add(overrideName);
+            return primary.Trim();
         }
 
-        return EnumerateTagCandidates(metadata.Tags)
+        if (!string.IsNullOrWhiteSpace(secondary))
+        {
+            appliedOverrides.Add(overrideName);
+            return secondary.Trim();
+        }
+
+        return fallback;
+    }
+
+    private static IReadOnlyList<string> NormalizeTags(
+        ProjectMetadata? metadata,
+        ProjectOverrideDefinition? projectOverride,
+        List<string> appliedOverrides)
+    {
+        var tags = EnumerateTagCandidates(metadata?.Tags)
+            .Concat(EnumerateTagCandidates(projectOverride?.Tags))
             .Where(tag => !string.IsNullOrWhiteSpace(tag))
             .Select(tag => tag.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
+
+        if (tags.Length > 0)
+        {
+            appliedOverrides.Add("tags");
+        }
+
+        return tags;
     }
 
-    private static IEnumerable<string> EnumerateTagCandidates(JsonElement tags)
+    private static IEnumerable<string> EnumerateTagCandidates(JsonElement? tags)
     {
-        if (tags.ValueKind == JsonValueKind.Array)
+        if (tags is null || tags.Value.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
         {
-            foreach (var tag in tags.EnumerateArray())
+            yield break;
+        }
+
+        var value = tags.Value;
+        if (value.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var tag in value.EnumerateArray())
             {
                 if (tag.ValueKind == JsonValueKind.String)
                 {
@@ -165,13 +267,40 @@ public sealed class ProjectDiscoveryService
             yield break;
         }
 
-        if (tags.ValueKind == JsonValueKind.String)
+        if (value.ValueKind == JsonValueKind.String)
         {
-            foreach (var tag in (tags.GetString() ?? string.Empty).Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+            foreach (var tag in (value.GetString() ?? string.Empty).Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
             {
                 yield return tag;
             }
         }
+    }
+
+    private string ResolveDocumentRoot(
+        string projectPath,
+        string framework,
+        ProjectMetadata? metadata,
+        ProjectOverrideDefinition? projectOverride,
+        ProjectDiscoveryOptions options,
+        List<string> appliedOverrides)
+    {
+        var documentRootOverride = FirstNonWhiteSpace(projectOverride?.DocumentRoot, metadata?.DocumentRoot);
+        if (!string.IsNullOrWhiteSpace(documentRootOverride))
+        {
+            var resolvedPath = ResolveProjectRelativePath(projectPath, documentRootOverride);
+            if (Directory.Exists(resolvedPath) && IsWithinProject(projectPath, resolvedPath))
+            {
+                appliedOverrides.Add("document root");
+                return resolvedPath;
+            }
+
+            _logger.LogWarning(
+                "Ignoring invalid Locora document root override '{DocumentRoot}' for project {ProjectPath}. The path must be an existing directory inside the project.",
+                documentRootOverride,
+                projectPath);
+        }
+
+        return DetectDocumentRoot(projectPath, framework, options);
     }
 
     private string DetectDocumentRoot(string projectPath, string framework, ProjectDiscoveryOptions options)
@@ -188,6 +317,112 @@ public sealed class ProjectDiscoveryService
         }
 
         return projectPath;
+    }
+
+    private string ResolveScheme(
+        string projectPath,
+        ProjectMetadata? metadata,
+        ProjectOverrideDefinition? projectOverride,
+        ProjectDiscoveryOptions options,
+        List<string> appliedOverrides)
+    {
+        var schemeOverride = FirstNonWhiteSpace(projectOverride?.Scheme, metadata?.Scheme);
+        if (string.IsNullOrWhiteSpace(schemeOverride))
+        {
+            return options.DefaultScheme;
+        }
+
+        var scheme = schemeOverride.Trim().ToLowerInvariant();
+        if (scheme is "http" or "https")
+        {
+            appliedOverrides.Add("scheme");
+            return scheme;
+        }
+
+        _logger.LogWarning(
+            "Ignoring invalid Locora scheme override '{Scheme}' for project {ProjectPath}. Use http or https.",
+            schemeOverride,
+            projectPath);
+        return options.DefaultScheme;
+    }
+
+    private ProjectOverrideDefinition? ResolveProjectOverride(
+        string projectPath,
+        string name,
+        string slug,
+        ProjectDiscoveryOptions options)
+    {
+        var fullProjectPath = Path.GetFullPath(projectPath);
+        return options.ProjectOverrides.FirstOrDefault(projectOverride =>
+            MatchesProjectOverrideKey(projectOverride.Key, slug, name) ||
+            MatchesProjectOverrideKey(projectOverride.Name, slug, name) ||
+            MatchesProjectOverridePath(projectOverride.Path, fullProjectPath, _paths.ProjectRoot));
+    }
+
+    private static bool MatchesProjectOverrideKey(string? candidate, string slug, string name)
+    {
+        if (string.IsNullOrWhiteSpace(candidate))
+        {
+            return false;
+        }
+
+        var value = candidate.Trim();
+        return value.Equals(slug, StringComparison.OrdinalIgnoreCase) ||
+            value.Equals(name, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool MatchesProjectOverridePath(string? candidate, string fullProjectPath, string projectRoot)
+    {
+        if (string.IsNullOrWhiteSpace(candidate))
+        {
+            return false;
+        }
+
+        try
+        {
+            var candidatePath = Path.IsPathRooted(candidate)
+                ? Path.GetFullPath(candidate)
+                : Path.GetFullPath(Path.Combine(projectRoot, candidate));
+            return candidatePath.Equals(fullProjectPath, StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static string ResolveProjectRelativePath(string projectPath, string path)
+    {
+        return Path.IsPathRooted(path)
+            ? Path.GetFullPath(path)
+            : Path.GetFullPath(Path.Combine(projectPath, path));
+    }
+
+    private static bool IsWithinProject(string projectPath, string candidatePath)
+    {
+        var root = EnsureTrailingDirectorySeparator(Path.GetFullPath(projectPath));
+        var candidate = Path.GetFullPath(candidatePath);
+        return candidate.Equals(root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), StringComparison.OrdinalIgnoreCase) ||
+            candidate.StartsWith(root, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string EnsureTrailingDirectorySeparator(string path)
+    {
+        return path.EndsWith(Path.DirectorySeparatorChar) || path.EndsWith(Path.AltDirectorySeparatorChar)
+            ? path
+            : $"{path}{Path.DirectorySeparatorChar}";
+    }
+
+    private static string? FirstNonWhiteSpace(params string?[] values)
+    {
+        return values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
+    }
+
+    private static string CreateOverrideSummary(IReadOnlyCollection<string> appliedOverrides)
+    {
+        return appliedOverrides.Count == 0
+            ? "Overrides: none"
+            : $"Overrides: {string.Join(", ", appliedOverrides.Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(value => value, StringComparer.OrdinalIgnoreCase))}";
     }
 
     private bool HasIndexFile(string directory, ProjectDiscoveryOptions options)
@@ -366,7 +601,8 @@ public sealed class ProjectDiscoveryService
             DomainSuffix = NormalizeDomainSuffix(options?.DomainSuffix),
             DefaultScheme = NormalizeDefaultScheme(options?.DefaultScheme),
             IndexFileNames = NormalizeNameList(options?.IndexFileNames, DefaultOptions.IndexFileNames),
-            IgnoredDirectoryNames = NormalizeNameList(options?.IgnoredDirectoryNames, DefaultOptions.IgnoredDirectoryNames)
+            IgnoredDirectoryNames = NormalizeNameList(options?.IgnoredDirectoryNames, DefaultOptions.IgnoredDirectoryNames),
+            ProjectOverrides = NormalizeProjectOverrides(options?.ProjectOverrides)
         };
     }
 
@@ -412,7 +648,24 @@ public sealed class ProjectDiscoveryService
         return normalized is { Count: > 0 } ? normalized : fallback.ToList();
     }
 
-    private sealed record ProjectMetadata(string? Domain, string? Description, JsonElement Tags);
+    private static List<ProjectOverrideDefinition> NormalizeProjectOverrides(IEnumerable<ProjectOverrideDefinition>? overrides)
+    {
+        return overrides?
+            .Where(projectOverride =>
+                !string.IsNullOrWhiteSpace(projectOverride.Key) ||
+                !string.IsNullOrWhiteSpace(projectOverride.Name) ||
+                !string.IsNullOrWhiteSpace(projectOverride.Path))
+            .ToList() ?? [];
+    }
+
+    private sealed record ProjectMetadata(
+        string? Domain,
+        string? Scheme,
+        string? DocumentRoot,
+        string? Runtime,
+        string? Framework,
+        string? Description,
+        JsonElement Tags);
 
     private sealed record ProjectSettingsDocument(ProjectDiscoveryOptions? LocoraProjects);
 }

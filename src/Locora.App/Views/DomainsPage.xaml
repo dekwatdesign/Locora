@@ -138,11 +138,207 @@
                     CornerRadius="12"
                     Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
                 <StackPanel Spacing="12">
+                    <TextBlock Text="Local Tunnels" Style="{StaticResource CardTitleTextStyle}" />
+                    <InfoBar IsOpen="True"
+                             Severity="Warning"
+                             Title="External access"
+                             Message="Starting a tunnel may expose the selected local project until the terminal session is stopped." />
+                    <InfoBar IsOpen="{x:Bind ViewModel.ShowExternalAccessConsentWarning, Mode=OneWay}"
+                             Severity="Error"
+                             Title="Consent required"
+                             Message="Tunnel commands are blocked until external access consent is confirmed for this app session." />
+                    <ToggleSwitch Header="I understand this can expose the selected local project to anyone with the generated public URL."
+                                  OffContent="Not confirmed"
+                                  OnContent="Confirmed"
+                                  IsOn="{x:Bind ViewModel.ExternalAccessConsentAccepted, Mode=TwoWay}" />
+                    <TextBlock Text="{x:Bind ViewModel.ExternalAccessConsentStatus, Mode=OneWay}"
+                               TextWrapping="Wrap"
+                               Opacity="0.72" />
+                    <TextBlock Text="Firewall &amp; Network Guidance" Style="{StaticResource CardTitleTextStyle}" />
+                    <TextBlock Text="{x:Bind ViewModel.NetworkGuidanceSummary, Mode=OneWay}"
+                               TextWrapping="Wrap"
+                               Opacity="0.72" />
+                    <Border Visibility="{x:Bind ViewModel.ShowNetworkGuidanceEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Padding="12"
+                            CornerRadius="10"
+                            Background="{ThemeResource CardBackgroundFillColorTertiaryBrush}">
+                        <TextBlock Text="Network guidance is not available yet" Style="{StaticResource CardTitleTextStyle}" />
+                    </Border>
+                    <ItemsControl Visibility="{x:Bind ViewModel.HasNetworkGuidance, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                  ItemsSource="{x:Bind ViewModel.NetworkGuidance, Mode=OneWay}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="models:NetworkGuidanceCard">
+                                <Border Padding="12"
+                                        CornerRadius="10"
+                                        Margin="0,0,0,8"
+                                        Background="{ThemeResource CardBackgroundFillColorTertiaryBrush}">
+                                    <StackPanel Spacing="5">
+                                        <TextBlock Text="{x:Bind Title}" Style="{StaticResource CardTitleTextStyle}" />
+                                        <TextBlock Text="{x:Bind ScopeLabel}" Opacity="0.72" />
+                                        <TextBlock Text="{x:Bind PortLabel}" />
+                                        <TextBlock Text="{x:Bind Summary}" TextWrapping="Wrap" />
+                                        <TextBlock Text="{x:Bind Details}" TextWrapping="Wrap" Opacity="0.72" />
+                                        <TextBlock Text="{x:Bind SuggestedAction}" TextWrapping="Wrap" Opacity="0.82" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="Share URL Lifecycle" Style="{StaticResource CardTitleTextStyle}" />
+                    <TextBlock Text="{x:Bind ViewModel.ShareUrlLifecycleSummary, Mode=OneWay}"
+                               TextWrapping="Wrap"
+                               Opacity="0.72" />
+                    <Button Content="Clear Stopped Shares"
+                            AutomationProperties.HelpText="Remove stopped share URL sessions from this list."
+                            ToolTipService.ToolTip="Clear stopped share URLs"
+                            Command="{x:Bind ViewModel.ClearStoppedShareUrlsCommand}"
+                            HorizontalAlignment="Left" />
+                    <Border Visibility="{x:Bind ViewModel.ShowShareUrlSessionsEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Padding="12"
+                            CornerRadius="10"
+                            Background="{ThemeResource CardBackgroundFillColorTertiaryBrush}">
+                        <TextBlock Text="No share URLs are being tracked" Style="{StaticResource CardTitleTextStyle}" />
+                    </Border>
+                    <ItemsControl Visibility="{x:Bind ViewModel.HasShareUrlSessions, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                  ItemsSource="{x:Bind ViewModel.ShareUrlSessions, Mode=OneWay}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="models:ShareUrlSessionCard">
+                                <Border Padding="12"
+                                        CornerRadius="10"
+                                        Margin="0,0,0,8"
+                                        Background="{ThemeResource CardBackgroundFillColorTertiaryBrush}">
+                                    <Grid ColumnSpacing="12" RowSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Text="{x:Bind ProfileName}" Style="{StaticResource CardTitleTextStyle}" />
+                                            <TextBlock Text="{x:Bind PublicUrlLabel, Mode=OneWay}" TextWrapping="Wrap" />
+                                            <TextBlock Text="{x:Bind StateLabel, Mode=OneWay}" />
+                                            <TextBlock Text="{x:Bind Details, Mode=OneWay}" TextWrapping="Wrap" Opacity="0.72" />
+                                            <TextBlock Text="{x:Bind ProviderLabel}" Opacity="0.72" />
+                                            <TextBlock Text="{x:Bind TargetLabel}" TextWrapping="Wrap" Opacity="0.72" />
+                                            <TextBlock Text="{x:Bind ProjectLabel}" Opacity="0.72" />
+                                            <TextBlock Text="{x:Bind LastUpdatedAtLabel, Mode=OneWay}" Opacity="0.72" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Center">
+                                            <Button Content="Copy"
+                                                    AutomationProperties.Name="{x:Bind CopyAutomationName}"
+                                                    AutomationProperties.HelpText="Copy this public share URL to the clipboard."
+                                                    ToolTipService.ToolTip="Copy share URL"
+                                                    IsEnabled="{x:Bind CanCopy, Mode=OneWay}"
+                                                    Command="{x:Bind CopyCommand}"
+                                                    CommandParameter="{x:Bind}" />
+                                            <Button Content="Open"
+                                                    AutomationProperties.Name="{x:Bind OpenAutomationName}"
+                                                    AutomationProperties.HelpText="Open this public share URL in the browser."
+                                                    ToolTipService.ToolTip="Open share URL"
+                                                    IsEnabled="{x:Bind CanOpen, Mode=OneWay}"
+                                                    Command="{x:Bind OpenCommand}"
+                                                    CommandParameter="{x:Bind}" />
+                                            <Button Content="Stop"
+                                                    AutomationProperties.Name="{x:Bind StopAutomationName}"
+                                                    AutomationProperties.HelpText="Stop the terminal session backing this share URL."
+                                                    ToolTipService.ToolTip="Stop sharing"
+                                                    IsEnabled="{x:Bind CanStop, Mode=OneWay}"
+                                                    Command="{x:Bind StopCommand}"
+                                                    CommandParameter="{x:Bind}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock Text="Tunnel Profiles" Style="{StaticResource CardTitleTextStyle}" />
+                    <TextBlock Text="{x:Bind ViewModel.LocalTunnelsStatus, Mode=OneWay}"
+                               TextWrapping="Wrap"
+                               Opacity="0.72" />
+                    <TextBox Header="Local tunnel profiles"
+                             Text="{x:Bind ViewModel.LocalTunnelsSettingsFilePath, Mode=OneWay}"
+                             IsReadOnly="True" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="Reload Tunnels"
+                                AutomationProperties.HelpText="Reload local tunnel profiles from local-tunnels.json."
+                                ToolTipService.ToolTip="Reload local tunnel profiles"
+                                Command="{x:Bind ViewModel.ReloadLocalTunnelsCommand}" />
+                        <Button Content="Open local-tunnels.json"
+                                AutomationProperties.HelpText="Open the local tunnel profiles JSON file."
+                                ToolTipService.ToolTip="Open local-tunnels.json"
+                                Command="{x:Bind ViewModel.OpenLocalTunnelsSettingsFileCommand}" />
+                    </StackPanel>
+
+                    <Border Visibility="{x:Bind ViewModel.ShowLocalTunnelsEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Padding="12"
+                            CornerRadius="10"
+                            Background="{ThemeResource CardBackgroundFillColorTertiaryBrush}">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="No local tunnel profiles configured" Style="{StaticResource CardTitleTextStyle}" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button Content="Open local-tunnels.json"
+                                        AutomationProperties.HelpText="Open the local tunnel profiles JSON file."
+                                        ToolTipService.ToolTip="Open local-tunnels.json"
+                                        Command="{x:Bind ViewModel.OpenLocalTunnelsSettingsFileCommand}" />
+                                <Button Content="Reload Tunnels"
+                                        AutomationProperties.HelpText="Reload local tunnel profiles from local-tunnels.json."
+                                        ToolTipService.ToolTip="Reload local tunnel profiles"
+                                        Command="{x:Bind ViewModel.ReloadLocalTunnelsCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <ItemsControl Visibility="{x:Bind ViewModel.HasLocalTunnels, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                  ItemsSource="{x:Bind ViewModel.LocalTunnels, Mode=OneWay}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="models:LocalTunnelProfileCard">
+                                <Border Padding="12"
+                                        CornerRadius="10"
+                                        Margin="0,0,0,8"
+                                        Background="{ThemeResource CardBackgroundFillColorTertiaryBrush}">
+                                    <Grid ColumnSpacing="12" RowSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Text="{x:Bind DisplayName}" Style="{StaticResource CardTitleTextStyle}" />
+                                            <TextBlock Text="{x:Bind Summary}" TextWrapping="Wrap" Opacity="0.72" />
+                                            <TextBlock Text="{x:Bind ProviderLabel}" />
+                                            <TextBlock Text="{x:Bind ScopeLabel}" Opacity="0.72" />
+                                            <TextBlock Text="{x:Bind TargetLabel}" TextWrapping="Wrap" />
+                                            <TextBlock Text="{x:Bind CommandLabel}" TextWrapping="Wrap" Opacity="0.72" />
+                                            <TextBlock Text="{x:Bind TagsLabel}" TextWrapping="Wrap" Opacity="0.72" />
+                                        </StackPanel>
+
+                                        <Button Grid.Column="1"
+                                                Content="Start"
+                                                AutomationProperties.Name="{x:Bind StartAutomationName}"
+                                                AutomationProperties.HelpText="Start this local tunnel profile in the built-in terminal."
+                                                ToolTipService.ToolTip="Start local tunnel"
+                                                Command="{x:Bind StartCommand}"
+                                                CommandParameter="{x:Bind}"
+                                                VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <Border Padding="16"
+                    CornerRadius="12"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                <StackPanel Spacing="12">
                     <TextBlock Text="Project Domain Mappings" Style="{StaticResource CardTitleTextStyle}" />
                     <TextBlock Text="Override a generated hostname and add dashboard metadata with a .locora.json file in the project root, for example &#123; &quot;domain&quot;: &quot;my-app.test&quot;, &quot;description&quot;: &quot;Customer portal&quot;, &quot;tags&quot;: [ &quot;php&quot;, &quot;api&quot; ] &#125;. Locora skips hosts and vhost generation when multiple projects claim the same hostname."
                                TextWrapping="Wrap"
                                Opacity="0.72" />
-                    <Border x:Load="{x:Bind ViewModel.ShowProjectsEmptyState, Mode=OneWay}"
+                    <Border Visibility="{x:Bind ViewModel.ShowProjectsEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                             Padding="12"
                             CornerRadius="10"
                             Background="{ThemeResource CardBackgroundFillColorTertiaryBrush}">
@@ -176,6 +372,7 @@
                                     <TextBlock Text="{x:Bind Runtime}" Opacity="0.72" />
                                     <TextBlock Text="{x:Bind Description}" TextWrapping="Wrap" Opacity="0.82" />
                                     <TextBlock Text="{x:Bind TagsLabel}" Opacity="0.72" />
+                                    <TextBlock Text="{x:Bind OverrideSummary}" TextWrapping="Wrap" Opacity="0.72" />
                                     <TextBlock Text="{x:Bind Folder}" TextWrapping="Wrap" Opacity="0.72" />
                                 </StackPanel>
                             </DataTemplate>
@@ -218,7 +415,7 @@
                     <TextBlock Text="Run this before restarting Nginx. Locora also blocks Nginx startup when validation fails."
                                TextWrapping="Wrap"
                                Opacity="0.72" />
-                    <Border x:Load="{x:Bind ViewModel.ShowValidationResultsEmptyState, Mode=OneWay}"
+                    <Border Visibility="{x:Bind ViewModel.ShowValidationResultsEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                             Padding="12"
                             CornerRadius="10"
                             Background="{ThemeResource CardBackgroundFillColorTertiaryBrush}">

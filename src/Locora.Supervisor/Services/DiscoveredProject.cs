@@ -10,4 +10,5 @@ public sealed record DiscoveredProject(
     string Framework,
     string Description,
     IReadOnlyList<string> Tags,
-    bool UsesHttps);
+    bool UsesHttps,
+    string OverrideSummary);

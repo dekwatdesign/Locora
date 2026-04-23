@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+using Locora.Application.Abstractions;
 using Locora.App.Contracts;
 using Locora.Infrastructure.Services;
 
@@ -5,6 +7,7 @@ namespace Locora.Supervisor.Services;
 
 public sealed class SupervisorStateStore
 {
+    private static readonly Regex RootedWindowsPathRegex = new(@"(?<![A-Za-z0-9])(?:[A-Za-z]:[\\/]|\\\\)[^\s""']*", RegexOptions.Compiled);
     private readonly ManagedServiceRegistry _registry;
     private readonly ProjectDiscoveryService _projectDiscovery;
     private readonly ProjectConfigurationWriter _projectConfigurationWriter;
@@ -36,7 +39,7 @@ public sealed class SupervisorStateStore
         PackageDownloadManager packageDownloadManager,
         StackProfileRegistry stackProfileRegistry,
         RuntimeRepairService runtimeRepairService,
-        Locora.Application.Abstractions.IEnvironmentPaths environmentPaths)
+        IEnvironmentPaths environmentPaths)
     {
         _registry = registry;
         _projectDiscovery = projectDiscovery;
@@ -65,17 +68,19 @@ public sealed class SupervisorStateStore
         var packageDownloads = await _packageDownloadManager.GetSnapshotAsync(cancellationToken);
         var runtimePackages = await _packageDownloadManager.GetRuntimeSnapshotAsync(cancellationToken);
         var toolPackages = await _packageDownloadManager.GetToolSnapshotAsync(cancellationToken);
+        var servicePresets = _registry.Presets;
         var stackProfiles = await _stackProfileRegistry.GetSnapshotAsync(_registry.Services, cancellationToken);
         var packageCompatibility = await _packageDownloadManager.GetCompatibilitySnapshotAsync(CreatePackageCompatibilityRequirements(), cancellationToken);
-        var validationResults = CreateValidationResults(packageCompatibility, stackProfiles);
+        var validationResults = CreateValidationResults(projects, packageRegistry, packageDownloads, runtimePackages, toolPackages, packageCompatibility, stackProfiles);
         var sslStatus = await _localSslService.GetStatusAsync(projects, cancellationToken);
 
         return new EnvironmentSnapshotDto(
             _appRoot,
             stackProfiles.ActiveProfileName,
             statuses.Select(Map).ToList(),
+            servicePresets.Select(Map).ToList(),
             projects.Select(Map).ToList(),
-            CreateIssues(statuses, projects, validationResults, portDiagnostics, permissionDiagnostics, packageRegistry, packageDownloads, runtimePackages, toolPackages, stackProfiles, sslStatus),
+            CreateIssues(statuses, servicePresets, projects, validationResults, portDiagnostics, permissionDiagnostics, packageRegistry, packageDownloads, runtimePackages, toolPackages, stackProfiles, sslStatus),
             validationResults,
             portDiagnostics.Select(Map).ToList(),
             permissionDiagnostics.Select(Map).ToList(),
@@ -116,6 +121,17 @@ public sealed class SupervisorStateStore
     public async Task StopServiceAsync(string serviceKey, CancellationToken cancellationToken = default)
     {
         await _registry.StopAsync(serviceKey, cancellationToken);
+    }
+
+    public async Task StartServicePresetAsync(string presetKey, CancellationToken cancellationToken = default)
+    {
+        await GenerateProjectConfigurationAsync(cancellationToken);
+        await _registry.StartPresetAsync(presetKey, cancellationToken);
+    }
+
+    public async Task StopServicePresetAsync(string presetKey, CancellationToken cancellationToken = default)
+    {
+        await _registry.StopPresetAsync(presetKey, cancellationToken);
     }
 
     public async Task ApplyHostsPreviewAsync(CancellationToken cancellationToken = default)
@@ -186,6 +202,44 @@ public sealed class SupervisorStateStore
         await _packageDownloadManager.ApplyPackageSelectionsAsync(result.Profile.PackageSelections, cancellationToken);
     }
 
+    public async Task SaveActiveEnvironmentAsync(string profileName, CancellationToken cancellationToken = default)
+    {
+        var statuses = await _registry.GetStatusesAsync(cancellationToken);
+        var serviceKeys = statuses
+            .Where(status => IsActiveServiceState(status.State))
+            .Select(status => status.Key)
+            .ToArray();
+
+        if (serviceKeys.Length == 0)
+        {
+            var activeProfile = await _stackProfileRegistry.GetActiveProfileAsync(_registry.Services, cancellationToken);
+            serviceKeys = activeProfile.ServiceKeys.Count > 0
+                ? activeProfile.ServiceKeys.ToArray()
+                : statuses
+                    .Where(status => status.AutoStart)
+                    .Select(status => status.Key)
+                    .ToArray();
+        }
+
+        var packageSelections = await _packageDownloadManager.GetActivePackageSelectionsAsync(cancellationToken);
+        await _stackProfileRegistry.SaveActiveEnvironmentAsync(
+            profileName,
+            serviceKeys,
+            packageSelections,
+            _registry.Services,
+            cancellationToken);
+    }
+
+    public async Task ExportStackProfilesAsync(string targetPath, CancellationToken cancellationToken = default)
+    {
+        await _stackProfileRegistry.ExportProfilesAsync(targetPath, _registry.Services, cancellationToken);
+    }
+
+    public async Task ImportStackProfilesAsync(string sourcePath, CancellationToken cancellationToken = default)
+    {
+        await _stackProfileRegistry.ImportProfilesAsync(sourcePath, _registry.Services, cancellationToken);
+    }
+
     public async Task RepairLocalSslAsync(CancellationToken cancellationToken = default)
     {
         var projects = await _projectDiscovery.DiscoverAsync(cancellationToken);
@@ -214,6 +268,7 @@ public sealed class SupervisorStateStore
 
     private IReadOnlyList<HealthIssueDto> CreateIssues(
         IReadOnlyList<ManagedServiceStatus> statuses,
+        IReadOnlyList<ServicePresetSnapshot> servicePresets,
         IReadOnlyList<DiscoveredProject> projects,
         IReadOnlyList<ValidationResultDto> validationResults,
         IReadOnlyList<PortDiagnosticSnapshot> portDiagnostics,
@@ -290,14 +345,33 @@ public sealed class SupervisorStateStore
 
         foreach (var validation in validationResults.Where(validation => !validation.IsValid))
         {
+            var isPackageCompatibility = validation.Key.Equals("package_service_compatibility", StringComparison.OrdinalIgnoreCase);
+            var isStackProfileCompatibility = validation.Key.Equals("stack_profile_compatibility", StringComparison.OrdinalIgnoreCase);
+            var isPortableRelocation = validation.Key.Equals("portable_relocation_readiness", StringComparison.OrdinalIgnoreCase);
+
             issues.Add(
                 new HealthIssueDto(
-                    "Error",
-                    $"{validation.DisplayName} config validation failed",
+                    isPortableRelocation ? "Warning" : "Error",
+                    isPortableRelocation ? "Portable relocation needs attention" : $"{validation.DisplayName} config validation failed",
                     validation.Summary,
-                    validation.Key.Equals("package_service_compatibility", StringComparison.OrdinalIgnoreCase)
+                    isPackageCompatibility
                         ? "Open Settings to align package selections with service versions, then run Install or Update Active Packages."
-                        : "Use Repair Runtime Configs from Services or Domains & Hosts, then review the validation output before restarting."));
+                        : isStackProfileCompatibility
+                            ? "Open Settings to update stack profiles so their service and package references still exist."
+                            : isPortableRelocation
+                                ? "Open Settings to review portable relocation validation, then replace absolute paths with portable relative paths or copy external project folders under www."
+                                : "Use Repair Runtime Configs from Services or Domains & Hosts, then review the validation output before restarting."));
+        }
+
+        var invalidPresetCount = servicePresets.Count(preset => !preset.IsValid);
+        if (invalidPresetCount > 0)
+        {
+            issues.Add(
+                new HealthIssueDto(
+                    "Warning",
+                    "Service presets need attention",
+                    $"{invalidPresetCount} service preset{(invalidPresetCount == 1 ? string.Empty : "s")} reference missing or empty service keys.",
+                    "Open services.json and update each preset so every service key exists."));
         }
 
         foreach (var diagnostic in portDiagnostics.Where(ShouldSurfacePortDiagnostic))
@@ -519,6 +593,21 @@ public sealed class SupervisorStateStore
             status.Note);
     }
 
+    private static ServicePresetStatusDto Map(ServicePresetSnapshot preset)
+    {
+        return new ServicePresetStatusDto(
+            preset.Key,
+            preset.DisplayName,
+            preset.Description,
+            preset.ServiceKeys,
+            preset.Tags,
+            preset.IsValid,
+            preset.State,
+            preset.ServicesLabel,
+            preset.Summary,
+            preset.Details);
+    }
+
     private static PackageSourceStatusDto Map(PackageSourceStatusSnapshot source)
     {
         return new PackageSourceStatusDto(
@@ -703,10 +792,16 @@ public sealed class SupervisorStateStore
             $"{project.Runtime} / {project.Framework}",
             project.Description,
             project.Tags,
-            project.UsesHttps);
+            project.UsesHttps,
+            project.OverrideSummary);
     }
 
     private IReadOnlyList<ValidationResultDto> CreateValidationResults(
+        IReadOnlyList<DiscoveredProject> projects,
+        PackageSourceRegistrySnapshot packageRegistry,
+        PackageDownloadManagerSnapshot packageDownloads,
+        RuntimePackageManagerSnapshot runtimePackages,
+        ToolPackageManagerSnapshot toolPackages,
         PackageCompatibilityManagerSnapshot packageCompatibility,
         StackProfileRegistrySnapshot stackProfiles)
     {
@@ -719,6 +814,7 @@ public sealed class SupervisorStateStore
 
         results.Add(Map(packageCompatibility));
         results.Add(MapProfileCompatibility(stackProfiles));
+        results.Add(CreatePortableRelocationValidation(projects, packageRegistry, packageDownloads, runtimePackages, toolPackages));
         return results;
     }
 
@@ -778,6 +874,238 @@ public sealed class SupervisorStateStore
             DateTimeOffset.UtcNow);
     }
 
+    private ValidationResultDto CreatePortableRelocationValidation(
+        IReadOnlyList<DiscoveredProject> projects,
+        PackageSourceRegistrySnapshot packageRegistry,
+        PackageDownloadManagerSnapshot packageDownloads,
+        RuntimePackageManagerSnapshot runtimePackages,
+        ToolPackageManagerSnapshot toolPackages)
+    {
+        var findings = new List<string>();
+        var checkedItems = 0;
+        var portableProjectCount = 0;
+        var externalProjectCount = 0;
+
+        foreach (var service in _registry.Services.Select(service => service.Definition))
+        {
+            checkedItems += AddPortableRelativePathFindings($"{service.DisplayName} executable", service.RelativeExecutablePath, findings);
+            checkedItems += AddPortableRelativePathFindings($"{service.DisplayName} stop executable", service.RelativeStopExecutablePath, findings);
+            checkedItems += AddPortableRelativePathFindings($"{service.DisplayName} working directory", service.RelativeWorkingDirectory, findings);
+
+            foreach (var argument in service.Arguments)
+            {
+                checkedItems += AddRootedPathTokenFindings($"{service.DisplayName} argument", argument, findings);
+            }
+
+            foreach (var argument in service.StopArguments)
+            {
+                checkedItems += AddRootedPathTokenFindings($"{service.DisplayName} stop argument", argument, findings);
+            }
+
+            foreach (var variable in service.EnvironmentVariables)
+            {
+                checkedItems += AddRootedPathTokenFindings($"{service.DisplayName} environment variable {variable.Key}", variable.Value, findings);
+            }
+        }
+
+        foreach (var project in projects)
+        {
+            checkedItems++;
+            if (IsResolvedPathWithinAppRoot(project.Path))
+            {
+                portableProjectCount++;
+            }
+            else
+            {
+                externalProjectCount++;
+                AddFinding(findings, $"Project {project.Name} is outside the portable root: {project.Path}");
+            }
+
+            checkedItems++;
+            if (!IsResolvedPathWithinAppRoot(project.DocumentRoot))
+            {
+                AddFinding(findings, $"Project {project.Name} document root is outside the portable root: {project.DocumentRoot}");
+            }
+        }
+
+        foreach (var source in packageRegistry.Sources.Where(source => source.IsEnabled))
+        {
+            checkedItems += AddResolvedPathFindings($"Package source {source.DisplayName} manifest", source.ManifestPath, findings);
+        }
+
+        foreach (var download in packageDownloads.Downloads)
+        {
+            checkedItems += AddResolvedPathFindings($"{download.DisplayName} cache path", download.CachePath, findings);
+            checkedItems += AddResolvedPathFindings($"{download.DisplayName} install path", download.InstallPath, findings);
+            checkedItems += AddResolvedPathFindings($"{download.DisplayName} active path", download.ActivePath, findings);
+        }
+
+        foreach (var runtime in runtimePackages.Runtimes)
+        {
+            checkedItems += AddResolvedPathFindings($"{runtime.DisplayName} install root", runtime.InstallRootPath, findings);
+            checkedItems += AddResolvedPathFindings($"{runtime.DisplayName} active path", runtime.ActivePath, findings);
+            checkedItems += AddResolvedPathFindings($"{runtime.DisplayName} executable", runtime.ExecutablePath, findings);
+        }
+
+        foreach (var tool in toolPackages.Tools)
+        {
+            checkedItems += AddResolvedPathFindings($"{tool.DisplayName} install root", tool.InstallRootPath, findings);
+            checkedItems += AddResolvedPathFindings($"{tool.DisplayName} active path", tool.ActivePath, findings);
+            checkedItems += AddResolvedPathFindings($"{tool.DisplayName} executable", tool.ExecutablePath, findings);
+        }
+
+        var isValid = findings.Count == 0;
+        var summary = isValid
+            ? $"Portable relocation ready: checked {checkedItems} path reference{(checkedItems == 1 ? string.Empty : "s")} with no absolute external dependencies."
+            : $"{findings.Count} relocation risk{(findings.Count == 1 ? string.Empty : "s")} found across {checkedItems} path reference{(checkedItems == 1 ? string.Empty : "s")}.";
+        var details = isValid
+            ? $"Projects under portable root: {portableProjectCount}. External projects: {externalProjectCount}. Service definitions use relative paths, and package manifests/cache/install roots resolve under {_appRoot}."
+            : BuildPortableRelocationDetails(findings, portableProjectCount, externalProjectCount);
+
+        return new ValidationResultDto(
+            "portable_relocation_readiness",
+            "Portable relocation readiness",
+            isValid,
+            summary,
+            details,
+            DateTimeOffset.UtcNow);
+    }
+
+    private int AddPortableRelativePathFindings(string label, string? path, ICollection<string> findings)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return 0;
+        }
+
+        var candidate = path.Trim().Trim('"');
+        try
+        {
+            if (Path.IsPathRooted(candidate))
+            {
+                AddFinding(findings, $"{label} uses an absolute path: {candidate}");
+                return 1;
+            }
+
+            if (candidate.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries).Any(segment => segment.Equals("..", StringComparison.Ordinal)))
+            {
+                AddFinding(findings, $"{label} walks outside the portable root: {candidate}");
+                return 1;
+            }
+        }
+        catch (Exception exception)
+        {
+            AddFinding(findings, $"{label} path could not be evaluated: {exception.Message}");
+        }
+
+        return 1;
+    }
+
+    private int AddRootedPathTokenFindings(string label, string? value, ICollection<string> findings)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return 0;
+        }
+
+        var matches = RootedWindowsPathRegex
+            .Matches(value)
+            .Select(match => match.Value.TrimEnd(',', ';', ')', ']'))
+            .Where(match => !string.IsNullOrWhiteSpace(match))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        foreach (var match in matches)
+        {
+            AddFinding(findings, $"{label} embeds an absolute path: {match}");
+        }
+
+        return 1;
+    }
+
+    private int AddResolvedPathFindings(string label, string? path, ICollection<string> findings)
+    {
+        if (IsPlaceholderPath(path))
+        {
+            return 0;
+        }
+
+        try
+        {
+            if (!IsResolvedPathWithinAppRoot(path!))
+            {
+                AddFinding(findings, $"{label} resolves outside the portable root: {path}");
+            }
+        }
+        catch (Exception exception)
+        {
+            AddFinding(findings, $"{label} could not be evaluated: {exception.Message}");
+        }
+
+        return 1;
+    }
+
+    private bool IsResolvedPathWithinAppRoot(string path)
+    {
+        if (IsPlaceholderPath(path))
+        {
+            return true;
+        }
+
+        var candidate = Path.IsPathRooted(path)
+            ? Path.GetFullPath(path)
+            : Path.GetFullPath(Path.Combine(_appRoot, path));
+        return IsPathWithinDirectory(candidate, _appRoot);
+    }
+
+    private static bool IsPlaceholderPath(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return true;
+        }
+
+        var value = path.Trim();
+        return value.Equals("(unset)", StringComparison.OrdinalIgnoreCase) ||
+            value.Equals("(unresolved)", StringComparison.OrdinalIgnoreCase) ||
+            value.Equals("(not configured)", StringComparison.OrdinalIgnoreCase) ||
+            value.Equals("None", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static void AddFinding(ICollection<string> findings, string finding)
+    {
+        if (!findings.Contains(finding, StringComparer.OrdinalIgnoreCase))
+        {
+            findings.Add(finding);
+        }
+    }
+
+    private static string BuildPortableRelocationDetails(IReadOnlyList<string> findings, int portableProjectCount, int externalProjectCount)
+    {
+        var displayedFindings = findings.Take(8).Select(finding => $"- {finding}");
+        var suffix = findings.Count > 8
+            ? $" Additional findings: {findings.Count - 8}."
+            : string.Empty;
+        return $"Projects under portable root: {portableProjectCount}. External projects: {externalProjectCount}. Findings: {string.Join(" ", displayedFindings)}{suffix}";
+    }
+
+    private static bool IsPathWithinDirectory(string candidatePath, string directoryPath)
+    {
+        var directory = EnsureTrailingDirectorySeparator(Path.GetFullPath(directoryPath));
+        var candidate = Path.GetFullPath(candidatePath);
+        return candidate.Equals(directory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), StringComparison.OrdinalIgnoreCase) ||
+            candidate.StartsWith(directory, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string EnsureTrailingDirectorySeparator(string path)
+    {
+        return string.IsNullOrWhiteSpace(path) ||
+            path.EndsWith(Path.DirectorySeparatorChar) ||
+            path.EndsWith(Path.AltDirectorySeparatorChar)
+                ? path
+                : $"{path}{Path.DirectorySeparatorChar}";
+    }
+
     private static string InferPackageId(Locora.Supervisor.Configuration.ManagedServiceDefinition definition)
     {
         var segments = definition.RelativeExecutablePath
@@ -823,6 +1151,12 @@ public sealed class SupervisorStateStore
     {
         return diagnostic.State.Equals("Blocked", StringComparison.OrdinalIgnoreCase) ||
             diagnostic.State.Equals("Attention", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsActiveServiceState(string state)
+    {
+        return state.Equals("Running", StringComparison.OrdinalIgnoreCase) ||
+            state.Equals("Starting", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsExternalPortOwner(ManagedServiceStatus status)

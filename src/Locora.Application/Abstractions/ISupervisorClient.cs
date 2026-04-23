@@ -14,6 +14,10 @@ public interface ISupervisorClient
 
     Task StopServiceAsync(string serviceKey, CancellationToken cancellationToken = default);
 
+    Task StartServicePresetAsync(string presetKey, CancellationToken cancellationToken = default);
+
+    Task StopServicePresetAsync(string presetKey, CancellationToken cancellationToken = default);
+
     Task ApplyHostsPreviewAsync(CancellationToken cancellationToken = default);
 
     Task RollbackHostsAsync(CancellationToken cancellationToken = default);
@@ -39,6 +43,12 @@ public interface ISupervisorClient
     Task SelectRuntimeVersionAsync(string selectionKey, CancellationToken cancellationToken = default);
 
     Task SelectStackProfileAsync(string profileKey, CancellationToken cancellationToken = default);
+
+    Task SaveActiveEnvironmentAsync(string profileName, CancellationToken cancellationToken = default);
+
+    Task ExportStackProfilesAsync(string targetPath, CancellationToken cancellationToken = default);
+
+    Task ImportStackProfilesAsync(string sourcePath, CancellationToken cancellationToken = default);
 
     Task RepairLocalSslAsync(CancellationToken cancellationToken = default);
 

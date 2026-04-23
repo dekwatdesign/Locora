@@ -38,7 +38,65 @@
                         Command="{x:Bind ViewModel.RefreshCommand}" />
             </StackPanel>
 
-            <Border x:Load="{x:Bind ViewModel.ShowMailpitIntegration, Mode=OneWay}"
+            <Border Visibility="{x:Bind ViewModel.HasServicePresets, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    Padding="16"
+                    CornerRadius="12"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Service Presets" Style="{StaticResource CardTitleTextStyle}" />
+                    <ItemsControl ItemsSource="{x:Bind ViewModel.ServicePresets, Mode=OneWay}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="models:ServicePresetCard">
+                                <Border Padding="12"
+                                        Margin="0,0,0,8"
+                                        CornerRadius="8"
+                                        Background="{ThemeResource LayerFillColorDefaultBrush}">
+                                    <Grid ColumnSpacing="12" RowSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Text="{x:Bind DisplayName}" Style="{StaticResource SectionTitleTextStyle}" />
+                                            <TextBlock Text="{x:Bind Description}" TextWrapping="Wrap" Opacity="0.72" />
+                                            <TextBlock Text="{x:Bind ServicesLabel}" TextWrapping="Wrap" />
+                                            <TextBlock Text="{x:Bind TagsLabel}" TextWrapping="Wrap" Opacity="0.72" />
+                                            <TextBlock Text="{x:Bind Summary}" TextWrapping="Wrap" />
+                                            <TextBlock Text="{x:Bind Details}" TextWrapping="Wrap" Opacity="0.72" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                            <Border Padding="10,4"
+                                                    CornerRadius="999"
+                                                    Background="{ThemeResource AccentFillColorSecondaryBrush}"
+                                                    HorizontalAlignment="Right">
+                                                <TextBlock Text="{x:Bind State}" />
+                                            </Border>
+                                            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                                                <Button Content="Start"
+                                                        AutomationProperties.Name="{x:Bind StartAutomationName}"
+                                                        AutomationProperties.HelpText="Start every service in this preset."
+                                                        ToolTipService.ToolTip="Start service preset"
+                                                        IsEnabled="{x:Bind CanRun, Mode=OneWay}"
+                                                        Click="OnStartServicePresetClicked" />
+                                                <Button Content="Stop"
+                                                        AutomationProperties.Name="{x:Bind StopAutomationName}"
+                                                        AutomationProperties.HelpText="Stop every service in this preset in reverse order."
+                                                        ToolTipService.ToolTip="Stop service preset"
+                                                        IsEnabled="{x:Bind CanRun, Mode=OneWay}"
+                                                        Click="OnStopServicePresetClicked" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <Border Visibility="{x:Bind ViewModel.ShowMailpitIntegration, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                     Padding="16"
                     CornerRadius="12"
                     Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
@@ -93,7 +151,7 @@
                 </StackPanel>
             </Border>
 
-            <Border x:Load="{x:Bind ViewModel.ShowServicesEmptyState, Mode=OneWay}"
+            <Border Visibility="{x:Bind ViewModel.ShowServicesEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                     Padding="16"
                     CornerRadius="12"
                     Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
@@ -156,7 +214,7 @@
                                 <StackPanel Grid.Column="3"
                                             Spacing="8"
                                             VerticalAlignment="Center">
-                                    <StackPanel x:Load="{x:Bind IsMailpitService, Mode=OneWay}"
+                                    <StackPanel Visibility="{x:Bind IsMailpitService, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                                                 Orientation="Horizontal"
                                                 Spacing="8"
                                                 HorizontalAlignment="Right">
@@ -172,7 +230,7 @@
                                                 Click="OnCopyMailpitSmtpClicked" />
                                     </StackPanel>
 
-                                    <StackPanel x:Load="{x:Bind SupportsDatabaseAdminTool, Mode=OneWay}"
+                                    <StackPanel Visibility="{x:Bind SupportsDatabaseAdminTool, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                                                 Orientation="Horizontal"
                                                 Spacing="8"
                                                 HorizontalAlignment="Right">

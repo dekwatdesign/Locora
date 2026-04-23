@@ -423,7 +423,7 @@ public sealed partial class NotifyIconTrayService : ITrayService, IDisposable
             return;
         }
 
-        _dispatcherQueue.TryEnqueue(action);
+        _dispatcherQueue.TryEnqueue(() => action());
     }
 
     private static string ClipTooltip(string value)

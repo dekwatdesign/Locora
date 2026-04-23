@@ -10,11 +10,11 @@ using Microsoft.UI.Xaml;
 
 namespace Locora.App;
 
-public partial class App : Application
+public partial class App : Microsoft.UI.Xaml.Application
 {
     private static IHost? _host;
     private static SingleInstanceLease? _singleInstanceLease;
-    private Window? _mainWindow;
+    private MainWindow? _mainWindow;
     private Services.ShellContextMenuActivationRelay? _activationRelay;
 
     public App()
@@ -24,6 +24,8 @@ public partial class App : Application
     }
 
     public static IHost Host => _host ?? throw new InvalidOperationException("The app host has not been initialized.");
+
+    public static MainWindow? CurrentMainWindow => (Current as App)?._mainWindow;
 
     public static T GetService<T>()
         where T : notnull
@@ -76,6 +78,10 @@ public partial class App : Application
                 services.AddSingleton<Services.IProjectPinStore, Services.ProjectPinStore>();
                 services.AddSingleton<Services.IOnboardingStateStore, Services.OnboardingStateStore>();
                 services.AddSingleton<Services.IShellContextMenuRegistrationService, Services.ShellContextMenuRegistrationService>();
+                services.AddSingleton<Services.IUserEnvironmentChangeService, Services.UserEnvironmentChangeService>();
+                services.AddSingleton<Services.IAppUpdateService, Services.AppUpdateService>();
+                services.AddSingleton<Services.IPortableDistributionService, Services.PortableDistributionService>();
+                services.AddSingleton<Services.IUserConfirmationService, Services.ContentDialogUserConfirmationService>();
                 services.AddSingleton<ISupervisorClient, NamedPipeSupervisorClient>();
                 services.AddSingleton<IWorkbenchService, WorkbenchService>();
                 services.AddSingleton<MainWindowViewModel>();

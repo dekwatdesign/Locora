@@ -34,6 +34,24 @@ public sealed partial class ServicesPage : Page
         }
     }
 
+    private void OnStartServicePresetClicked(object sender, RoutedEventArgs args)
+    {
+        if (sender is FrameworkElement { DataContext: ServicePresetCard preset } &&
+            ViewModel.StartServicePresetCommand.CanExecute(preset))
+        {
+            ViewModel.StartServicePresetCommand.Execute(preset);
+        }
+    }
+
+    private void OnStopServicePresetClicked(object sender, RoutedEventArgs args)
+    {
+        if (sender is FrameworkElement { DataContext: ServicePresetCard preset } &&
+            ViewModel.StopServicePresetCommand.CanExecute(preset))
+        {
+            ViewModel.StopServicePresetCommand.Execute(preset);
+        }
+    }
+
     private void OnRepairServiceClicked(object sender, RoutedEventArgs args)
     {
         if (sender is FrameworkElement { DataContext: ServiceStatusCard service } &&

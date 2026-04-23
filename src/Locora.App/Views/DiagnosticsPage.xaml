@@ -204,7 +204,7 @@
                             Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
                         <StackPanel Spacing="12">
                             <TextBlock Text="Health Issues" Style="{StaticResource SectionTitleTextStyle}" />
-                            <Border x:Load="{x:Bind ViewModel.ShowHealthIssuesEmptyState, Mode=OneWay}"
+                            <Border Visibility="{x:Bind ViewModel.ShowHealthIssuesEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                                     Padding="12"
                                     CornerRadius="10"
                                     Background="{ThemeResource CardBackgroundFillColorTertiaryBrush}">
@@ -253,7 +253,7 @@
                             <TextBlock Text="{x:Bind ViewModel.ConfigValidationSummary, Mode=OneWay}"
                                        TextWrapping="Wrap"
                                        Opacity="0.72" />
-                            <Border x:Load="{x:Bind ViewModel.ShowValidationResultsEmptyState, Mode=OneWay}"
+                            <Border Visibility="{x:Bind ViewModel.ShowValidationResultsEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                                     Padding="12"
                                     CornerRadius="10"
                                     Background="{ThemeResource CardBackgroundFillColorTertiaryBrush}">
@@ -305,7 +305,7 @@
                             <TextBlock Text="{x:Bind ViewModel.PortDiagnosticsSummary, Mode=OneWay}"
                                        TextWrapping="Wrap"
                                        Opacity="0.72" />
-                            <Border x:Load="{x:Bind ViewModel.ShowPortDiagnosticsEmptyState, Mode=OneWay}"
+                            <Border Visibility="{x:Bind ViewModel.ShowPortDiagnosticsEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                                     Padding="12"
                                     CornerRadius="10"
                                     Background="{ThemeResource CardBackgroundFillColorTertiaryBrush}">
@@ -357,7 +357,7 @@
                             <TextBlock Text="{x:Bind ViewModel.PermissionDiagnosticsSummary, Mode=OneWay}"
                                        TextWrapping="Wrap"
                                        Opacity="0.72" />
-                            <Border x:Load="{x:Bind ViewModel.ShowPermissionDiagnosticsEmptyState, Mode=OneWay}"
+                            <Border Visibility="{x:Bind ViewModel.ShowPermissionDiagnosticsEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                                     Padding="12"
                                     CornerRadius="10"
                                     Background="{ThemeResource CardBackgroundFillColorTertiaryBrush}">
@@ -413,7 +413,7 @@
                             <TextBlock Text="{x:Bind ViewModel.SslCaExpirationLabel, Mode=OneWay}" Opacity="0.72" />
                             <TextBlock Text="{x:Bind ViewModel.SslRepairLabel, Mode=OneWay}" TextWrapping="Wrap" Opacity="0.72" />
 
-                            <Border x:Load="{x:Bind ViewModel.ShowSslCertificateDiagnosticsEmptyState, Mode=OneWay}"
+                            <Border Visibility="{x:Bind ViewModel.ShowSslCertificateDiagnosticsEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                                     Padding="12"
                                     CornerRadius="10"
                                     Background="{ThemeResource CardBackgroundFillColorTertiaryBrush}">

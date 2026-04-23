@@ -32,6 +32,8 @@ public static class LocoraHostBuilder
                 configuration.AddJsonFile("usr/config/services.json", optional: true, reloadOnChange: true);
                 configuration.AddJsonFile("usr/config/projects.json", optional: true, reloadOnChange: true);
                 configuration.AddJsonFile("usr/config/profiles.json", optional: true, reloadOnChange: true);
+                configuration.AddJsonFile("usr/config/custom-tools.json", optional: true, reloadOnChange: true);
+                configuration.AddJsonFile("usr/config/local-tunnels.json", optional: true, reloadOnChange: true);
                 configuration.AddJsonFile("usr/config/sources.json", optional: true, reloadOnChange: true);
                 configuration.AddJsonFile("usr/config/packages.lock.json", optional: true, reloadOnChange: true);
                 configuration.AddEnvironmentVariables(prefix: "LOCORA_");
@@ -83,6 +85,10 @@ public static class LocoraHostBuilder
         Directory.CreateDirectory(Path.Combine(userRoot, "templates"));
         Directory.CreateDirectory(Path.Combine(userRoot, "cache"));
         Directory.CreateDirectory(Path.Combine(userRoot, "cache", "packages"));
+        Directory.CreateDirectory(Path.Combine(userRoot, "updates"));
+        Directory.CreateDirectory(Path.Combine(userRoot, "updates", "downloads"));
+        Directory.CreateDirectory(Path.Combine(userRoot, "distribution"));
+        Directory.CreateDirectory(Path.Combine(userRoot, "distribution", "artifacts"));
         Directory.CreateDirectory(Path.Combine(basePath, "www"));
         Directory.CreateDirectory(Path.Combine(basePath, "bin"));
         Directory.CreateDirectory(Path.Combine(basePath, "data"));
@@ -111,6 +117,22 @@ public static class LocoraHostBuilder
                   "PreferredDatabase": "MariaDB",
                   "PreferredShell": "PowerShell",
                   "PreferredEditor": "VS Code"
+                },
+                "Updates": {
+                  "Channel": "stable",
+                  "ManifestUri": "",
+                  "ReleasePageUri": "",
+                  "AllowPrerelease": false,
+                  "CheckOnStartup": false,
+                  "CheckTimeoutMs": 5000
+                },
+                "Distribution": {
+                  "Configuration": "Release",
+                  "RuntimeIdentifier": "win-x64",
+                  "IncludeRuntimeBinaries": false,
+                  "IncludePackageCache": false,
+                  "IncludeUserData": false,
+                  "CreateReleaseManifest": true
                 }
               }
             }
@@ -319,6 +341,53 @@ public static class LocoraHostBuilder
                     "StartTimeoutMs": 5000,
                     "StopTimeoutMs": 3000
                   }
+                ],
+                "Presets": [
+                  {
+                    "Key": "web-db-mail",
+                    "DisplayName": "Web + DB + Mail",
+                    "Description": "Start the default web server, MariaDB, and Mailpit for PHP and CMS work.",
+                    "ServiceKeys": [
+                      "nginx",
+                      "mariadb",
+                      "mailpit"
+                    ],
+                    "Tags": [
+                      "web",
+                      "database",
+                      "mail"
+                    ]
+                  },
+                  {
+                    "Key": "node-api",
+                    "DisplayName": "Node API",
+                    "Description": "Start Nginx, PostgreSQL, Redis, and Mailpit for API and full-stack JavaScript projects.",
+                    "ServiceKeys": [
+                      "nginx",
+                      "postgresql",
+                      "redis",
+                      "mailpit"
+                    ],
+                    "Tags": [
+                      "node",
+                      "api",
+                      "postgres",
+                      "cache"
+                    ]
+                  },
+                  {
+                    "Key": "cache-lab",
+                    "DisplayName": "Cache Lab",
+                    "Description": "Start Redis and Memcached for cache integration testing.",
+                    "ServiceKeys": [
+                      "redis",
+                      "memcached"
+                    ],
+                    "Tags": [
+                      "cache",
+                      "testing"
+                    ]
+                  }
                 ]
               }
             }
@@ -346,7 +415,8 @@ public static class LocoraHostBuilder
                   ".vscode",
                   "node_modules",
                   "vendor"
-                ]
+                ],
+                "ProjectOverrides": []
               }
             }
             """);
@@ -567,6 +637,119 @@ public static class LocoraHostBuilder
                       "dev",
                       "project"
                     ]
+                  }
+                ]
+              }
+            }
+            """);
+
+        EnsureFile(
+            Path.Combine(configRoot, "custom-tools.json"),
+            """
+            {
+              "LocoraTools": {
+                "Tools": [
+                  {
+                    "Key": "open-localhost",
+                    "DisplayName": "Open localhost",
+                    "Description": "Open the default local HTTP endpoint in the browser.",
+                    "Action": "url",
+                    "Target": "http://localhost/",
+                    "Scope": "root",
+                    "Tags": [
+                      "browser",
+                      "web"
+                    ],
+                    "IsEnabled": true
+                  },
+                  {
+                    "Key": "open-config-folder",
+                    "DisplayName": "Open config folder",
+                    "Description": "Open Locora's portable configuration folder.",
+                    "Action": "folder",
+                    "Target": "{configRoot}",
+                    "Scope": "root",
+                    "Tags": [
+                      "config",
+                      "folder"
+                    ],
+                    "IsEnabled": true
+                  },
+                  {
+                    "Key": "composer-diagnose",
+                    "DisplayName": "Composer diagnose",
+                    "Description": "Run Composer diagnostics in the selected project terminal tab.",
+                    "Action": "terminal",
+                    "Target": "composer diagnose",
+                    "Scope": "project",
+                    "Tags": [
+                      "composer",
+                      "php",
+                      "diagnostics"
+                    ],
+                    "IsEnabled": true
+                  }
+                ]
+              }
+            }
+            """);
+
+        EnsureFile(
+            Path.Combine(configRoot, "local-tunnels.json"),
+            """
+            {
+              "LocoraTunnels": {
+                "Profiles": [
+                  {
+                    "Key": "cloudflared-selected-project",
+                    "DisplayName": "Cloudflared quick tunnel",
+                    "Provider": "cloudflared",
+                    "Description": "Expose the selected project URL through a temporary Cloudflare Tunnel.",
+                    "CommandText": "cloudflared tunnel --url {localUrl}",
+                    "Scope": "project",
+                    "ProjectName": "",
+                    "LocalUrl": "{projectUrl}",
+                    "Port": 80,
+                    "Tags": [
+                      "share",
+                      "cloudflared",
+                      "temporary"
+                    ],
+                    "IsEnabled": true
+                  },
+                  {
+                    "Key": "ngrok-http-80",
+                    "DisplayName": "Ngrok HTTP 80",
+                    "Provider": "ngrok",
+                    "Description": "Expose the default local web server port with ngrok.",
+                    "CommandText": "ngrok http {port}",
+                    "Scope": "root",
+                    "ProjectName": "",
+                    "LocalUrl": "http://127.0.0.1:{port}",
+                    "Port": 80,
+                    "Tags": [
+                      "share",
+                      "ngrok",
+                      "http"
+                    ],
+                    "IsEnabled": true
+                  },
+                  {
+                    "Key": "dev-tunnel-http-80",
+                    "DisplayName": "Dev Tunnel HTTP 80",
+                    "Provider": "devtunnel",
+                    "Description": "Expose the default local web server port with Microsoft dev tunnels.",
+                    "CommandText": "devtunnel host -p {port} --allow-anonymous",
+                    "Scope": "root",
+                    "ProjectName": "",
+                    "LocalUrl": "http://127.0.0.1:{port}",
+                    "Port": 80,
+                    "Tags": [
+                      "share",
+                      "devtunnel",
+                      "http"
+                    ],
+                    "IsEnabled": true
                   }
                 ]
               }

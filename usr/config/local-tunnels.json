@@ -1,0 +1,57 @@
+{
+  "LocoraTunnels": {
+    "Profiles": [
+      {
+        "Key": "cloudflared-selected-project",
+        "DisplayName": "Cloudflared quick tunnel",
+        "Provider": "cloudflared",
+        "Description": "Expose the selected project URL through a temporary Cloudflare Tunnel.",
+        "CommandText": "cloudflared tunnel --url {localUrl}",
+        "Scope": "project",
+        "ProjectName": "",
+        "LocalUrl": "{projectUrl}",
+        "Port": 80,
+        "Tags": [
+          "share",
+          "cloudflared",
+          "temporary"
+        ],
+        "IsEnabled": true
+      },
+      {
+        "Key": "ngrok-http-80",
+        "DisplayName": "Ngrok HTTP 80",
+        "Provider": "ngrok",
+        "Description": "Expose the default local web server port with ngrok.",
+        "CommandText": "ngrok http {port}",
+        "Scope": "root",
+        "ProjectName": "",
+        "LocalUrl": "http://127.0.0.1:{port}",
+        "Port": 80,
+        "Tags": [
+          "share",
+          "ngrok",
+          "http"
+        ],
+        "IsEnabled": true
+      },
+      {
+        "Key": "dev-tunnel-http-80",
+        "DisplayName": "Dev Tunnel HTTP 80",
+        "Provider": "devtunnel",
+        "Description": "Expose the default local web server port with Microsoft dev tunnels.",
+        "CommandText": "devtunnel host -p {port} --allow-anonymous",
+        "Scope": "root",
+        "ProjectName": "",
+        "LocalUrl": "http://127.0.0.1:{port}",
+        "Port": 80,
+        "Tags": [
+          "share",
+          "devtunnel",
+          "http"
+        ],
+        "IsEnabled": true
+      }
+    ]
+  }
+}

@@ -5,6 +5,21 @@ public sealed class ManagedServicesOptions
     public const string SectionName = "LocoraServices";
 
     public List<ManagedServiceDefinition> Services { get; init; } = [];
+
+    public List<ServicePresetDefinition> Presets { get; init; } = [];
+}
+
+public sealed class ServicePresetDefinition
+{
+    public string Key { get; init; } = string.Empty;
+
+    public string DisplayName { get; init; } = string.Empty;
+
+    public string Description { get; init; } = string.Empty;
+
+    public List<string> ServiceKeys { get; init; } = [];
+
+    public List<string> Tags { get; init; } = [];
 }
 
 public sealed class ManagedServiceDefinition

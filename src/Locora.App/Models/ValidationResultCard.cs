@@ -5,4 +5,5 @@ public sealed record ValidationResultCard(
     string State,
     string Summary,
     string Details,
-    string CheckedAt);
+    string CheckedAt,
+    string Key = "");

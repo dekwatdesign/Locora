@@ -9,7 +9,7 @@
             <TextBlock Text="Activity" Style="{StaticResource PageTitleTextStyle}" />
             <TextBlock Text="{x:Bind ViewModel.LogsRoot, Mode=OneWay}" Opacity="0.72" />
 
-            <Border x:Load="{x:Bind ViewModel.ShowActivityEmptyState, Mode=OneWay}"
+            <Border Visibility="{x:Bind ViewModel.ShowActivityEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                     Padding="16"
                     CornerRadius="12"
                     Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
