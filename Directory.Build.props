@@ -4,5 +4,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <InformationalVersion>1.0.0</InformationalVersion>
+    <Authors>CodeLevel8 Team</Authors>
+    <Company>CodeLevel8 Team</Company>
+    <Product>Locora</Product>
+    <Copyright>Copyright (c) CodeLevel8 Team</Copyright>
   </PropertyGroup>
 </Project>

@@ -2,6 +2,7 @@
 <Page
     x:Class="Locora.App.Views.DashboardPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:controls="using:Locora.App.Controls"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:models="using:Locora.App.Models">
     <ScrollViewer>
@@ -61,11 +62,12 @@
                         </StackPanel>
 
                         <Button Grid.Column="1"
-                                Content="Hide Guide"
                                 AccessKey="H"
                                 AutomationProperties.HelpText="Hide the first-run setup guide. You can show it again from Settings."
                                 ToolTipService.ToolTip="Hide the setup guide"
-                                Command="{x:Bind ViewModel.DismissFirstRunOnboardingCommand}" />
+                                Command="{x:Bind ViewModel.DismissFirstRunOnboardingCommand}">
+                            <controls:IconLabel Glyph="{StaticResource FaCloseGlyph}" Text="Hide" />
+                        </Button>
                     </Grid>
 
                     <TextBlock Text="Use these steps to get from a fresh portable folder to a working local development stack."
@@ -96,12 +98,13 @@
                                 <TextBlock Text="{x:Bind ViewModel.FirstRunSupervisorStepLabel, Mode=OneWay}"
                                            TextWrapping="Wrap"
                                            Opacity="0.72" />
-                                <Button Content="Refresh Snapshot"
-                                        AccessKey="R"
+                                <Button AccessKey="R"
                                         AutomationProperties.HelpText="Refresh the supervisor snapshot for setup step 1."
                                         ToolTipService.ToolTip="Refresh the supervisor snapshot"
                                         Command="{x:Bind ViewModel.RefreshCommand}"
-                                        HorizontalAlignment="Left" />
+                                        HorizontalAlignment="Left">
+                                    <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                                </Button>
                             </StackPanel>
                         </Border>
 
@@ -116,12 +119,13 @@
                                 <TextBlock Text="{x:Bind ViewModel.FirstRunServicesStepLabel, Mode=OneWay}"
                                            TextWrapping="Wrap"
                                            Opacity="0.72" />
-                                <Button Content="Repair Runtime Configs"
-                                        AccessKey="C"
+                                <Button AccessKey="C"
                                         AutomationProperties.HelpText="Regenerate runtime service configuration for setup step 2."
                                         ToolTipService.ToolTip="Repair runtime service configuration"
                                         Command="{x:Bind ViewModel.RepairRuntimeCommand}"
-                                        HorizontalAlignment="Left" />
+                                        HorizontalAlignment="Left">
+                                    <controls:IconLabel Glyph="{StaticResource FaRepairGlyph}" Text="Repair Configs" />
+                                </Button>
                             </StackPanel>
                         </Border>
 
@@ -137,14 +141,16 @@
                                            TextWrapping="Wrap"
                                            Opacity="0.72" />
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <Button Content="Open Projects Root"
-                                            AutomationProperties.HelpText="Open the projects root folder for setup step 3."
+                                    <Button AutomationProperties.HelpText="Open the projects root folder for setup step 3."
                                             ToolTipService.ToolTip="Open projects root folder"
-                                            Command="{x:Bind ViewModel.OpenProjectRootCommand}" />
-                                    <Button Content="Refresh"
-                                            AutomationProperties.HelpText="Refresh project discovery for setup step 3."
+                                            Command="{x:Bind ViewModel.OpenProjectRootCommand}">
+                                        <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Projects" />
+                                    </Button>
+                                    <Button AutomationProperties.HelpText="Refresh project discovery for setup step 3."
                                             ToolTipService.ToolTip="Refresh project discovery"
-                                            Command="{x:Bind ViewModel.RefreshCommand}" />
+                                            Command="{x:Bind ViewModel.RefreshCommand}">
+                                        <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                                    </Button>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -161,14 +167,16 @@
                                            TextWrapping="Wrap"
                                            Opacity="0.72" />
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <Button Content="Generate Local SSL"
-                                            AutomationProperties.HelpText="Generate the local certificate authority and project certificates for setup step 4."
+                                    <Button AutomationProperties.HelpText="Generate the local certificate authority and project certificates for setup step 4."
                                             ToolTipService.ToolTip="Generate local SSL certificates"
-                                            Command="{x:Bind ViewModel.GenerateLocalSslCommand}" />
-                                    <Button Content="Trust Local CA"
-                                            AutomationProperties.HelpText="Trust the local certificate authority for the current Windows user."
+                                            Command="{x:Bind ViewModel.GenerateLocalSslCommand}">
+                                        <controls:IconLabel Glyph="{StaticResource FaCertificateGlyph}" Text="Generate SSL" />
+                                    </Button>
+                                    <Button AutomationProperties.HelpText="Trust the local certificate authority for the current Windows user."
                                             ToolTipService.ToolTip="Trust the local certificate authority"
-                                            Command="{x:Bind ViewModel.TrustLocalSslCaCommand}" />
+                                            Command="{x:Bind ViewModel.TrustLocalSslCaCommand}">
+                                        <controls:IconLabel Glyph="{StaticResource FaShieldGlyph}" Text="Trust CA" />
+                                    </Button>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -185,14 +193,16 @@
                                            TextWrapping="Wrap"
                                            Opacity="0.72" />
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <Button Content="Validate Nginx Config"
-                                            AutomationProperties.HelpText="Run generated Nginx configuration validation for setup step 5."
+                                    <Button AutomationProperties.HelpText="Run generated Nginx configuration validation for setup step 5."
                                             ToolTipService.ToolTip="Validate generated Nginx configuration"
-                                            Command="{x:Bind ViewModel.ValidateNginxConfigCommand}" />
-                                    <Button Content="Repair Hosts &amp; VHosts"
-                                            AutomationProperties.HelpText="Regenerate hosts preview, Nginx vhosts, and Apache vhosts."
+                                            Command="{x:Bind ViewModel.ValidateNginxConfigCommand}">
+                                        <controls:IconLabel Glyph="{StaticResource FaCheckGlyph}" Text="Validate" />
+                                    </Button>
+                                    <Button AutomationProperties.HelpText="Regenerate hosts preview, Nginx vhosts, and Apache vhosts."
                                             ToolTipService.ToolTip="Regenerate hosts and vhost artifacts"
-                                            Command="{x:Bind ViewModel.RepairDomainsCommand}" />
+                                            Command="{x:Bind ViewModel.RepairDomainsCommand}">
+                                        <controls:IconLabel Glyph="{StaticResource FaGlobeGlyph}" Text="Repair Hosts" />
+                                    </Button>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -274,14 +284,16 @@
                                        TextWrapping="Wrap"
                                        Opacity="0.72" />
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <Button Content="Refresh Snapshot"
-                                        AutomationProperties.HelpText="Refresh the supervisor snapshot to reload services."
+                                <Button AutomationProperties.HelpText="Refresh the supervisor snapshot to reload services."
                                         ToolTipService.ToolTip="Refresh service snapshot"
-                                        Command="{x:Bind ViewModel.RefreshCommand}" />
-                                <Button Content="Repair Runtime Configs"
-                                        AutomationProperties.HelpText="Regenerate runtime service configuration from bundled defaults."
+                                        Command="{x:Bind ViewModel.RefreshCommand}">
+                                    <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                                </Button>
+                                <Button AutomationProperties.HelpText="Regenerate runtime service configuration from bundled defaults."
                                         ToolTipService.ToolTip="Repair runtime service configuration"
-                                        Command="{x:Bind ViewModel.RepairRuntimeCommand}" />
+                                        Command="{x:Bind ViewModel.RepairRuntimeCommand}">
+                                    <controls:IconLabel Glyph="{StaticResource FaRepairGlyph}" Text="Repair" />
+                                </Button>
                             </StackPanel>
                         </StackPanel>
                     </Border>
@@ -335,14 +347,16 @@
                                        TextWrapping="Wrap"
                                        Opacity="0.72" />
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <Button Content="Refresh Snapshot"
-                                        AutomationProperties.HelpText="Refresh diagnostics and health issues."
+                                <Button AutomationProperties.HelpText="Refresh diagnostics and health issues."
                                         ToolTipService.ToolTip="Refresh diagnostics snapshot"
-                                        Command="{x:Bind ViewModel.RefreshCommand}" />
-                                <Button Content="Validate Nginx Config"
-                                        AutomationProperties.HelpText="Validate generated Nginx configuration."
+                                        Command="{x:Bind ViewModel.RefreshCommand}">
+                                    <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                                </Button>
+                                <Button AutomationProperties.HelpText="Validate generated Nginx configuration."
                                         ToolTipService.ToolTip="Validate generated Nginx configuration"
-                                        Command="{x:Bind ViewModel.ValidateNginxConfigCommand}" />
+                                        Command="{x:Bind ViewModel.ValidateNginxConfigCommand}">
+                                    <controls:IconLabel Glyph="{StaticResource FaCheckGlyph}" Text="Validate" />
+                                </Button>
                             </StackPanel>
                         </StackPanel>
                     </Border>
@@ -376,18 +390,21 @@
                                        TextWrapping="Wrap"
                                        Opacity="0.72" />
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <Button Content="Open Projects Root"
-                                        AutomationProperties.HelpText="Open the projects root folder in File Explorer."
+                                <Button AutomationProperties.HelpText="Open the projects root folder in File Explorer."
                                         ToolTipService.ToolTip="Open projects root folder"
-                                        Command="{x:Bind ViewModel.OpenProjectRootCommand}" />
-                                <Button Content="Refresh Snapshot"
-                                        AutomationProperties.HelpText="Refresh project discovery from the supervisor."
+                                        Command="{x:Bind ViewModel.OpenProjectRootCommand}">
+                                    <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Projects" />
+                                </Button>
+                                <Button AutomationProperties.HelpText="Refresh project discovery from the supervisor."
                                         ToolTipService.ToolTip="Refresh project discovery"
-                                        Command="{x:Bind ViewModel.RefreshCommand}" />
-                                <Button Content="Repair Hosts &amp; VHosts"
-                                        AutomationProperties.HelpText="Regenerate hosts preview, Nginx vhosts, and Apache vhosts."
+                                        Command="{x:Bind ViewModel.RefreshCommand}">
+                                    <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                                </Button>
+                                <Button AutomationProperties.HelpText="Regenerate hosts preview, Nginx vhosts, and Apache vhosts."
                                         ToolTipService.ToolTip="Regenerate hosts and vhost artifacts"
-                                        Command="{x:Bind ViewModel.RepairDomainsCommand}" />
+                                        Command="{x:Bind ViewModel.RepairDomainsCommand}">
+                                    <controls:IconLabel Glyph="{StaticResource FaGlobeGlyph}" Text="Hosts" />
+                                </Button>
                             </StackPanel>
                         </StackPanel>
                     </Border>
@@ -403,33 +420,61 @@
                                             <MenuFlyoutItem Text="Open Site"
                                                             Command="{x:Bind OpenUrlCommand}"
                                                             CommandParameter="{Binding}"
-                                                            AutomationProperties.Name="{x:Bind OpenUrlAutomationName}" />
+                                                            AutomationProperties.Name="{x:Bind OpenUrlAutomationName}">
+                                                <MenuFlyoutItem.Icon>
+                                                    <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaGlobeGlyph}" />
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
                                             <MenuFlyoutItem Text="Open Folder"
                                                             Command="{x:Bind OpenFolderCommand}"
                                                             CommandParameter="{Binding}"
-                                                            AutomationProperties.Name="{x:Bind OpenFolderAutomationName}" />
+                                                            AutomationProperties.Name="{x:Bind OpenFolderAutomationName}">
+                                                <MenuFlyoutItem.Icon>
+                                                    <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaFolderOpenGlyph}" />
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
                                             <MenuFlyoutItem Text="Reveal in Explorer"
                                                             Command="{x:Bind RevealInExplorerCommand}"
                                                             CommandParameter="{Binding}"
-                                                            AutomationProperties.Name="{x:Bind RevealInExplorerAutomationName}" />
+                                                            AutomationProperties.Name="{x:Bind RevealInExplorerAutomationName}">
+                                                <MenuFlyoutItem.Icon>
+                                                    <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaFolderGlyph}" />
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
                                             <MenuFlyoutItem Text="Copy Folder Path"
                                                             Command="{x:Bind CopyFolderPathCommand}"
                                                             CommandParameter="{Binding}"
-                                                            AutomationProperties.Name="{x:Bind CopyFolderPathAutomationName}" />
+                                                            AutomationProperties.Name="{x:Bind CopyFolderPathAutomationName}">
+                                                <MenuFlyoutItem.Icon>
+                                                    <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaCopyGlyph}" />
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
                                             <MenuFlyoutSeparator />
                                             <MenuFlyoutItem Text="Terminal"
                                                             Command="{x:Bind OpenTerminalCommand}"
                                                             CommandParameter="{Binding}"
-                                                            AutomationProperties.Name="{x:Bind OpenTerminalAutomationName}" />
+                                                            AutomationProperties.Name="{x:Bind OpenTerminalAutomationName}">
+                                                <MenuFlyoutItem.Icon>
+                                                    <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaTerminalGlyph}" />
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
                                             <MenuFlyoutItem Text="Editor"
                                                             Command="{x:Bind OpenEditorCommand}"
                                                             CommandParameter="{Binding}"
-                                                            AutomationProperties.Name="{x:Bind OpenEditorAutomationName}" />
+                                                            AutomationProperties.Name="{x:Bind OpenEditorAutomationName}">
+                                                <MenuFlyoutItem.Icon>
+                                                    <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaEditGlyph}" />
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
                                             <MenuFlyoutSeparator />
                                             <MenuFlyoutItem Text="{x:Bind PinButtonLabel}"
                                                             Command="{x:Bind TogglePinCommand}"
                                                             CommandParameter="{Binding}"
-                                                            AutomationProperties.Name="{x:Bind PinAutomationName}" />
+                                                            AutomationProperties.Name="{x:Bind PinAutomationName}">
+                                                <MenuFlyoutItem.Icon>
+                                                    <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaPinGlyph}" />
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
                                         </MenuFlyout>
                                     </Border.ContextFlyout>
                                     <StackPanel Spacing="10">
@@ -440,10 +485,13 @@
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="{x:Bind Name}" Style="{StaticResource CardTitleTextStyle}" />
                                             <Button Grid.Column="1"
-                                                    Content="{x:Bind PinButtonLabel}"
+                                                    Style="{StaticResource CompactIconButtonStyle}"
                                                     Command="{x:Bind TogglePinCommand}"
                                                     CommandParameter="{Binding}"
-                                                    AutomationProperties.Name="{x:Bind PinAutomationName}" />
+                                                    AutomationProperties.Name="{x:Bind PinAutomationName}"
+                                                    ToolTipService.ToolTip="{x:Bind PinButtonLabel}">
+                                                <controls:IconLabel Glyph="{StaticResource FaPinGlyph}" />
+                                            </Button>
                                         </Grid>
                                         <TextBlock Text="{x:Bind Url}" />
                                         <TextBlock Text="{x:Bind Runtime}" Opacity="0.72" />
@@ -464,28 +512,32 @@
 
                                             <Button Grid.Row="0"
                                                     Grid.Column="0"
-                                                    Content="Open Site"
                                                     Command="{x:Bind OpenUrlCommand}"
                                                     CommandParameter="{Binding}"
-                                                    AutomationProperties.Name="{x:Bind OpenUrlAutomationName}" />
+                                                    AutomationProperties.Name="{x:Bind OpenUrlAutomationName}">
+                                                <controls:IconLabel Glyph="{StaticResource FaGlobeGlyph}" Text="Site" />
+                                            </Button>
                                             <Button Grid.Row="0"
                                                     Grid.Column="1"
-                                                    Content="Open Folder"
                                                     Command="{x:Bind OpenFolderCommand}"
                                                     CommandParameter="{Binding}"
-                                                    AutomationProperties.Name="{x:Bind OpenFolderAutomationName}" />
+                                                    AutomationProperties.Name="{x:Bind OpenFolderAutomationName}">
+                                                <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Folder" />
+                                            </Button>
                                             <Button Grid.Row="1"
                                                     Grid.Column="0"
-                                                    Content="Terminal"
                                                     Command="{x:Bind OpenTerminalCommand}"
                                                     CommandParameter="{Binding}"
-                                                    AutomationProperties.Name="{x:Bind OpenTerminalAutomationName}" />
+                                                    AutomationProperties.Name="{x:Bind OpenTerminalAutomationName}">
+                                                <controls:IconLabel Glyph="{StaticResource FaTerminalGlyph}" Text="Term" />
+                                            </Button>
                                             <Button Grid.Row="1"
                                                     Grid.Column="1"
-                                                    Content="Editor"
                                                     Command="{x:Bind OpenEditorCommand}"
                                                     CommandParameter="{Binding}"
-                                                    AutomationProperties.Name="{x:Bind OpenEditorAutomationName}" />
+                                                    AutomationProperties.Name="{x:Bind OpenEditorAutomationName}">
+                                                <controls:IconLabel Glyph="{StaticResource FaEditGlyph}" Text="Editor" />
+                                            </Button>
                                         </Grid>
                                     </StackPanel>
                                 </Border>

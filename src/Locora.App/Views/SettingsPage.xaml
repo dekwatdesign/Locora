@@ -2,6 +2,7 @@
 <Page
     x:Class="Locora.App.Views.SettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:controls="using:Locora.App.Controls"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:models="using:Locora.App.Models">
     <ScrollViewer>
@@ -68,16 +69,18 @@
                                  Text="{x:Bind ViewModel.OnboardingSettingsFilePath, Mode=OneWay}"
                                  IsReadOnly="True" />
                         <StackPanel x:Name="FirstRunButtons" Orientation="Vertical" Spacing="8">
-                            <Button Content="Show Guide"
-                                    AccessKey="G"
+                            <Button AccessKey="G"
                                     AutomationProperties.HelpText="Show the first-run setup guide on the Dashboard."
                                     ToolTipService.ToolTip="Show the Dashboard setup guide"
-                                    Command="{x:Bind ViewModel.ShowFirstRunOnboardingCommand}" />
-                            <Button Content="Hide Guide"
-                                    AccessKey="H"
+                                    Command="{x:Bind ViewModel.ShowFirstRunOnboardingCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaDashboardGlyph}" Text="Show" />
+                            </Button>
+                            <Button AccessKey="H"
                                     AutomationProperties.HelpText="Hide the first-run setup guide from the Dashboard."
                                     ToolTipService.ToolTip="Hide the Dashboard setup guide"
-                                    Command="{x:Bind ViewModel.DismissFirstRunOnboardingCommand}" />
+                                    Command="{x:Bind ViewModel.DismissFirstRunOnboardingCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaDashboardGlyph}" Text="Hide" />
+                            </Button>
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -96,21 +99,24 @@
                                  Text="{x:Bind ViewModel.EnvironmentRoot, Mode=OneWay}"
                                  IsReadOnly="True" />
                         <StackPanel x:Name="RootButtons" Orientation="Vertical" Spacing="8">
-                            <Button Content="Open Portable Root"
-                                    AccessKey="P"
+                            <Button AccessKey="P"
                                     AutomationProperties.HelpText="Open the portable root folder in File Explorer."
                                     ToolTipService.ToolTip="Open the portable root folder"
-                                    Command="{x:Bind ViewModel.OpenEnvironmentRootCommand}" />
-                            <Button Content="Open Config"
-                                    AccessKey="C"
+                                    Command="{x:Bind ViewModel.OpenEnvironmentRootCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Portable" />
+                            </Button>
+                            <Button AccessKey="C"
                                     AutomationProperties.HelpText="Open the configuration folder in File Explorer."
                                     ToolTipService.ToolTip="Open the configuration folder"
-                                    Command="{x:Bind ViewModel.OpenConfigRootCommand}" />
-                            <Button Content="Open Logs"
-                                    AccessKey="L"
+                                    Command="{x:Bind ViewModel.OpenConfigRootCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Config" />
+                            </Button>
+                            <Button AccessKey="L"
                                     AutomationProperties.HelpText="Open the logs folder in File Explorer."
                                     ToolTipService.ToolTip="Open the logs folder"
-                                    Command="{x:Bind ViewModel.OpenLogsRootCommand}" />
+                                    Command="{x:Bind ViewModel.OpenLogsRootCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Logs" />
+                            </Button>
                         </StackPanel>
 
                         <Grid x:Name="SettingsPathGrid" ColumnSpacing="12" RowSpacing="12">
@@ -129,44 +135,48 @@
                                 <TextBox Header="Projects root"
                                          Text="{x:Bind ViewModel.ProjectRoot, Mode=OneWay}"
                                          IsReadOnly="True" />
-                                <Button Content="Open Projects Root"
-                                        AutomationProperties.HelpText="Open the projects root folder in File Explorer."
+                                <Button AutomationProperties.HelpText="Open the projects root folder in File Explorer."
                                         ToolTipService.ToolTip="Open the projects root folder"
                                         Command="{x:Bind ViewModel.OpenProjectRootCommand}"
-                                        HorizontalAlignment="Left" />
+                                        HorizontalAlignment="Left">
+                                    <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Projects" />
+                                </Button>
                             </StackPanel>
 
                             <StackPanel x:Name="RuntimePathPanel" Grid.Row="1" Grid.Column="0" Spacing="8">
                                 <TextBox Header="Runtime binaries"
                                          Text="{x:Bind ViewModel.BinRoot, Mode=OneWay}"
                                          IsReadOnly="True" />
-                                <Button Content="Open Bin"
-                                        AutomationProperties.HelpText="Open the runtime binaries folder in File Explorer."
+                                <Button AutomationProperties.HelpText="Open the runtime binaries folder in File Explorer."
                                         ToolTipService.ToolTip="Open the runtime binaries folder"
                                         Command="{x:Bind ViewModel.OpenBinRootCommand}"
-                                        HorizontalAlignment="Left" />
+                                        HorizontalAlignment="Left">
+                                    <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Bin" />
+                                </Button>
                             </StackPanel>
 
                             <StackPanel x:Name="DataPathPanel" Grid.Row="2" Grid.Column="0" Spacing="8">
                                 <TextBox Header="Service data"
                                          Text="{x:Bind ViewModel.DataRoot, Mode=OneWay}"
                                          IsReadOnly="True" />
-                                <Button Content="Open Data"
-                                        AutomationProperties.HelpText="Open the service data folder in File Explorer."
+                                <Button AutomationProperties.HelpText="Open the service data folder in File Explorer."
                                         ToolTipService.ToolTip="Open the service data folder"
                                         Command="{x:Bind ViewModel.OpenDataRootCommand}"
-                                        HorizontalAlignment="Left" />
+                                        HorizontalAlignment="Left">
+                                    <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Data" />
+                                </Button>
                             </StackPanel>
 
                             <StackPanel x:Name="TempPathPanel" Grid.Row="3" Grid.Column="0" Spacing="8">
                                 <TextBox Header="Temporary files"
                                          Text="{x:Bind ViewModel.TempRoot, Mode=OneWay}"
                                          IsReadOnly="True" />
-                                <Button Content="Open Temp"
-                                        AutomationProperties.HelpText="Open the temporary files folder in File Explorer."
+                                <Button AutomationProperties.HelpText="Open the temporary files folder in File Explorer."
                                         ToolTipService.ToolTip="Open the temporary files folder"
                                         Command="{x:Bind ViewModel.OpenTempRootCommand}"
-                                        HorizontalAlignment="Left" />
+                                        HorizontalAlignment="Left">
+                                    <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Temp" />
+                                </Button>
                             </StackPanel>
                         </Grid>
                     </StackPanel>
@@ -184,42 +194,47 @@
                         <TextBox Header="App settings"
                                  Text="{x:Bind ViewModel.AppSettingsFilePath, Mode=OneWay}"
                                  IsReadOnly="True" />
-                        <Button Content="Open appsettings.json"
-                                AutomationProperties.HelpText="Open the app settings JSON file."
+                        <Button AutomationProperties.HelpText="Open the app settings JSON file."
                                 ToolTipService.ToolTip="Open appsettings.json"
                                 Command="{x:Bind ViewModel.OpenAppSettingsFileCommand}"
-                                HorizontalAlignment="Left" />
+                                HorizontalAlignment="Left">
+                            <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" Text="appsettings.json" />
+                        </Button>
 
                         <TextBox Header="Supervisor settings"
                                  Text="{x:Bind ViewModel.SupervisorSettingsFilePath, Mode=OneWay}"
                                  IsReadOnly="True" />
-                        <Button Content="Open supervisor.json"
-                                AutomationProperties.HelpText="Open the supervisor settings JSON file."
+                        <Button AutomationProperties.HelpText="Open the supervisor settings JSON file."
                                 ToolTipService.ToolTip="Open supervisor.json"
                                 Command="{x:Bind ViewModel.OpenSupervisorSettingsFileCommand}"
-                                HorizontalAlignment="Left" />
+                                HorizontalAlignment="Left">
+                            <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" Text="supervisor.json" />
+                        </Button>
 
                         <TextBox Header="Services settings"
                                  Text="{x:Bind ViewModel.ServicesSettingsFilePath, Mode=OneWay}"
                                  IsReadOnly="True" />
-                        <Button Content="Open services.json"
-                                AutomationProperties.HelpText="Open the services settings JSON file."
+                        <Button AutomationProperties.HelpText="Open the services settings JSON file."
                                 ToolTipService.ToolTip="Open services.json"
                                 Command="{x:Bind ViewModel.OpenServicesSettingsFileCommand}"
-                                HorizontalAlignment="Left" />
+                                HorizontalAlignment="Left">
+                            <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" Text="services.json" />
+                        </Button>
 
                         <TextBox Header="Project discovery settings"
                                  Text="{x:Bind ViewModel.ProjectsSettingsFilePath, Mode=OneWay}"
                                  IsReadOnly="True" />
                         <StackPanel x:Name="ProjectConfigButtons" Orientation="Vertical" Spacing="8">
-                            <Button Content="Open projects.json"
-                                    AutomationProperties.HelpText="Open the project discovery settings JSON file."
+                            <Button AutomationProperties.HelpText="Open the project discovery settings JSON file."
                                     ToolTipService.ToolTip="Open projects.json"
-                                    Command="{x:Bind ViewModel.OpenProjectsSettingsFileCommand}" />
-                            <Button Content="Open Config Folder"
-                                    AutomationProperties.HelpText="Open the folder containing Locora configuration files."
+                                    Command="{x:Bind ViewModel.OpenProjectsSettingsFileCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" Text="projects.json" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the folder containing Locora configuration files."
                                     ToolTipService.ToolTip="Open the configuration folder"
-                                    Command="{x:Bind ViewModel.OpenConfigRootCommand}" />
+                                    Command="{x:Bind ViewModel.OpenConfigRootCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Config" />
+                            </Button>
                         </StackPanel>
 
                         <TextBox Header="Configuration backups"
@@ -239,37 +254,42 @@
                                    TextWrapping="Wrap"
                                    Opacity="0.72" />
                         <StackPanel x:Name="ConfigBackupButtons" Orientation="Vertical" Spacing="8">
-                            <Button Content="Back Up Config"
-                                    AutomationProperties.HelpText="Create a timestamped zip archive of usr/config."
+                            <Button AutomationProperties.HelpText="Create a timestamped zip archive of usr/config."
                                     ToolTipService.ToolTip="Back up Locora configuration"
-                                    Command="{x:Bind ViewModel.BackupConfigCommand}" />
-                            <Button Content="Restore Config Backup"
-                                    AutomationProperties.HelpText="Restore a Locora configuration backup archive into usr/config."
+                                    Command="{x:Bind ViewModel.BackupConfigCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaBackupGlyph}" Text="Back Up" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Restore a Locora configuration backup archive into usr/config."
                                     ToolTipService.ToolTip="Restore configuration backup"
-                                    Command="{x:Bind ViewModel.RestoreConfigCommand}" />
-                            <Button Content="Open Config Backups"
-                                    AutomationProperties.HelpText="Open the folder containing configuration backup archives."
+                                    Command="{x:Bind ViewModel.RestoreConfigCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaBackupGlyph}" Text="Restore" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the folder containing configuration backup archives."
                                     ToolTipService.ToolTip="Open configuration backups"
-                                    Command="{x:Bind ViewModel.OpenConfigBackupRootCommand}" />
+                                    Command="{x:Bind ViewModel.OpenConfigBackupRootCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaBackupGlyph}" Text="Backups" />
+                            </Button>
                         </StackPanel>
 
                         <TextBox Header="Stack profiles"
                                  Text="{x:Bind ViewModel.ProfilesSettingsFilePath, Mode=OneWay}"
                                  IsReadOnly="True" />
-                        <Button Content="Open profiles.json"
-                                AutomationProperties.HelpText="Open the stack profiles JSON file."
+                        <Button AutomationProperties.HelpText="Open the stack profiles JSON file."
                                 ToolTipService.ToolTip="Open profiles.json"
                                 Command="{x:Bind ViewModel.OpenProfilesSettingsFileCommand}"
-                                HorizontalAlignment="Left" />
+                                HorizontalAlignment="Left">
+                            <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" Text="profiles.json" />
+                        </Button>
 
                         <TextBox Header="Package sources"
                                  Text="{x:Bind ViewModel.PackageSourcesSettingsFilePath, Mode=OneWay}"
                                  IsReadOnly="True" />
-                        <Button Content="Open sources.json"
-                                AutomationProperties.HelpText="Open the package sources JSON file."
+                        <Button AutomationProperties.HelpText="Open the package sources JSON file."
                                 ToolTipService.ToolTip="Open sources.json"
                                 Command="{x:Bind ViewModel.OpenPackageSourcesSettingsFileCommand}"
-                                HorizontalAlignment="Left" />
+                                HorizontalAlignment="Left">
+                            <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" Text="sources.json" />
+                        </Button>
 
                         <TextBox Header="Package lock state"
                                  Text="{x:Bind ViewModel.PackagesLockSettingsFilePath, Mode=OneWay}"
@@ -278,14 +298,16 @@
                                  Text="{x:Bind ViewModel.PackageManifestsRootPath, Mode=OneWay}"
                                  IsReadOnly="True" />
                         <StackPanel x:Name="PackageManifestButtons" Orientation="Vertical" Spacing="8">
-                            <Button Content="Open packages.lock.json"
-                                    AutomationProperties.HelpText="Open the package lock JSON file."
+                            <Button AutomationProperties.HelpText="Open the package lock JSON file."
                                     ToolTipService.ToolTip="Open packages.lock.json"
-                                    Command="{x:Bind ViewModel.OpenPackagesLockSettingsFileCommand}" />
-                            <Button Content="Open package-manifests"
-                                    AutomationProperties.HelpText="Open the bundled package manifests folder."
+                                    Command="{x:Bind ViewModel.OpenPackagesLockSettingsFileCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaPackageGlyph}" Text="packages.lock.json" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the bundled package manifests folder."
                                     ToolTipService.ToolTip="Open the package manifests folder"
-                                    Command="{x:Bind ViewModel.OpenPackageManifestsRootCommand}" />
+                                    Command="{x:Bind ViewModel.OpenPackageManifestsRootCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaPackageGlyph}" Text="package-manifests" />
+                            </Button>
                         </StackPanel>
 
                         <Grid x:Name="SettingsStateGrid" ColumnSpacing="12" RowSpacing="12">
@@ -333,6 +355,9 @@
                         <TextBox Header="Current version"
                                  Text="{x:Bind ViewModel.AppUpdateCurrentVersion, Mode=OneWay}"
                                  IsReadOnly="True" />
+                        <TextBox Header="Developer"
+                                 Text="{x:Bind ViewModel.DeveloperName, Mode=OneWay}"
+                                 IsReadOnly="True" />
                         <TextBox Header="Latest version"
                                  Text="{x:Bind ViewModel.AppUpdateLatestVersion, Mode=OneWay}"
                                  IsReadOnly="True" />
@@ -367,34 +392,41 @@
                                  Text="{x:Bind ViewModel.AppUpdateDownloadRootPath, Mode=OneWay}"
                                  IsReadOnly="True" />
                         <StackPanel x:Name="AppUpdateButtons" Orientation="Vertical" Spacing="8">
-                            <Button Content="Check for Updates"
-                                    AutomationProperties.HelpText="Read the configured app update manifest and refresh the cached update plan."
+                            <Button AutomationProperties.HelpText="Read the configured app update manifest and refresh the cached update plan."
                                     ToolTipService.ToolTip="Check configured update manifest"
-                                    Command="{x:Bind ViewModel.CheckForAppUpdatesCommand}" />
-                            <Button Content="Open Release Page"
-                                    AutomationProperties.HelpText="Open the release page URI from the app update status."
+                                    Command="{x:Bind ViewModel.CheckForAppUpdatesCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Check" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the release page URI from the app update status."
                                     ToolTipService.ToolTip="Open app update release page"
-                                    Command="{x:Bind ViewModel.OpenAppUpdateReleasePageCommand}" />
-                            <Button Content="Open Download"
-                                    AutomationProperties.HelpText="Open the update download URI from the app update status."
+                                    Command="{x:Bind ViewModel.OpenAppUpdateReleasePageCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaGlobeGlyph}" Text="Release" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the update download URI from the app update status."
                                     ToolTipService.ToolTip="Open app update download"
-                                    Command="{x:Bind ViewModel.OpenAppUpdateDownloadCommand}" />
-                            <Button Content="Open Update Plan"
-                                    AutomationProperties.HelpText="Open the cached update plan JSON file."
+                                    Command="{x:Bind ViewModel.OpenAppUpdateDownloadCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaDownloadGlyph}" Text="Download" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the cached update plan JSON file."
                                     ToolTipService.ToolTip="Open update plan"
-                                    Command="{x:Bind ViewModel.OpenAppUpdatePlanCommand}" />
-                            <Button Content="Open Manifest Cache"
-                                    AutomationProperties.HelpText="Open the cached release manifest JSON file."
+                                    Command="{x:Bind ViewModel.OpenAppUpdatePlanCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" Text="Plan" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the cached release manifest JSON file."
                                     ToolTipService.ToolTip="Open cached update manifest"
-                                    Command="{x:Bind ViewModel.OpenAppUpdateManifestCacheCommand}" />
-                            <Button Content="Open Example Manifest"
-                                    AutomationProperties.HelpText="Open the example release manifest schema."
+                                    Command="{x:Bind ViewModel.OpenAppUpdateManifestCacheCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" Text="Cache" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the example release manifest schema."
                                     ToolTipService.ToolTip="Open example update manifest"
-                                    Command="{x:Bind ViewModel.OpenAppUpdateManifestExampleCommand}" />
-                            <Button Content="Open appsettings.json"
-                                    AutomationProperties.HelpText="Open appsettings.json to edit the Updates section."
+                                    Command="{x:Bind ViewModel.OpenAppUpdateManifestExampleCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" Text="Example" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open appsettings.json to edit the Updates section."
                                     ToolTipService.ToolTip="Open appsettings.json"
-                                    Command="{x:Bind ViewModel.OpenAppSettingsFileCommand}" />
+                                    Command="{x:Bind ViewModel.OpenAppSettingsFileCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" Text="appsettings.json" />
+                            </Button>
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -432,34 +464,41 @@
                                  Text="{x:Bind ViewModel.PortableDistributionManifestTemplatePath, Mode=OneWay}"
                                  IsReadOnly="True" />
                         <StackPanel x:Name="PortableDistributionButtons" Orientation="Vertical" Spacing="8">
-                            <Button Content="Refresh Distribution Files"
-                                    AutomationProperties.HelpText="Regenerate the portable distribution PowerShell script, plan, README, and release manifest template."
+                            <Button AutomationProperties.HelpText="Regenerate the portable distribution PowerShell script, plan, README, and release manifest template."
                                     ToolTipService.ToolTip="Regenerate portable distribution files"
-                                    Command="{x:Bind ViewModel.RefreshPortableDistributionFilesCommand}" />
-                            <Button Content="Open Build Script"
-                                    AutomationProperties.HelpText="Open the generated PowerShell script for building a portable ZIP release."
+                                    Command="{x:Bind ViewModel.RefreshPortableDistributionFilesCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the generated PowerShell script for building a portable ZIP release."
                                     ToolTipService.ToolTip="Open portable distribution script"
-                                    Command="{x:Bind ViewModel.OpenPortableDistributionScriptCommand}" />
-                            <Button Content="Open Distribution Plan"
-                                    AutomationProperties.HelpText="Open the generated portable distribution plan JSON file."
+                                    Command="{x:Bind ViewModel.OpenPortableDistributionScriptCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" Text="Script" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the generated portable distribution plan JSON file."
                                     ToolTipService.ToolTip="Open portable distribution plan"
-                                    Command="{x:Bind ViewModel.OpenPortableDistributionPlanCommand}" />
-                            <Button Content="Open README"
-                                    AutomationProperties.HelpText="Open the generated portable distribution README."
+                                    Command="{x:Bind ViewModel.OpenPortableDistributionPlanCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" Text="Plan" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the generated portable distribution README."
                                     ToolTipService.ToolTip="Open portable distribution README"
-                                    Command="{x:Bind ViewModel.OpenPortableDistributionReadmeCommand}" />
-                            <Button Content="Open Manifest Template"
-                                    AutomationProperties.HelpText="Open the generated release manifest template for update checks."
+                                    Command="{x:Bind ViewModel.OpenPortableDistributionReadmeCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" Text="README" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the generated release manifest template for update checks."
                                     ToolTipService.ToolTip="Open release manifest template"
-                                    Command="{x:Bind ViewModel.OpenPortableDistributionManifestTemplateCommand}" />
-                            <Button Content="Open Distribution Folder"
-                                    AutomationProperties.HelpText="Open the folder containing generated portable distribution helper files."
+                                    Command="{x:Bind ViewModel.OpenPortableDistributionManifestTemplateCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" Text="Template" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the folder containing generated portable distribution helper files."
                                     ToolTipService.ToolTip="Open portable distribution folder"
-                                    Command="{x:Bind ViewModel.OpenPortableDistributionRootCommand}" />
-                            <Button Content="Open Artifacts Folder"
-                                    AutomationProperties.HelpText="Open the folder where portable ZIP artifacts should be written."
+                                    Command="{x:Bind ViewModel.OpenPortableDistributionRootCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Distribution" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the folder where portable ZIP artifacts should be written."
                                     ToolTipService.ToolTip="Open portable distribution artifacts"
-                                    Command="{x:Bind ViewModel.OpenPortableDistributionArtifactsRootCommand}" />
+                                    Command="{x:Bind ViewModel.OpenPortableDistributionArtifactsRootCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Artifacts" />
+                            </Button>
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -483,21 +522,24 @@
                                    TextWrapping="Wrap"
                                    Opacity="0.72" />
                         <StackPanel x:Name="DomainDefaultButtons" Orientation="Vertical" Spacing="8">
-                            <Button Content="Save Domain Defaults"
-                                    AccessKey="S"
+                            <Button AccessKey="S"
                                     AutomationProperties.HelpText="Save the generated domain suffix and default scheme."
                                     ToolTipService.ToolTip="Save generated domain defaults"
-                                    Command="{x:Bind ViewModel.SaveDomainSettingsCommand}" />
-                            <Button Content="Repair Hosts &amp; VHosts"
-                                    AccessKey="V"
+                                    Command="{x:Bind ViewModel.SaveDomainSettingsCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaSaveGlyph}" Text="Save Defaults" />
+                            </Button>
+                            <Button AccessKey="V"
                                     AutomationProperties.HelpText="Regenerate hosts preview, Nginx vhosts, and Apache vhosts."
                                     ToolTipService.ToolTip="Regenerate hosts and vhost artifacts"
-                                    Command="{x:Bind ViewModel.RepairDomainsCommand}" />
-                            <Button Content="Refresh Snapshot"
-                                    AccessKey="R"
+                                    Command="{x:Bind ViewModel.RepairDomainsCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaRepairGlyph}" Text="Hosts" />
+                            </Button>
+                            <Button AccessKey="R"
                                     AutomationProperties.HelpText="Refresh the latest supervisor snapshot."
                                     ToolTipService.ToolTip="Refresh the supervisor snapshot"
-                                    Command="{x:Bind ViewModel.RefreshCommand}" />
+                                    Command="{x:Bind ViewModel.RefreshCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                            </Button>
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -523,14 +565,16 @@
                                            TextWrapping="Wrap"
                                            Opacity="0.72" />
                                 <StackPanel Orientation="Vertical" Spacing="8">
-                                    <Button Content="Refresh Snapshot"
-                                            AutomationProperties.HelpText="Refresh package source registry state from the supervisor."
+                                    <Button AutomationProperties.HelpText="Refresh package source registry state from the supervisor."
                                             ToolTipService.ToolTip="Refresh package source registry"
-                                            Command="{x:Bind ViewModel.RefreshCommand}" />
-                                    <Button Content="Open sources.json"
-                                            AutomationProperties.HelpText="Open the package sources JSON file."
+                                            Command="{x:Bind ViewModel.RefreshCommand}">
+                                        <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                                    </Button>
+                                    <Button AutomationProperties.HelpText="Open the package sources JSON file."
                                             ToolTipService.ToolTip="Open sources.json"
-                                            Command="{x:Bind ViewModel.OpenPackageSourcesSettingsFileCommand}" />
+                                            Command="{x:Bind ViewModel.OpenPackageSourcesSettingsFileCommand}">
+                                        <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" Text="sources.json" />
+                                    </Button>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -578,14 +622,16 @@
                                            TextWrapping="Wrap"
                                            Opacity="0.72" />
                                 <StackPanel Orientation="Vertical" Spacing="8">
-                                    <Button Content="Refresh Snapshot"
-                                            AutomationProperties.HelpText="Refresh runtime version inventory from the supervisor."
+                                    <Button AutomationProperties.HelpText="Refresh runtime version inventory from the supervisor."
                                             ToolTipService.ToolTip="Refresh runtime version inventory"
-                                            Command="{x:Bind ViewModel.RefreshCommand}" />
-                                    <Button Content="Open package-manifests"
-                                            AutomationProperties.HelpText="Open the bundled package manifests folder."
+                                            Command="{x:Bind ViewModel.RefreshCommand}">
+                                        <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                                    </Button>
+                                    <Button AutomationProperties.HelpText="Open the bundled package manifests folder."
                                             ToolTipService.ToolTip="Open the package manifests folder"
-                                            Command="{x:Bind ViewModel.OpenPackageManifestsRootCommand}" />
+                                            Command="{x:Bind ViewModel.OpenPackageManifestsRootCommand}">
+                                        <controls:IconLabel Glyph="{StaticResource FaPackageGlyph}" Text="package-manifests" />
+                                    </Button>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -624,13 +670,14 @@
                                                           SelectedItem="{x:Bind SelectedVersion, Mode=TwoWay}"
                                                           MinWidth="180"
                                                           HorizontalAlignment="Left" />
-                                                <Button Content="Switch Runtime Version"
-                                                        AutomationProperties.Name="{x:Bind SwitchAutomationName, Mode=OneWay}"
+                                                <Button AutomationProperties.Name="{x:Bind SwitchAutomationName, Mode=OneWay}"
                                                         AutomationProperties.HelpText="Select this runtime version in the package lock state. Installed versions activate immediately; missing versions become the next install target."
                                                         ToolTipService.ToolTip="Switch selected runtime version"
                                                         IsEnabled="{x:Bind CanSwitchVersion, Mode=OneWay}"
                                                         Command="{x:Bind SwitchVersionCommand}"
-                                                        CommandParameter="{x:Bind}" />
+                                                        CommandParameter="{x:Bind}">
+                                                    <controls:IconLabel Glyph="{StaticResource FaCheckGlyph}" Text="Switch" />
+                                                </Button>
                                             </StackPanel>
                                         </StackPanel>
                                     </Border>
@@ -652,18 +699,21 @@
                         <TextBlock Text="{x:Bind ViewModel.ToolPackageStatusLabel, Mode=OneWay}" />
 
                         <StackPanel x:Name="ToolPackageButtons" Orientation="Vertical" Spacing="8">
-                            <Button Content="Refresh Snapshot"
-                                    AutomationProperties.HelpText="Refresh tool package inventory from the supervisor."
+                            <Button AutomationProperties.HelpText="Refresh tool package inventory from the supervisor."
                                     ToolTipService.ToolTip="Refresh tool package inventory"
-                                    Command="{x:Bind ViewModel.RefreshCommand}" />
-                            <Button Content="Open packages.lock.json"
-                                    AutomationProperties.HelpText="Open the package lock JSON file."
+                                    Command="{x:Bind ViewModel.RefreshCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the package lock JSON file."
                                     ToolTipService.ToolTip="Open packages.lock.json"
-                                    Command="{x:Bind ViewModel.OpenPackagesLockSettingsFileCommand}" />
-                            <Button Content="Open package-manifests"
-                                    AutomationProperties.HelpText="Open the bundled package manifests folder."
+                                    Command="{x:Bind ViewModel.OpenPackagesLockSettingsFileCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaPackageGlyph}" Text="packages.lock.json" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the bundled package manifests folder."
                                     ToolTipService.ToolTip="Open the package manifests folder"
-                                    Command="{x:Bind ViewModel.OpenPackageManifestsRootCommand}" />
+                                    Command="{x:Bind ViewModel.OpenPackageManifestsRootCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaPackageGlyph}" Text="package-manifests" />
+                            </Button>
                         </StackPanel>
 
                         <Border Visibility="{x:Bind ViewModel.ShowToolPackagesEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
@@ -674,14 +724,16 @@
                                            TextWrapping="Wrap"
                                            Opacity="0.72" />
                                 <StackPanel Orientation="Vertical" Spacing="8">
-                                    <Button Content="Refresh Snapshot"
-                                            AutomationProperties.HelpText="Refresh tool package inventory from the supervisor."
+                                    <Button AutomationProperties.HelpText="Refresh tool package inventory from the supervisor."
                                             ToolTipService.ToolTip="Refresh tool package inventory"
-                                            Command="{x:Bind ViewModel.RefreshCommand}" />
-                                    <Button Content="Open package-manifests"
-                                            AutomationProperties.HelpText="Open the bundled package manifests folder."
+                                            Command="{x:Bind ViewModel.RefreshCommand}">
+                                        <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                                    </Button>
+                                    <Button AutomationProperties.HelpText="Open the bundled package manifests folder."
                                             ToolTipService.ToolTip="Open the package manifests folder"
-                                            Command="{x:Bind ViewModel.OpenPackageManifestsRootCommand}" />
+                                            Command="{x:Bind ViewModel.OpenPackageManifestsRootCommand}">
+                                        <controls:IconLabel Glyph="{StaticResource FaPackageGlyph}" Text="package-manifests" />
+                                    </Button>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -739,22 +791,26 @@
                                    Opacity="0.72" />
 
                         <StackPanel Orientation="Vertical" Spacing="8">
-                            <Button Content="Preview Laragon Import"
-                                    AutomationProperties.HelpText="Scan the Laragon www folder and show project overrides before writing projects.json."
+                            <Button AutomationProperties.HelpText="Scan the Laragon www folder and show project overrides before writing projects.json."
                                     ToolTipService.ToolTip="Preview Laragon project import"
-                                    Command="{x:Bind ViewModel.PreviewLaragonImportCommand}" />
-                            <Button Content="Import Laragon Projects"
-                                    AutomationProperties.HelpText="Merge Laragon project overrides into projects.json and regenerate hosts and vhosts."
+                                    Command="{x:Bind ViewModel.PreviewLaragonImportCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaImportGlyph}" Text="Preview" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Merge Laragon project overrides into projects.json and regenerate hosts and vhosts."
                                     ToolTipService.ToolTip="Import Laragon projects"
-                                    Command="{x:Bind ViewModel.ImportLaragonProjectsCommand}" />
-                            <Button Content="Open Laragon Root"
-                                    AutomationProperties.HelpText="Open the configured Laragon root folder."
+                                    Command="{x:Bind ViewModel.ImportLaragonProjectsCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaImportGlyph}" Text="Import" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the configured Laragon root folder."
                                     ToolTipService.ToolTip="Open Laragon root"
-                                    Command="{x:Bind ViewModel.OpenLaragonRootCommand}" />
-                            <Button Content="Open projects.json"
-                                    AutomationProperties.HelpText="Open project discovery settings after import."
+                                    Command="{x:Bind ViewModel.OpenLaragonRootCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Laragon Root" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open project discovery settings after import."
                                     ToolTipService.ToolTip="Open projects.json"
-                                    Command="{x:Bind ViewModel.OpenProjectsSettingsFileCommand}" />
+                                    Command="{x:Bind ViewModel.OpenProjectsSettingsFileCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" Text="projects.json" />
+                            </Button>
                         </StackPanel>
 
                         <Border Visibility="{x:Bind ViewModel.ShowLaragonImportEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
@@ -811,38 +867,46 @@
                                    Opacity="0.72" />
 
                         <StackPanel x:Name="StackProfileButtons" Orientation="Vertical" Spacing="8">
-                            <Button Content="Save Active Environment"
-                                    AutomationProperties.HelpText="Save the current running services and active package selections as a stack profile."
+                            <Button AutomationProperties.HelpText="Save the current running services and active package selections as a stack profile."
                                     ToolTipService.ToolTip="Save active environment as stack profile"
-                                    Command="{x:Bind ViewModel.SaveActiveEnvironmentCommand}" />
-                            <Button Content="Export Stack Profiles"
-                                    AutomationProperties.HelpText="Export stack profiles to the configured JSON file."
+                                    Command="{x:Bind ViewModel.SaveActiveEnvironmentCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaSaveGlyph}" Text="Save Active" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Export stack profiles to the configured JSON file."
                                     ToolTipService.ToolTip="Export stack profiles"
-                                    Command="{x:Bind ViewModel.ExportStackProfilesCommand}" />
-                            <Button Content="Import Stack Profiles"
-                                    AutomationProperties.HelpText="Import stack profiles from the configured JSON file and preserve existing profile keys."
+                                    Command="{x:Bind ViewModel.ExportStackProfilesCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaExportGlyph}" Text="Export" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Import stack profiles from the configured JSON file and preserve existing profile keys."
                                     ToolTipService.ToolTip="Import stack profiles"
-                                    Command="{x:Bind ViewModel.ImportStackProfilesCommand}" />
-                            <Button Content="Refresh Snapshot"
-                                    AutomationProperties.HelpText="Refresh stack profile state from the supervisor."
+                                    Command="{x:Bind ViewModel.ImportStackProfilesCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaImportGlyph}" Text="Import" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Refresh stack profile state from the supervisor."
                                     ToolTipService.ToolTip="Refresh stack profile state"
-                                    Command="{x:Bind ViewModel.RefreshCommand}" />
-                            <Button Content="Open profiles.json"
-                                    AutomationProperties.HelpText="Open the stack profiles JSON file."
+                                    Command="{x:Bind ViewModel.RefreshCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the stack profiles JSON file."
                                     ToolTipService.ToolTip="Open profiles.json"
-                                    Command="{x:Bind ViewModel.OpenProfilesSettingsFileCommand}" />
-                            <Button Content="Open profiles folder"
-                                    AutomationProperties.HelpText="Open the folder used for profile import and export files."
+                                    Command="{x:Bind ViewModel.OpenProfilesSettingsFileCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" Text="profiles.json" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the folder used for profile import and export files."
                                     ToolTipService.ToolTip="Open profiles folder"
-                                    Command="{x:Bind ViewModel.OpenProfilesRootCommand}" />
-                            <Button Content="Open packages.lock.json"
-                                    AutomationProperties.HelpText="Open package selections that are merged when a stack profile is selected."
+                                    Command="{x:Bind ViewModel.OpenProfilesRootCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="profiles folder" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open package selections that are merged when a stack profile is selected."
                                     ToolTipService.ToolTip="Open package lock state"
-                                    Command="{x:Bind ViewModel.OpenPackagesLockSettingsFileCommand}" />
-                            <Button Content="Start Active Stack"
-                                    AutomationProperties.HelpText="Start services from the active stack profile."
+                                    Command="{x:Bind ViewModel.OpenPackagesLockSettingsFileCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaPackageGlyph}" Text="packages.lock.json" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Start services from the active stack profile."
                                     ToolTipService.ToolTip="Start active stack profile services"
-                                    Command="{x:Bind ViewModel.StartAllCommand}" />
+                                    Command="{x:Bind ViewModel.StartAllCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaPlayGlyph}" Text="Start Stack" />
+                            </Button>
                         </StackPanel>
 
                         <Border Visibility="{x:Bind ViewModel.ShowStackProfilesEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
@@ -853,14 +917,16 @@
                                            TextWrapping="Wrap"
                                            Opacity="0.72" />
                                 <StackPanel Orientation="Vertical" Spacing="8">
-                                    <Button Content="Refresh Snapshot"
-                                            AutomationProperties.HelpText="Refresh stack profile state from the supervisor."
+                                    <Button AutomationProperties.HelpText="Refresh stack profile state from the supervisor."
                                             ToolTipService.ToolTip="Refresh stack profile state"
-                                            Command="{x:Bind ViewModel.RefreshCommand}" />
-                                    <Button Content="Open profiles.json"
-                                            AutomationProperties.HelpText="Open the stack profiles JSON file."
+                                            Command="{x:Bind ViewModel.RefreshCommand}">
+                                        <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                                    </Button>
+                                    <Button AutomationProperties.HelpText="Open the stack profiles JSON file."
                                             ToolTipService.ToolTip="Open profiles.json"
-                                            Command="{x:Bind ViewModel.OpenProfilesSettingsFileCommand}" />
+                                            Command="{x:Bind ViewModel.OpenProfilesSettingsFileCommand}">
+                                        <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" Text="profiles.json" />
+                                    </Button>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -881,14 +947,15 @@
                                                     <TextBlock Text="{x:Bind State}" />
                                                 </StackPanel>
                                                 <Button Grid.Column="1"
-                                                        Content="{x:Bind SelectButtonLabel, Mode=OneWay}"
                                                         AutomationProperties.Name="{x:Bind SelectAutomationName, Mode=OneWay}"
                                                         AutomationProperties.HelpText="Load this stack profile and merge its package selections into packages.lock.json."
                                                         ToolTipService.ToolTip="Load stack profile"
                                                         IsEnabled="{x:Bind CanSelect, Mode=OneWay}"
                                                         Command="{x:Bind SelectProfileCommand}"
                                                         CommandParameter="{x:Bind}"
-                                                        VerticalAlignment="Center" />
+                                                        VerticalAlignment="Center">
+                                                    <controls:IconLabel Glyph="{StaticResource FaCheckGlyph}" Text="{x:Bind SelectButtonLabel, Mode=OneWay}" />
+                                                </Button>
                                             </Grid>
 
                                             <TextBlock Text="{x:Bind Description}" TextWrapping="Wrap" Opacity="0.72" />
@@ -918,18 +985,21 @@
                                  IsReadOnly="True" />
 
                         <StackPanel x:Name="CustomToolButtons" Orientation="Vertical" Spacing="8">
-                            <Button Content="Reload Custom Tools"
-                                    AutomationProperties.HelpText="Reload custom tools from custom-tools.json."
+                            <Button AutomationProperties.HelpText="Reload custom tools from custom-tools.json."
                                     ToolTipService.ToolTip="Reload custom tools"
-                                    Command="{x:Bind ViewModel.ReloadCustomToolsCommand}" />
-                            <Button Content="Open custom-tools.json"
-                                    AutomationProperties.HelpText="Open the custom tools JSON file."
+                                    Command="{x:Bind ViewModel.ReloadCustomToolsCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Reload" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the custom tools JSON file."
                                     ToolTipService.ToolTip="Open custom-tools.json"
-                                    Command="{x:Bind ViewModel.OpenCustomToolsSettingsFileCommand}" />
-                            <Button Content="Open Terminal Commands"
-                                    AutomationProperties.HelpText="Open terminal preset commands used alongside custom terminal tools."
+                                    Command="{x:Bind ViewModel.OpenCustomToolsSettingsFileCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" Text="custom-tools.json" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open terminal preset commands used alongside custom terminal tools."
                                     ToolTipService.ToolTip="Open terminal commands"
-                                    Command="{x:Bind ViewModel.OpenTerminalCommandsSettingsFileCommand}" />
+                                    Command="{x:Bind ViewModel.OpenTerminalCommandsSettingsFileCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaTerminalGlyph}" Text="Commands" />
+                            </Button>
                         </StackPanel>
 
                         <Border Visibility="{x:Bind ViewModel.ShowCustomToolsEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
@@ -937,14 +1007,16 @@
                             <StackPanel Spacing="10">
                                 <TextBlock Text="No custom tools configured" Style="{StaticResource CardTitleTextStyle}" />
                                 <StackPanel Orientation="Vertical" Spacing="8">
-                                    <Button Content="Open custom-tools.json"
-                                            AutomationProperties.HelpText="Open the custom tools JSON file."
+                                    <Button AutomationProperties.HelpText="Open the custom tools JSON file."
                                             ToolTipService.ToolTip="Open custom-tools.json"
-                                            Command="{x:Bind ViewModel.OpenCustomToolsSettingsFileCommand}" />
-                                    <Button Content="Reload Custom Tools"
-                                            AutomationProperties.HelpText="Reload custom tools from custom-tools.json."
+                                            Command="{x:Bind ViewModel.OpenCustomToolsSettingsFileCommand}">
+                                        <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" Text="custom-tools.json" />
+                                    </Button>
+                                    <Button AutomationProperties.HelpText="Reload custom tools from custom-tools.json."
                                             ToolTipService.ToolTip="Reload custom tools"
-                                            Command="{x:Bind ViewModel.ReloadCustomToolsCommand}" />
+                                            Command="{x:Bind ViewModel.ReloadCustomToolsCommand}">
+                                        <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Reload" />
+                                    </Button>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -970,14 +1042,15 @@
                                             </StackPanel>
 
                                             <Button Grid.Column="1"
-                                                    Content="Run"
                                                     AutomationProperties.Name="{x:Bind RunAutomationName}"
                                                     AutomationProperties.HelpText="Run this custom tool."
                                                     ToolTipService.ToolTip="Run custom tool"
                                                     IsEnabled="{x:Bind CanRun, Mode=OneWay}"
                                                     Command="{x:Bind RunCommand}"
                                                     CommandParameter="{x:Bind}"
-                                                    VerticalAlignment="Center" />
+                                                    VerticalAlignment="Center">
+                                                <controls:IconLabel Glyph="{StaticResource FaPlayGlyph}" Text="Run" />
+                                            </Button>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
@@ -1008,30 +1081,36 @@
                                  IsReadOnly="True" />
 
                         <StackPanel x:Name="PackageDownloadButtons" Orientation="Vertical" Spacing="8">
-                            <Button Content="Install or Update Active Packages"
-                                    AutomationProperties.HelpText="Sync, validate, and extract the active package selections into the portable runtime roots."
+                            <Button AutomationProperties.HelpText="Sync, validate, and extract the active package selections into the portable runtime roots."
                                     ToolTipService.ToolTip="Install or update active packages"
-                                    Command="{x:Bind ViewModel.InstallOrUpdatePackagesCommand}" />
-                            <Button Content="Sync Package Downloads"
-                                    AutomationProperties.HelpText="Copy or download package artifacts into the local package cache."
+                                    Command="{x:Bind ViewModel.InstallOrUpdatePackagesCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaPackageGlyph}" Text="Install/Update" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Copy or download package artifacts into the local package cache."
                                     ToolTipService.ToolTip="Sync package downloads into cache"
-                                    Command="{x:Bind ViewModel.SyncPackageDownloadsCommand}" />
-                            <Button Content="Validate Cached Checksums"
-                                    AutomationProperties.HelpText="Refresh package download state and validate SHA-256 for cached artifacts."
+                                    Command="{x:Bind ViewModel.SyncPackageDownloadsCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaPackageGlyph}" Text="Sync" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Refresh package download state and validate SHA-256 for cached artifacts."
                                     ToolTipService.ToolTip="Validate cached package checksums"
-                                    Command="{x:Bind ViewModel.RefreshCommand}" />
-                            <Button Content="Extract Package Archives"
-                                    AutomationProperties.HelpText="Extract cached package archives into the portable bin roots and refresh current runtime paths."
+                                    Command="{x:Bind ViewModel.RefreshCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaCheckGlyph}" Text="Checksums" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Extract cached package archives into the portable bin roots and refresh current runtime paths."
                                     ToolTipService.ToolTip="Extract cached package archives"
-                                    Command="{x:Bind ViewModel.ExtractPackageArchivesCommand}" />
-                            <Button Content="Open Package Cache"
-                                    AutomationProperties.HelpText="Open the package cache folder in File Explorer."
+                                    Command="{x:Bind ViewModel.ExtractPackageArchivesCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaPackageGlyph}" Text="Extract" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the package cache folder in File Explorer."
                                     ToolTipService.ToolTip="Open the package cache folder"
-                                    Command="{x:Bind ViewModel.OpenPackageCacheRootCommand}" />
-                            <Button Content="Open packages.lock.json"
-                                    AutomationProperties.HelpText="Open the package lock JSON file."
+                                    Command="{x:Bind ViewModel.OpenPackageCacheRootCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaPackageGlyph}" Text="Cache" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the package lock JSON file."
                                     ToolTipService.ToolTip="Open packages.lock.json"
-                                    Command="{x:Bind ViewModel.OpenPackagesLockSettingsFileCommand}" />
+                                    Command="{x:Bind ViewModel.OpenPackagesLockSettingsFileCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaPackageGlyph}" Text="packages.lock.json" />
+                            </Button>
                         </StackPanel>
 
                         <Border Visibility="{x:Bind ViewModel.ShowPackageDownloadsEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
@@ -1042,14 +1121,16 @@
                                            TextWrapping="Wrap"
                                            Opacity="0.72" />
                                 <StackPanel Orientation="Vertical" Spacing="8">
-                                    <Button Content="Refresh Snapshot"
-                                            AutomationProperties.HelpText="Refresh package download planning from the supervisor."
+                                    <Button AutomationProperties.HelpText="Refresh package download planning from the supervisor."
                                             ToolTipService.ToolTip="Refresh package download planning"
-                                            Command="{x:Bind ViewModel.RefreshCommand}" />
-                                    <Button Content="Open packages.lock.json"
-                                            AutomationProperties.HelpText="Open the package lock JSON file."
+                                            Command="{x:Bind ViewModel.RefreshCommand}">
+                                        <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                                    </Button>
+                                    <Button AutomationProperties.HelpText="Open the package lock JSON file."
                                             ToolTipService.ToolTip="Open packages.lock.json"
-                                            Command="{x:Bind ViewModel.OpenPackagesLockSettingsFileCommand}" />
+                                            Command="{x:Bind ViewModel.OpenPackagesLockSettingsFileCommand}">
+                                        <controls:IconLabel Glyph="{StaticResource FaPackageGlyph}" Text="packages.lock.json" />
+                                    </Button>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -1079,13 +1160,14 @@
                                                      Text="{x:Bind ActivePath}"
                                                      IsReadOnly="True" />
                                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <Button Content="Remove Installed Versions"
-                                                        AutomationProperties.Name="{x:Bind RemoveAutomationName}"
+                                                <Button AutomationProperties.Name="{x:Bind RemoveAutomationName}"
                                                         AutomationProperties.HelpText="Remove installed runtime folders for this package without deleting cached artifacts."
                                                         ToolTipService.ToolTip="Remove installed runtime folders for this package"
                                                         IsEnabled="{x:Bind CanRemoveInstall, Mode=OneWay}"
                                                         Command="{x:Bind RemoveInstallCommand}"
-                                                        CommandParameter="{x:Bind}" />
+                                                        CommandParameter="{x:Bind}">
+                                                    <controls:IconLabel Glyph="{StaticResource FaPackageGlyph}" Text="Remove" />
+                                                </Button>
                                             </StackPanel>
                                         </StackPanel>
                                     </Border>
@@ -1126,26 +1208,31 @@
                                  IsReadOnly="True" />
 
                         <StackPanel x:Name="RuntimeBackupButtons" Orientation="Vertical" Spacing="8">
-                            <Button Content="Back Up Config"
-                                    AutomationProperties.HelpText="Create a timestamped zip archive of usr/config before backing up runtime folders."
+                            <Button AutomationProperties.HelpText="Create a timestamped zip archive of usr/config before backing up runtime folders."
                                     ToolTipService.ToolTip="Back up Locora configuration"
-                                    Command="{x:Bind ViewModel.BackupConfigCommand}" />
-                            <Button Content="Open Data"
-                                    AutomationProperties.HelpText="Open the service data folder in File Explorer."
+                                    Command="{x:Bind ViewModel.BackupConfigCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaBackupGlyph}" Text="Back Up" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the service data folder in File Explorer."
                                     ToolTipService.ToolTip="Open service data"
-                                    Command="{x:Bind ViewModel.OpenDataRootCommand}" />
-                            <Button Content="Open Bin"
-                                    AutomationProperties.HelpText="Open the runtime binaries folder in File Explorer."
+                                    Command="{x:Bind ViewModel.OpenDataRootCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Data" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the runtime binaries folder in File Explorer."
                                     ToolTipService.ToolTip="Open runtime binaries"
-                                    Command="{x:Bind ViewModel.OpenBinRootCommand}" />
-                            <Button Content="Open Package Cache"
-                                    AutomationProperties.HelpText="Open the package cache folder in File Explorer."
+                                    Command="{x:Bind ViewModel.OpenBinRootCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Bin" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the package cache folder in File Explorer."
                                     ToolTipService.ToolTip="Open package cache"
-                                    Command="{x:Bind ViewModel.OpenPackageCacheRootCommand}" />
-                            <Button Content="Open packages.lock.json"
-                                    AutomationProperties.HelpText="Open the package lock JSON file."
+                                    Command="{x:Bind ViewModel.OpenPackageCacheRootCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaPackageGlyph}" Text="Cache" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the package lock JSON file."
                                     ToolTipService.ToolTip="Open packages.lock.json"
-                                    Command="{x:Bind ViewModel.OpenPackagesLockSettingsFileCommand}" />
+                                    Command="{x:Bind ViewModel.OpenPackagesLockSettingsFileCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaPackageGlyph}" Text="packages.lock.json" />
+                            </Button>
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -1171,22 +1258,26 @@
                                  IsReadOnly="True" />
 
                         <StackPanel x:Name="PortableRelocationButtons" Orientation="Vertical" Spacing="8">
-                            <Button Content="Refresh Snapshot"
-                                    AutomationProperties.HelpText="Run the portable relocation readiness check through the supervisor snapshot."
+                            <Button AutomationProperties.HelpText="Run the portable relocation readiness check through the supervisor snapshot."
                                     ToolTipService.ToolTip="Validate portable relocation readiness"
-                                    Command="{x:Bind ViewModel.RefreshCommand}" />
-                            <Button Content="Export Diagnostic Report"
-                                    AutomationProperties.HelpText="Export diagnostics including portable relocation validation details."
+                                    Command="{x:Bind ViewModel.RefreshCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Export diagnostics including portable relocation validation details."
                                     ToolTipService.ToolTip="Export diagnostic report"
-                                    Command="{x:Bind ViewModel.ExportDiagnosticReportCommand}" />
-                            <Button Content="Open Config Folder"
-                                    AutomationProperties.HelpText="Open the configuration folder containing service, package, and project path settings."
+                                    Command="{x:Bind ViewModel.ExportDiagnosticReportCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaExportGlyph}" Text="Export" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the configuration folder containing service, package, and project path settings."
                                     ToolTipService.ToolTip="Open configuration folder"
-                                    Command="{x:Bind ViewModel.OpenConfigRootCommand}" />
-                            <Button Content="Open Projects Root"
-                                    AutomationProperties.HelpText="Open the portable projects root."
+                                    Command="{x:Bind ViewModel.OpenConfigRootCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Config" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the portable projects root."
                                     ToolTipService.ToolTip="Open projects root"
-                                    Command="{x:Bind ViewModel.OpenProjectRootCommand}" />
+                                    Command="{x:Bind ViewModel.OpenProjectRootCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Projects" />
+                            </Button>
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -1218,26 +1309,31 @@
                                  Text="{x:Bind ViewModel.UserEnvironmentBackupRootPath, Mode=OneWay}"
                                  IsReadOnly="True" />
                         <StackPanel x:Name="UserEnvironmentButtons" Orientation="Vertical" Spacing="8">
-                            <Button Content="Refresh Environment Scripts"
-                                    AutomationProperties.HelpText="Regenerate the CurrentUser PowerShell scripts and manifest for this portable root."
+                            <Button AutomationProperties.HelpText="Regenerate the CurrentUser PowerShell scripts and manifest for this portable root."
                                     ToolTipService.ToolTip="Regenerate user environment scripts"
-                                    Command="{x:Bind ViewModel.RefreshUserEnvironmentFilesCommand}" />
-                            <Button Content="Open Install Script"
-                                    AutomationProperties.HelpText="Open the generated PowerShell script that adds Locora user PATH and LOCORA variables."
+                                    Command="{x:Bind ViewModel.RefreshUserEnvironmentFilesCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the generated PowerShell script that adds Locora user PATH and LOCORA variables."
                                     ToolTipService.ToolTip="Open the generated environment install script"
-                                    Command="{x:Bind ViewModel.OpenUserEnvironmentApplyScriptCommand}" />
-                            <Button Content="Open Uninstall Script"
-                                    AutomationProperties.HelpText="Open the generated PowerShell script that removes Locora user PATH and LOCORA variables."
+                                    Command="{x:Bind ViewModel.OpenUserEnvironmentApplyScriptCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaPackageGlyph}" Text="Install" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the generated PowerShell script that removes Locora user PATH and LOCORA variables."
                                     ToolTipService.ToolTip="Open the generated environment uninstall script"
-                                    Command="{x:Bind ViewModel.OpenUserEnvironmentRemoveScriptCommand}" />
-                            <Button Content="Open Manifest"
-                                    AutomationProperties.HelpText="Open the JSON manifest describing the generated PATH and environment variable plan."
+                                    Command="{x:Bind ViewModel.OpenUserEnvironmentRemoveScriptCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaPackageGlyph}" Text="Uninstall" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the JSON manifest describing the generated PATH and environment variable plan."
                                     ToolTipService.ToolTip="Open the generated environment manifest"
-                                    Command="{x:Bind ViewModel.OpenUserEnvironmentManifestCommand}" />
-                            <Button Content="Open Aliases Folder"
-                                    AutomationProperties.HelpText="Open the aliases folder that persistent PATH scripts add for the current user."
+                                    Command="{x:Bind ViewModel.OpenUserEnvironmentManifestCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" Text="Manifest" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the aliases folder that persistent PATH scripts add for the current user."
                                     ToolTipService.ToolTip="Open the aliases folder"
-                                    Command="{x:Bind ViewModel.OpenAliasesRootCommand}" />
+                                    Command="{x:Bind ViewModel.OpenAliasesRootCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaTerminalGlyph}" Text="Aliases" />
+                            </Button>
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -1269,30 +1365,36 @@
                                  Text="{x:Bind ViewModel.ShellContextMenuExecutablePath, Mode=OneWay}"
                                  IsReadOnly="True" />
                         <StackPanel x:Name="ExplorerContextButtons" Orientation="Vertical" Spacing="8">
-                            <Button Content="Refresh Registry Files"
-                                    AutomationProperties.HelpText="Regenerate the install and uninstall registry files for the current Locora executable path."
+                            <Button AutomationProperties.HelpText="Regenerate the install and uninstall registry files for the current Locora executable path."
                                     ToolTipService.ToolTip="Regenerate shell context menu registry files"
-                                    Command="{x:Bind ViewModel.RefreshShellContextMenuFilesCommand}" />
-                            <Button Content="Open Install .reg"
-                                    AutomationProperties.HelpText="Open the generated registry file that adds Locora context menus for the current Windows user."
+                                    Command="{x:Bind ViewModel.RefreshShellContextMenuFilesCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the generated registry file that adds Locora context menus for the current Windows user."
                                     ToolTipService.ToolTip="Open the generated install registry file"
-                                    Command="{x:Bind ViewModel.OpenShellContextMenuInstallFileCommand}" />
-                            <Button Content="Open Uninstall .reg"
-                                    AutomationProperties.HelpText="Open the generated registry file that removes Locora context menus for the current Windows user."
+                                    Command="{x:Bind ViewModel.OpenShellContextMenuInstallFileCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaPackageGlyph}" Text="Install .reg" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the generated registry file that removes Locora context menus for the current Windows user."
                                     ToolTipService.ToolTip="Open the generated uninstall registry file"
-                                    Command="{x:Bind ViewModel.OpenShellContextMenuUninstallFileCommand}" />
-                            <Button Content="Open Shell Integration Folder"
-                                    AutomationProperties.HelpText="Open the folder containing generated shell integration files."
+                                    Command="{x:Bind ViewModel.OpenShellContextMenuUninstallFileCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaPackageGlyph}" Text="Uninstall .reg" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the folder containing generated shell integration files."
                                     ToolTipService.ToolTip="Open shell integration folder"
-                                    Command="{x:Bind ViewModel.OpenShellIntegrationRootCommand}" />
-                            <Button Content="Open Projects Root"
-                                    AutomationProperties.HelpText="Open the projects root folder in File Explorer."
+                                    Command="{x:Bind ViewModel.OpenShellIntegrationRootCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Shell Files" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the projects root folder in File Explorer."
                                     ToolTipService.ToolTip="Open the projects root folder"
-                                    Command="{x:Bind ViewModel.OpenProjectRootCommand}" />
-                            <Button Content="Open Portable Root"
-                                    AutomationProperties.HelpText="Open the portable root folder in File Explorer."
+                                    Command="{x:Bind ViewModel.OpenProjectRootCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Projects" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the portable root folder in File Explorer."
                                     ToolTipService.ToolTip="Open the portable root folder"
-                                    Command="{x:Bind ViewModel.OpenEnvironmentRootCommand}" />
+                                    Command="{x:Bind ViewModel.OpenEnvironmentRootCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Portable" />
+                            </Button>
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -1312,18 +1414,21 @@
                                  Text="{x:Bind ViewModel.AppSettingsFilePath, Mode=OneWay}"
                                  IsReadOnly="True" />
                         <StackPanel x:Name="EditorPreferenceButtons" Orientation="Vertical" Spacing="8">
-                            <Button Content="Open Portable Root in Editor"
-                                    AutomationProperties.HelpText="Open the portable root with the preferred editor integration."
+                            <Button AutomationProperties.HelpText="Open the portable root with the preferred editor integration."
                                     ToolTipService.ToolTip="Open portable root in editor"
-                                    Command="{x:Bind ViewModel.OpenEnvironmentRootInEditorCommand}" />
-                            <Button Content="Open Projects Root in Editor"
-                                    AutomationProperties.HelpText="Open the projects root with the preferred editor integration."
+                                    Command="{x:Bind ViewModel.OpenEnvironmentRootInEditorCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaEditGlyph}" Text="Portable" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the projects root with the preferred editor integration."
                                     ToolTipService.ToolTip="Open projects root in editor"
-                                    Command="{x:Bind ViewModel.OpenProjectRootInEditorCommand}" />
-                            <Button Content="Open appsettings.json"
-                                    AutomationProperties.HelpText="Open the app settings JSON file to change the preferred editor command."
+                                    Command="{x:Bind ViewModel.OpenProjectRootInEditorCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaEditGlyph}" Text="Projects" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the app settings JSON file to change the preferred editor command."
                                     ToolTipService.ToolTip="Open appsettings.json"
-                                    Command="{x:Bind ViewModel.OpenAppSettingsFileCommand}" />
+                                    Command="{x:Bind ViewModel.OpenAppSettingsFileCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" Text="appsettings.json" />
+                            </Button>
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -1357,15 +1462,17 @@
                                    TextWrapping="Wrap"
                                    Opacity="0.72" />
                         <StackPanel x:Name="PermissionActionButtons" Orientation="Vertical" Spacing="8">
-                            <Button Content="Restart Supervisor as Admin"
-                                    AccessKey="A"
+                            <Button AccessKey="A"
                                     AutomationProperties.HelpText="Ask Windows to restart Locora Supervisor with administrator rights."
                                     ToolTipService.ToolTip="Restart supervisor as administrator"
-                                    Command="{x:Bind ViewModel.RestartSupervisorElevatedCommand}" />
-                            <Button Content="Refresh Snapshot"
-                                    AutomationProperties.HelpText="Refresh permission diagnostics from the supervisor."
+                                    Command="{x:Bind ViewModel.RestartSupervisorElevatedCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaAdminGlyph}" Text="Admin" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Refresh permission diagnostics from the supervisor."
                                     ToolTipService.ToolTip="Refresh permission diagnostics"
-                                    Command="{x:Bind ViewModel.RefreshCommand}" />
+                                    Command="{x:Bind ViewModel.RefreshCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                            </Button>
                         </StackPanel>
 
                         <Border Visibility="{x:Bind ViewModel.ShowPermissionDiagnosticsEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
@@ -1376,14 +1483,16 @@
                                            TextWrapping="Wrap"
                                            Opacity="0.72" />
                                 <StackPanel x:Name="PermissionEmptyActions" Orientation="Vertical" Spacing="8">
-                                    <Button Content="Refresh Snapshot"
-                                            AutomationProperties.HelpText="Refresh permission diagnostics from the supervisor."
+                                    <Button AutomationProperties.HelpText="Refresh permission diagnostics from the supervisor."
                                             ToolTipService.ToolTip="Refresh permission diagnostics"
-                                            Command="{x:Bind ViewModel.RefreshCommand}" />
-                                    <Button Content="Open Portable Root"
-                                            AutomationProperties.HelpText="Open the portable root folder in File Explorer."
+                                            Command="{x:Bind ViewModel.RefreshCommand}">
+                                        <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                                    </Button>
+                                    <Button AutomationProperties.HelpText="Open the portable root folder in File Explorer."
                                             ToolTipService.ToolTip="Open the portable root folder"
-                                            Command="{x:Bind ViewModel.OpenEnvironmentRootCommand}" />
+                                            Command="{x:Bind ViewModel.OpenEnvironmentRootCommand}">
+                                        <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Portable" />
+                                    </Button>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -1415,20 +1524,23 @@
                                    TextWrapping="Wrap"
                                    Opacity="0.72" />
                         <StackPanel x:Name="DiagnosticReportActions" Orientation="Vertical" Spacing="8">
-                            <Button Content="Copy Diagnostic Report"
-                                    AccessKey="Y"
+                            <Button AccessKey="Y"
                                     AutomationProperties.HelpText="Copy the diagnostic report to the clipboard."
                                     ToolTipService.ToolTip="Copy diagnostic report to clipboard"
-                                    Command="{x:Bind ViewModel.CopyDiagnosticReportCommand}" />
-                            <Button Content="Export Markdown Report"
-                                    AccessKey="E"
+                                    Command="{x:Bind ViewModel.CopyDiagnosticReportCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaCopyGlyph}" Text="Copy" />
+                            </Button>
+                            <Button AccessKey="E"
                                     AutomationProperties.HelpText="Export the diagnostic report as a Markdown file."
                                     ToolTipService.ToolTip="Export diagnostic report as Markdown"
-                                    Command="{x:Bind ViewModel.ExportDiagnosticReportCommand}" />
-                            <Button Content="Open Logs"
-                                    AutomationProperties.HelpText="Open the logs folder that contains exported diagnostic reports."
+                                    Command="{x:Bind ViewModel.ExportDiagnosticReportCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaExportGlyph}" Text="Export" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Open the logs folder that contains exported diagnostic reports."
                                     ToolTipService.ToolTip="Open logs folder"
-                                    Command="{x:Bind ViewModel.OpenLogsRootCommand}" />
+                                    Command="{x:Bind ViewModel.OpenLogsRootCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Logs" />
+                            </Button>
                         </StackPanel>
                         <TextBox Header="Last exported report"
                                  Text="{x:Bind ViewModel.DiagnosticReportPath, Mode=OneWay}"

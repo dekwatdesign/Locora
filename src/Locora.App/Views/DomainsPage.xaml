@@ -2,6 +2,7 @@
 <Page
     x:Class="Locora.App.Views.DomainsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:controls="using:Locora.App.Controls"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:models="using:Locora.App.Models">
     <ScrollViewer>
@@ -51,12 +52,13 @@
                     <TextBox Header="Project domain settings file"
                              Text="{x:Bind ViewModel.ProjectsSettingsFilePath, Mode=OneWay}"
                              IsReadOnly="True" />
-                    <Button Content="Save Domain Defaults"
-                            AccessKey="S"
+                    <Button AccessKey="S"
                             AutomationProperties.HelpText="Save generated domain suffix and default scheme to projects.json."
                             ToolTipService.ToolTip="Save generated domain defaults"
                             Command="{x:Bind ViewModel.SaveDomainSettingsCommand}"
-                            HorizontalAlignment="Left" />
+                            HorizontalAlignment="Left">
+                        <controls:IconLabel Glyph="{StaticResource FaSaveGlyph}" Text="Save Defaults" />
+                    </Button>
                 </StackPanel>
             </Border>
 
@@ -81,54 +83,65 @@
 
                     <StackPanel Spacing="8" Margin="0,8,0,0">
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Button Content="Repair Hosts &amp; VHosts"
-                                    AutomationProperties.HelpText="Regenerate hosts preview, Nginx vhosts, and Apache vhosts."
+                            <Button AutomationProperties.HelpText="Regenerate hosts preview, Nginx vhosts, and Apache vhosts."
                                     ToolTipService.ToolTip="Regenerate hosts and vhost artifacts"
-                                    Command="{x:Bind ViewModel.RepairDomainsCommand}" />
-                            <Button Content="Repair Runtime Configs"
-                                    AutomationProperties.HelpText="Regenerate common service runtime configuration."
+                                    Command="{x:Bind ViewModel.RepairDomainsCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaGlobeGlyph}" Text="Repair Hosts" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Regenerate common service runtime configuration."
                                     ToolTipService.ToolTip="Repair runtime configuration"
-                                    Command="{x:Bind ViewModel.RepairRuntimeCommand}" />
-                            <Button Content="Restart Supervisor as Admin"
-                                    AutomationProperties.HelpText="Restart the supervisor with administrator rights for protected hosts operations."
+                                    Command="{x:Bind ViewModel.RepairRuntimeCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaRepairGlyph}" Text="Repair Configs" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Restart the supervisor with administrator rights for protected hosts operations."
                                     ToolTipService.ToolTip="Restart supervisor as administrator"
-                                    Command="{x:Bind ViewModel.RestartSupervisorElevatedCommand}" />
-                            <Button Content="Validate Nginx Config"
-                                    AutomationProperties.HelpText="Validate generated Nginx configuration before starting or restarting services."
+                                    Command="{x:Bind ViewModel.RestartSupervisorElevatedCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaAdminGlyph}" Text="Admin" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Validate generated Nginx configuration before starting or restarting services."
                                     ToolTipService.ToolTip="Validate generated Nginx configuration"
-                                    Command="{x:Bind ViewModel.ValidateNginxConfigCommand}" />
+                                    Command="{x:Bind ViewModel.ValidateNginxConfigCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaCheckGlyph}" Text="Validate" />
+                            </Button>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Button Content="Generate Local SSL"
-                                    AutomationProperties.HelpText="Generate the Locora local CA and project certificates."
+                            <Button AutomationProperties.HelpText="Generate the Locora local CA and project certificates."
                                     ToolTipService.ToolTip="Generate local SSL certificates"
-                                    Command="{x:Bind ViewModel.GenerateLocalSslCommand}" />
-                            <Button Content="Repair Local SSL"
-                                    AutomationProperties.HelpText="Repair missing, expired, invalid, or stale local SSL certificates."
+                                    Command="{x:Bind ViewModel.GenerateLocalSslCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaCertificateGlyph}" Text="Generate SSL" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Repair missing, expired, invalid, or stale local SSL certificates."
                                     ToolTipService.ToolTip="Repair local SSL certificates"
-                                    Command="{x:Bind ViewModel.RepairLocalSslCommand}" />
-                            <Button Content="Trust Local CA"
-                                    AutomationProperties.HelpText="Trust the Locora local CA for the current Windows user."
+                                    Command="{x:Bind ViewModel.RepairLocalSslCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaShieldGlyph}" Text="Repair SSL" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Trust the Locora local CA for the current Windows user."
                                     ToolTipService.ToolTip="Trust local certificate authority"
-                                    Command="{x:Bind ViewModel.TrustLocalSslCaCommand}" />
+                                    Command="{x:Bind ViewModel.TrustLocalSslCaCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaKeyGlyph}" Text="Trust CA" />
+                            </Button>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Button Content="Remove Local CA Trust"
-                                    AutomationProperties.HelpText="Remove current-user trust for the Locora local CA."
+                            <Button AutomationProperties.HelpText="Remove current-user trust for the Locora local CA."
                                     ToolTipService.ToolTip="Remove local CA trust"
-                                    Command="{x:Bind ViewModel.RollbackLocalSslTrustCommand}" />
-                            <Button Content="Apply Preview"
-                                    AutomationProperties.HelpText="Apply the generated hosts preview as the managed Locora block."
+                                    Command="{x:Bind ViewModel.RollbackLocalSslTrustCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaTrashGlyph}" Text="Untrust CA" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Apply the generated hosts preview as the managed Locora block."
                                     ToolTipService.ToolTip="Apply generated hosts preview"
-                                    Command="{x:Bind ViewModel.ApplyHostsPreviewCommand}" />
-                            <Button Content="Rollback Latest"
-                                    AutomationProperties.HelpText="Restore the latest hosts-file rollback backup."
+                                    Command="{x:Bind ViewModel.ApplyHostsPreviewCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaUploadGlyph}" Text="Apply" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Restore the latest hosts-file rollback backup."
                                     ToolTipService.ToolTip="Rollback latest hosts-file backup"
-                                    Command="{x:Bind ViewModel.RollbackHostsCommand}" />
-                            <Button Content="Refresh"
-                                    AutomationProperties.HelpText="Refresh the latest supervisor snapshot."
+                                    Command="{x:Bind ViewModel.RollbackHostsCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaBackupGlyph}" Text="Rollback" />
+                            </Button>
+                            <Button AutomationProperties.HelpText="Refresh the latest supervisor snapshot."
                                     ToolTipService.ToolTip="Refresh domains snapshot"
-                                    Command="{x:Bind ViewModel.RefreshCommand}" />
+                                    Command="{x:Bind ViewModel.RefreshCommand}">
+                                <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                            </Button>
                         </StackPanel>
                     </StackPanel>
                 </StackPanel>
@@ -188,11 +201,12 @@
                     <TextBlock Text="{x:Bind ViewModel.ShareUrlLifecycleSummary, Mode=OneWay}"
                                TextWrapping="Wrap"
                                Opacity="0.72" />
-                    <Button Content="Clear Stopped Shares"
-                            AutomationProperties.HelpText="Remove stopped share URL sessions from this list."
+                    <Button AutomationProperties.HelpText="Remove stopped share URL sessions from this list."
                             ToolTipService.ToolTip="Clear stopped share URLs"
                             Command="{x:Bind ViewModel.ClearStoppedShareUrlsCommand}"
-                            HorizontalAlignment="Left" />
+                            HorizontalAlignment="Left">
+                        <controls:IconLabel Glyph="{StaticResource FaTrashGlyph}" Text="Clear Stopped" />
+                    </Button>
                     <Border Visibility="{x:Bind ViewModel.ShowShareUrlSessionsEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                             Padding="12"
                             CornerRadius="10"
@@ -225,27 +239,33 @@
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Center">
-                                            <Button Content="Copy"
+                                            <Button Style="{StaticResource CompactIconButtonStyle}"
                                                     AutomationProperties.Name="{x:Bind CopyAutomationName}"
                                                     AutomationProperties.HelpText="Copy this public share URL to the clipboard."
                                                     ToolTipService.ToolTip="Copy share URL"
                                                     IsEnabled="{x:Bind CanCopy, Mode=OneWay}"
                                                     Command="{x:Bind CopyCommand}"
-                                                    CommandParameter="{x:Bind}" />
-                                            <Button Content="Open"
+                                                    CommandParameter="{x:Bind}">
+                                                <controls:IconLabel Glyph="{StaticResource FaCopyGlyph}" />
+                                            </Button>
+                                            <Button Style="{StaticResource CompactIconButtonStyle}"
                                                     AutomationProperties.Name="{x:Bind OpenAutomationName}"
                                                     AutomationProperties.HelpText="Open this public share URL in the browser."
                                                     ToolTipService.ToolTip="Open share URL"
                                                     IsEnabled="{x:Bind CanOpen, Mode=OneWay}"
                                                     Command="{x:Bind OpenCommand}"
-                                                    CommandParameter="{x:Bind}" />
-                                            <Button Content="Stop"
+                                                    CommandParameter="{x:Bind}">
+                                                <controls:IconLabel Glyph="{StaticResource FaGlobeGlyph}" />
+                                            </Button>
+                                            <Button Style="{StaticResource CompactIconButtonStyle}"
                                                     AutomationProperties.Name="{x:Bind StopAutomationName}"
                                                     AutomationProperties.HelpText="Stop the terminal session backing this share URL."
                                                     ToolTipService.ToolTip="Stop sharing"
                                                     IsEnabled="{x:Bind CanStop, Mode=OneWay}"
                                                     Command="{x:Bind StopCommand}"
-                                                    CommandParameter="{x:Bind}" />
+                                                    CommandParameter="{x:Bind}">
+                                                <controls:IconLabel Glyph="{StaticResource FaStopGlyph}" />
+                                            </Button>
                                         </StackPanel>
                                     </Grid>
                                 </Border>
@@ -261,14 +281,16 @@
                              Text="{x:Bind ViewModel.LocalTunnelsSettingsFilePath, Mode=OneWay}"
                              IsReadOnly="True" />
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button Content="Reload Tunnels"
-                                AutomationProperties.HelpText="Reload local tunnel profiles from local-tunnels.json."
+                        <Button AutomationProperties.HelpText="Reload local tunnel profiles from local-tunnels.json."
                                 ToolTipService.ToolTip="Reload local tunnel profiles"
-                                Command="{x:Bind ViewModel.ReloadLocalTunnelsCommand}" />
-                        <Button Content="Open local-tunnels.json"
-                                AutomationProperties.HelpText="Open the local tunnel profiles JSON file."
+                                Command="{x:Bind ViewModel.ReloadLocalTunnelsCommand}">
+                            <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Reload" />
+                        </Button>
+                        <Button AutomationProperties.HelpText="Open the local tunnel profiles JSON file."
                                 ToolTipService.ToolTip="Open local-tunnels.json"
-                                Command="{x:Bind ViewModel.OpenLocalTunnelsSettingsFileCommand}" />
+                                Command="{x:Bind ViewModel.OpenLocalTunnelsSettingsFileCommand}">
+                            <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" Text="Config" />
+                        </Button>
                     </StackPanel>
 
                     <Border Visibility="{x:Bind ViewModel.ShowLocalTunnelsEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
@@ -278,14 +300,16 @@
                         <StackPanel Spacing="10">
                             <TextBlock Text="No local tunnel profiles configured" Style="{StaticResource CardTitleTextStyle}" />
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <Button Content="Open local-tunnels.json"
-                                        AutomationProperties.HelpText="Open the local tunnel profiles JSON file."
+                                <Button AutomationProperties.HelpText="Open the local tunnel profiles JSON file."
                                         ToolTipService.ToolTip="Open local-tunnels.json"
-                                        Command="{x:Bind ViewModel.OpenLocalTunnelsSettingsFileCommand}" />
-                                <Button Content="Reload Tunnels"
-                                        AutomationProperties.HelpText="Reload local tunnel profiles from local-tunnels.json."
+                                        Command="{x:Bind ViewModel.OpenLocalTunnelsSettingsFileCommand}">
+                                    <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" Text="Config" />
+                                </Button>
+                                <Button AutomationProperties.HelpText="Reload local tunnel profiles from local-tunnels.json."
                                         ToolTipService.ToolTip="Reload local tunnel profiles"
-                                        Command="{x:Bind ViewModel.ReloadLocalTunnelsCommand}" />
+                                        Command="{x:Bind ViewModel.ReloadLocalTunnelsCommand}">
+                                    <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Reload" />
+                                </Button>
                             </StackPanel>
                         </StackPanel>
                     </Border>
@@ -315,13 +339,14 @@
                                         </StackPanel>
 
                                         <Button Grid.Column="1"
-                                                Content="Start"
                                                 AutomationProperties.Name="{x:Bind StartAutomationName}"
                                                 AutomationProperties.HelpText="Start this local tunnel profile in the built-in terminal."
                                                 ToolTipService.ToolTip="Start local tunnel"
                                                 Command="{x:Bind StartCommand}"
                                                 CommandParameter="{x:Bind}"
-                                                VerticalAlignment="Center" />
+                                                VerticalAlignment="Center">
+                                            <controls:IconLabel Glyph="{StaticResource FaShareGlyph}" Text="Start" />
+                                        </Button>
                                     </Grid>
                                 </Border>
                             </DataTemplate>
@@ -348,18 +373,21 @@
                                        TextWrapping="Wrap"
                                        Opacity="0.72" />
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <Button Content="Open Projects Root"
-                                        AutomationProperties.HelpText="Open the projects root folder in File Explorer."
+                                <Button AutomationProperties.HelpText="Open the projects root folder in File Explorer."
                                         ToolTipService.ToolTip="Open projects root folder"
-                                        Command="{x:Bind ViewModel.OpenProjectRootCommand}" />
-                                <Button Content="Refresh Snapshot"
-                                        AutomationProperties.HelpText="Refresh project discovery from the supervisor."
+                                        Command="{x:Bind ViewModel.OpenProjectRootCommand}">
+                                    <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Projects" />
+                                </Button>
+                                <Button AutomationProperties.HelpText="Refresh project discovery from the supervisor."
                                         ToolTipService.ToolTip="Refresh project discovery"
-                                        Command="{x:Bind ViewModel.RefreshCommand}" />
-                                <Button Content="Repair Hosts &amp; VHosts"
-                                        AutomationProperties.HelpText="Regenerate hosts preview, Nginx vhosts, and Apache vhosts."
+                                        Command="{x:Bind ViewModel.RefreshCommand}">
+                                    <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                                </Button>
+                                <Button AutomationProperties.HelpText="Regenerate hosts preview, Nginx vhosts, and Apache vhosts."
                                         ToolTipService.ToolTip="Regenerate hosts and vhost artifacts"
-                                        Command="{x:Bind ViewModel.RepairDomainsCommand}" />
+                                        Command="{x:Bind ViewModel.RepairDomainsCommand}">
+                                    <controls:IconLabel Glyph="{StaticResource FaGlobeGlyph}" Text="Hosts" />
+                                </Button>
                             </StackPanel>
                         </StackPanel>
                     </Border>
@@ -425,14 +453,16 @@
                                        TextWrapping="Wrap"
                                        Opacity="0.72" />
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <Button Content="Validate Nginx Config"
-                                        AutomationProperties.HelpText="Validate generated Nginx configuration before service startup."
+                                <Button AutomationProperties.HelpText="Validate generated Nginx configuration before service startup."
                                         ToolTipService.ToolTip="Validate generated Nginx configuration"
-                                        Command="{x:Bind ViewModel.ValidateNginxConfigCommand}" />
-                                <Button Content="Repair Runtime Configs"
-                                        AutomationProperties.HelpText="Regenerate common service runtime configuration."
+                                        Command="{x:Bind ViewModel.ValidateNginxConfigCommand}">
+                                    <controls:IconLabel Glyph="{StaticResource FaCheckGlyph}" Text="Validate" />
+                                </Button>
+                                <Button AutomationProperties.HelpText="Regenerate common service runtime configuration."
                                         ToolTipService.ToolTip="Repair runtime configuration"
-                                        Command="{x:Bind ViewModel.RepairRuntimeCommand}" />
+                                        Command="{x:Bind ViewModel.RepairRuntimeCommand}">
+                                    <controls:IconLabel Glyph="{StaticResource FaRepairGlyph}" Text="Repair" />
+                                </Button>
                             </StackPanel>
                         </StackPanel>
                     </Border>

@@ -9,6 +9,7 @@
     <EnableMsixTooling>false</EnableMsixTooling>
     <WindowsPackageType>None</WindowsPackageType>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +20,11 @@
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.WindowsAppSDK" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\Fonts\*.otf" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\Fonts\FONT-AWESOME-LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

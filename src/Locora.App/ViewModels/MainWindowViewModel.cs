@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO.Compression;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -794,6 +795,8 @@ public sealed class MainWindowViewModel : ObservableObject
         get => _appUpdateCurrentVersion;
         private set => SetProperty(ref _appUpdateCurrentVersion, value);
     }
+
+    public string DeveloperName => ResolveDeveloperName();
 
     public string AppUpdateLatestVersion
     {
@@ -2131,6 +2134,14 @@ public sealed class MainWindowViewModel : ObservableObject
     }
 
     private static bool CanUseProject(ProjectCard? project) => project is not null;
+
+    private static string ResolveDeveloperName()
+    {
+        var companyName = typeof(MainWindowViewModel).Assembly
+            .GetCustomAttribute<AssemblyCompanyAttribute>()?.Company;
+
+        return string.IsNullOrWhiteSpace(companyName) ? "CodeLevel8 Team" : companyName;
+    }
 
     private async Task RefreshAsync()
     {

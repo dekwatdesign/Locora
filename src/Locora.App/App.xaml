@@ -10,6 +10,55 @@
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
             <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <FontFamily x:Key="FontAwesomeSolidFontFamily">ms-appx:///Assets/Fonts/Font Awesome 7 Free-Solid-900.otf#Font Awesome 7 Free Solid</FontFamily>
+            <FontFamily x:Key="FontAwesomeRegularFontFamily">ms-appx:///Assets/Fonts/Font Awesome 7 Free-Regular-400.otf#Font Awesome 7 Free</FontFamily>
+            <FontFamily x:Key="FontAwesomeBrandsFontFamily">ms-appx:///Assets/Fonts/Font Awesome 7 Brands-Regular-400.otf#Font Awesome 7 Brands</FontFamily>
+            <x:String x:Key="FaActivityGlyph">&#xF1DA;</x:String>
+            <x:String x:Key="FaAdminGlyph">&#xF132;</x:String>
+            <x:String x:Key="FaArchiveGlyph">&#xF187;</x:String>
+            <x:String x:Key="FaBackupGlyph">&#xF0C7;</x:String>
+            <x:String x:Key="FaBoltGlyph">&#xF0E7;</x:String>
+            <x:String x:Key="FaBrowserGlyph">&#xF2D0;</x:String>
+            <x:String x:Key="FaCertificateGlyph">&#xF0A3;</x:String>
+            <x:String x:Key="FaCheckGlyph">&#xF00C;</x:String>
+            <x:String x:Key="FaClipboardGlyph">&#xF328;</x:String>
+            <x:String x:Key="FaCloseGlyph">&#xF00D;</x:String>
+            <x:String x:Key="FaCodeGlyph">&#xF121;</x:String>
+            <x:String x:Key="FaCommandGlyph">&#xF002;</x:String>
+            <x:String x:Key="FaCopyGlyph">&#xF0C5;</x:String>
+            <x:String x:Key="FaDashboardGlyph">&#xF015;</x:String>
+            <x:String x:Key="FaDatabaseGlyph">&#xF1C0;</x:String>
+            <x:String x:Key="FaDiagnosticsGlyph">&#xF0AD;</x:String>
+            <x:String x:Key="FaDownloadGlyph">&#xF019;</x:String>
+            <x:String x:Key="FaEditGlyph">&#xF044;</x:String>
+            <x:String x:Key="FaExportGlyph">&#xF56E;</x:String>
+            <x:String x:Key="FaFileCodeGlyph">&#xF1C9;</x:String>
+            <x:String x:Key="FaFolderGlyph">&#xF07B;</x:String>
+            <x:String x:Key="FaFolderOpenGlyph">&#xF07C;</x:String>
+            <x:String x:Key="FaGlobeGlyph">&#xF0AC;</x:String>
+            <x:String x:Key="FaImportGlyph">&#xF56F;</x:String>
+            <x:String x:Key="FaInboxGlyph">&#xF01C;</x:String>
+            <x:String x:Key="FaKeyGlyph">&#xF084;</x:String>
+            <x:String x:Key="FaLogsGlyph">&#xF15C;</x:String>
+            <x:String x:Key="FaMailGlyph">&#xF0E0;</x:String>
+            <x:String x:Key="FaNetworkGlyph">&#xF6FF;</x:String>
+            <x:String x:Key="FaPackageGlyph">&#xF466;</x:String>
+            <x:String x:Key="FaPinGlyph">&#xF08D;</x:String>
+            <x:String x:Key="FaPlayGlyph">&#xF04B;</x:String>
+            <x:String x:Key="FaProjectGlyph">&#xF542;</x:String>
+            <x:String x:Key="FaRefreshGlyph">&#xF021;</x:String>
+            <x:String x:Key="FaRepairGlyph">&#xF7D9;</x:String>
+            <x:String x:Key="FaRocketGlyph">&#xF135;</x:String>
+            <x:String x:Key="FaSaveGlyph">&#xF0C7;</x:String>
+            <x:String x:Key="FaSettingsGlyph">&#xF013;</x:String>
+            <x:String x:Key="FaShareGlyph">&#xF1E0;</x:String>
+            <x:String x:Key="FaShieldGlyph">&#xF3ED;</x:String>
+            <x:String x:Key="FaStopGlyph">&#xF04D;</x:String>
+            <x:String x:Key="FaTerminalGlyph">&#xF120;</x:String>
+            <x:String x:Key="FaTrashGlyph">&#xF2ED;</x:String>
+            <x:String x:Key="FaUploadGlyph">&#xF093;</x:String>
+            <x:String x:Key="FaWarningGlyph">&#xF071;</x:String>
+            <x:String x:Key="FaWrenchGlyph">&#xF0AD;</x:String>
             <Style x:Key="PageTitleTextStyle" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="28" />
                 <Setter Property="FontWeight" Value="SemiBold" />
@@ -26,14 +75,24 @@
                 <Setter Property="FontSize" Value="38" />
                 <Setter Property="FontWeight" Value="SemiBold" />
             </Style>
+            <Style x:Key="CompactIconButtonStyle" TargetType="Button">
+                <Setter Property="Width" Value="36" />
+                <Setter Property="Height" Value="36" />
+                <Setter Property="MinWidth" Value="36" />
+                <Setter Property="Padding" Value="0" />
+            </Style>
+            <Style x:Key="CompactActionButtonStyle" TargetType="Button">
+                <Setter Property="MinHeight" Value="36" />
+                <Setter Property="Padding" Value="12,6" />
+            </Style>
             <Style x:Key="SettingsCardBorderStyle" TargetType="Border">
                 <Setter Property="Padding" Value="16" />
-                <Setter Property="CornerRadius" Value="12" />
+                <Setter Property="CornerRadius" Value="8" />
                 <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorSecondaryBrush}" />
             </Style>
             <Style x:Key="SettingsInnerCardBorderStyle" TargetType="Border">
                 <Setter Property="Padding" Value="12" />
-                <Setter Property="CornerRadius" Value="10" />
+                <Setter Property="CornerRadius" Value="8" />
                 <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorTertiaryBrush}" />
             </Style>
         </ResourceDictionary>

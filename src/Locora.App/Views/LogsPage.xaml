@@ -2,6 +2,7 @@
 <Page
     x:Class="Locora.App.Views.LogsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:controls="using:Locora.App.Controls"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:models="using:Locora.App.Models">
     <ScrollViewer>
@@ -19,16 +20,18 @@
                                TextWrapping="Wrap"
                                Opacity="0.72" />
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button Content="Refresh Snapshot"
-                                AccessKey="R"
+                        <Button AccessKey="R"
                                 AutomationProperties.HelpText="Refresh recent activity from the supervisor snapshot."
                                 ToolTipService.ToolTip="Refresh activity"
-                                Command="{x:Bind ViewModel.RefreshCommand}" />
-                        <Button Content="Open Logs Folder"
-                                AccessKey="L"
+                                Command="{x:Bind ViewModel.RefreshCommand}">
+                            <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                        </Button>
+                        <Button AccessKey="L"
                                 AutomationProperties.HelpText="Open the logs folder in File Explorer."
                                 ToolTipService.ToolTip="Open logs folder"
-                                Command="{x:Bind ViewModel.OpenLogsRootCommand}" />
+                                Command="{x:Bind ViewModel.OpenLogsRootCommand}">
+                            <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Logs" />
+                        </Button>
                     </StackPanel>
                 </StackPanel>
             </Border>

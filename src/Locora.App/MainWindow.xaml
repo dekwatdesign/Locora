@@ -2,6 +2,7 @@
 <Window
     x:Class="Locora.App.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:controls="using:Locora.App.Controls"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <NavigationView x:Name="ShellNavigationView"
                     AutomationProperties.Name="Locora navigation"
@@ -15,49 +16,49 @@
                                 Content="Dashboard"
                                 AutomationProperties.HelpText="Open the runtime overview, first-run guide, service summary, and projects.">
                 <NavigationViewItem.Icon>
-                    <SymbolIcon Symbol="Home" />
+                    <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaDashboardGlyph}" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
             <NavigationViewItem Tag="services"
                                 Content="Services"
                                 AutomationProperties.HelpText="Manage configured services and Mailpit integration.">
                 <NavigationViewItem.Icon>
-                    <SymbolIcon Symbol="AllApps" />
+                    <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaWrenchGlyph}" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
             <NavigationViewItem Tag="domains"
                                 Content="Domains &amp; Hosts"
                                 AutomationProperties.HelpText="Manage generated domains, hosts preview, vhosts, and local SSL.">
                 <NavigationViewItem.Icon>
-                    <SymbolIcon Symbol="World" />
+                    <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaGlobeGlyph}" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
             <NavigationViewItem Tag="diagnostics"
                                 Content="Diagnostics"
                                 AutomationProperties.HelpText="Inspect health issues, validation, port, permission, and SSL diagnostics.">
                 <NavigationViewItem.Icon>
-                    <SymbolIcon Symbol="Find" />
+                    <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaDiagnosticsGlyph}" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
             <NavigationViewItem Tag="terminal"
                                 Content="Terminal"
                                 AutomationProperties.HelpText="Open built-in project terminal sessions.">
                 <NavigationViewItem.Icon>
-                    <SymbolIcon Symbol="Document" />
+                    <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaTerminalGlyph}" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
             <NavigationViewItem Tag="logs"
                                 Content="Logs"
                                 AutomationProperties.HelpText="Open recent Locora shell activity.">
                 <NavigationViewItem.Icon>
-                    <SymbolIcon Symbol="Document" />
+                    <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaLogsGlyph}" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
             <NavigationViewItem Tag="settings"
                                 Content="Settings"
                                 AutomationProperties.HelpText="Open advanced settings, portable paths, config files, and diagnostics export actions.">
                 <NavigationViewItem.Icon>
-                    <SymbolIcon Symbol="Setting" />
+                    <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaSettingsGlyph}" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
         </NavigationView.MenuItems>
@@ -107,7 +108,7 @@
                                 SuggestionChosen="OnCommandPaletteSuggestionChosen"
                                 TextChanged="OnCommandPaletteTextChanged">
                     <AutoSuggestBox.QueryIcon>
-                        <SymbolIcon Symbol="Find" />
+                        <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaCommandGlyph}" />
                     </AutoSuggestBox.QueryIcon>
                     <AutoSuggestBox.KeyboardAccelerators>
                         <KeyboardAccelerator Key="K"
@@ -121,13 +122,13 @@
                             Grid.Column="0"
                             HorizontalAlignment="Left"
                             DefaultLabelPosition="Right">
-                    <AppBarButton Label="Command"
+                    <AppBarButton Label="Search"
                                   AccessKey="K"
                                   Click="OnCommandPaletteButtonClick"
                                   AutomationProperties.HelpText="Open the command palette. Shortcut: Control K."
                                   ToolTipService.ToolTip="Open command palette">
                         <AppBarButton.Icon>
-                            <SymbolIcon Symbol="Find" />
+                            <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaCommandGlyph}" />
                         </AppBarButton.Icon>
                     </AppBarButton>
                     <AppBarButton Label="Refresh"
@@ -136,25 +137,25 @@
                                   ToolTipService.ToolTip="Refresh the environment snapshot"
                                   Command="{Binding RefreshCommand}">
                         <AppBarButton.Icon>
-                            <SymbolIcon Symbol="Refresh" />
+                            <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaRefreshGlyph}" />
                         </AppBarButton.Icon>
                     </AppBarButton>
-                    <AppBarButton Label="Start All"
+                    <AppBarButton Label="Start"
                                   AccessKey="S"
                                   AutomationProperties.HelpText="Start all enabled services."
                                   ToolTipService.ToolTip="Start all enabled services"
                                   Command="{Binding StartAllCommand}">
                         <AppBarButton.Icon>
-                            <SymbolIcon Symbol="Play" />
+                            <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaPlayGlyph}" />
                         </AppBarButton.Icon>
                     </AppBarButton>
-                    <AppBarButton Label="Stop All"
+                    <AppBarButton Label="Stop"
                                   AccessKey="T"
                                   AutomationProperties.HelpText="Stop all managed services."
                                   ToolTipService.ToolTip="Stop all managed services"
                                   Command="{Binding StopAllCommand}">
                         <AppBarButton.Icon>
-                            <SymbolIcon Symbol="Stop" />
+                            <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaStopGlyph}" />
                         </AppBarButton.Icon>
                     </AppBarButton>
                 </CommandBar>

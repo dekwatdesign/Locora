@@ -2,6 +2,7 @@
 <Page
     x:Class="Locora.App.Views.DiagnosticsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:controls="using:Locora.App.Controls"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:models="using:Locora.App.Models">
     <ScrollViewer>
@@ -135,51 +136,61 @@
                                Opacity="0.72" />
 
                     <StackPanel x:Name="DiagnosticsPrimaryActions" Orientation="Vertical" Spacing="8">
-                        <Button Content="Refresh Snapshot"
-                                AccessKey="R"
+                        <Button AccessKey="R"
                                 AutomationProperties.HelpText="Refresh the latest diagnostics snapshot from the supervisor."
                                 ToolTipService.ToolTip="Refresh diagnostics snapshot"
-                                Command="{x:Bind ViewModel.RefreshCommand}" />
-                        <Button Content="Validate Nginx Config"
-                                AccessKey="V"
+                                Command="{x:Bind ViewModel.RefreshCommand}">
+                            <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                        </Button>
+                        <Button AccessKey="V"
                                 AutomationProperties.HelpText="Validate generated Nginx configuration before service startup."
                                 ToolTipService.ToolTip="Validate generated Nginx configuration"
-                                Command="{x:Bind ViewModel.ValidateNginxConfigCommand}" />
-                        <Button Content="Repair Hosts &amp; VHosts"
-                                AutomationProperties.HelpText="Regenerate hosts preview, Nginx vhosts, and Apache vhosts."
+                                Command="{x:Bind ViewModel.ValidateNginxConfigCommand}">
+                            <controls:IconLabel Glyph="{StaticResource FaCheckGlyph}" Text="Validate" />
+                        </Button>
+                        <Button AutomationProperties.HelpText="Regenerate hosts preview, Nginx vhosts, and Apache vhosts."
                                 ToolTipService.ToolTip="Regenerate hosts and vhost artifacts"
-                                Command="{x:Bind ViewModel.RepairDomainsCommand}" />
-                        <Button Content="Repair Runtime Configs"
-                                AutomationProperties.HelpText="Regenerate common service runtime configuration."
+                                Command="{x:Bind ViewModel.RepairDomainsCommand}">
+                            <controls:IconLabel Glyph="{StaticResource FaGlobeGlyph}" Text="Hosts" />
+                        </Button>
+                        <Button AutomationProperties.HelpText="Regenerate common service runtime configuration."
                                 ToolTipService.ToolTip="Repair runtime configuration"
-                                Command="{x:Bind ViewModel.RepairRuntimeCommand}" />
-                        <Button Content="Restart as Admin"
-                                AutomationProperties.HelpText="Restart the supervisor with administrator rights for protected operations."
+                                Command="{x:Bind ViewModel.RepairRuntimeCommand}">
+                            <controls:IconLabel Glyph="{StaticResource FaRepairGlyph}" Text="Repair" />
+                        </Button>
+                        <Button AutomationProperties.HelpText="Restart the supervisor with administrator rights for protected operations."
                                 ToolTipService.ToolTip="Restart supervisor as administrator"
-                                Command="{x:Bind ViewModel.RestartSupervisorElevatedCommand}" />
+                                Command="{x:Bind ViewModel.RestartSupervisorElevatedCommand}">
+                            <controls:IconLabel Glyph="{StaticResource FaAdminGlyph}" Text="Admin" />
+                        </Button>
                     </StackPanel>
 
                     <StackPanel x:Name="DiagnosticsSecondaryActions" Orientation="Vertical" Spacing="8">
-                        <Button Content="Generate Local SSL"
-                                AutomationProperties.HelpText="Generate the Locora local CA and project certificates."
+                        <Button AutomationProperties.HelpText="Generate the Locora local CA and project certificates."
                                 ToolTipService.ToolTip="Generate local SSL certificates"
-                                Command="{x:Bind ViewModel.GenerateLocalSslCommand}" />
-                        <Button Content="Repair Local SSL"
-                                AutomationProperties.HelpText="Repair missing, expired, invalid, or stale local SSL certificates."
+                                Command="{x:Bind ViewModel.GenerateLocalSslCommand}">
+                            <controls:IconLabel Glyph="{StaticResource FaCertificateGlyph}" Text="Generate SSL" />
+                        </Button>
+                        <Button AutomationProperties.HelpText="Repair missing, expired, invalid, or stale local SSL certificates."
                                 ToolTipService.ToolTip="Repair local SSL certificates"
-                                Command="{x:Bind ViewModel.RepairLocalSslCommand}" />
-                        <Button Content="Trust Local CA"
-                                AutomationProperties.HelpText="Trust the Locora local CA for the current Windows user."
+                                Command="{x:Bind ViewModel.RepairLocalSslCommand}">
+                            <controls:IconLabel Glyph="{StaticResource FaShieldGlyph}" Text="Repair SSL" />
+                        </Button>
+                        <Button AutomationProperties.HelpText="Trust the Locora local CA for the current Windows user."
                                 ToolTipService.ToolTip="Trust local certificate authority"
-                                Command="{x:Bind ViewModel.TrustLocalSslCaCommand}" />
-                        <Button Content="Copy Report"
-                                AutomationProperties.HelpText="Copy the diagnostic report to the clipboard."
+                                Command="{x:Bind ViewModel.TrustLocalSslCaCommand}">
+                            <controls:IconLabel Glyph="{StaticResource FaKeyGlyph}" Text="Trust CA" />
+                        </Button>
+                        <Button AutomationProperties.HelpText="Copy the diagnostic report to the clipboard."
                                 ToolTipService.ToolTip="Copy diagnostic report to clipboard"
-                                Command="{x:Bind ViewModel.CopyDiagnosticReportCommand}" />
-                        <Button Content="Export Report"
-                                AutomationProperties.HelpText="Export the diagnostic report as a Markdown file."
+                                Command="{x:Bind ViewModel.CopyDiagnosticReportCommand}">
+                            <controls:IconLabel Glyph="{StaticResource FaCopyGlyph}" Text="Copy Report" />
+                        </Button>
+                        <Button AutomationProperties.HelpText="Export the diagnostic report as a Markdown file."
                                 ToolTipService.ToolTip="Export diagnostic report as Markdown"
-                                Command="{x:Bind ViewModel.ExportDiagnosticReportCommand}" />
+                                Command="{x:Bind ViewModel.ExportDiagnosticReportCommand}">
+                            <controls:IconLabel Glyph="{StaticResource FaExportGlyph}" Text="Export" />
+                        </Button>
                     </StackPanel>
 
                     <TextBox Header="Last exported report"
@@ -214,14 +225,16 @@
                                                TextWrapping="Wrap"
                                                Opacity="0.72" />
                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <Button Content="Refresh Snapshot"
-                                                AutomationProperties.HelpText="Refresh health issues from the supervisor."
+                                        <Button AutomationProperties.HelpText="Refresh health issues from the supervisor."
                                                 ToolTipService.ToolTip="Refresh health issues"
-                                                Command="{x:Bind ViewModel.RefreshCommand}" />
-                                        <Button Content="Export Report"
-                                                AutomationProperties.HelpText="Export the current clean diagnostics baseline as Markdown."
+                                                Command="{x:Bind ViewModel.RefreshCommand}">
+                                            <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                                        </Button>
+                                        <Button AutomationProperties.HelpText="Export the current clean diagnostics baseline as Markdown."
                                                 ToolTipService.ToolTip="Export diagnostic report"
-                                                Command="{x:Bind ViewModel.ExportDiagnosticReportCommand}" />
+                                                Command="{x:Bind ViewModel.ExportDiagnosticReportCommand}">
+                                            <controls:IconLabel Glyph="{StaticResource FaExportGlyph}" Text="Export" />
+                                        </Button>
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
@@ -263,14 +276,16 @@
                                                TextWrapping="Wrap"
                                                Opacity="0.72" />
                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <Button Content="Validate Nginx Config"
-                                                AutomationProperties.HelpText="Validate generated Nginx configuration."
+                                        <Button AutomationProperties.HelpText="Validate generated Nginx configuration."
                                                 ToolTipService.ToolTip="Validate generated Nginx configuration"
-                                                Command="{x:Bind ViewModel.ValidateNginxConfigCommand}" />
-                                        <Button Content="Repair Runtime Configs"
-                                                AutomationProperties.HelpText="Regenerate common service runtime configuration."
+                                                Command="{x:Bind ViewModel.ValidateNginxConfigCommand}">
+                                            <controls:IconLabel Glyph="{StaticResource FaCheckGlyph}" Text="Validate" />
+                                        </Button>
+                                        <Button AutomationProperties.HelpText="Regenerate common service runtime configuration."
                                                 ToolTipService.ToolTip="Repair runtime configuration"
-                                                Command="{x:Bind ViewModel.RepairRuntimeCommand}" />
+                                                Command="{x:Bind ViewModel.RepairRuntimeCommand}">
+                                            <controls:IconLabel Glyph="{StaticResource FaRepairGlyph}" Text="Repair" />
+                                        </Button>
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
@@ -315,14 +330,16 @@
                                                TextWrapping="Wrap"
                                                Opacity="0.72" />
                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <Button Content="Refresh Snapshot"
-                                                AutomationProperties.HelpText="Refresh port diagnostics from the supervisor."
+                                        <Button AutomationProperties.HelpText="Refresh port diagnostics from the supervisor."
                                                 ToolTipService.ToolTip="Refresh port diagnostics"
-                                                Command="{x:Bind ViewModel.RefreshCommand}" />
-                                        <Button Content="Repair Runtime Configs"
-                                                AutomationProperties.HelpText="Regenerate common service runtime configuration."
+                                                Command="{x:Bind ViewModel.RefreshCommand}">
+                                            <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                                        </Button>
+                                        <Button AutomationProperties.HelpText="Regenerate common service runtime configuration."
                                                 ToolTipService.ToolTip="Repair runtime configuration"
-                                                Command="{x:Bind ViewModel.RepairRuntimeCommand}" />
+                                                Command="{x:Bind ViewModel.RepairRuntimeCommand}">
+                                            <controls:IconLabel Glyph="{StaticResource FaRepairGlyph}" Text="Repair" />
+                                        </Button>
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
@@ -367,14 +384,16 @@
                                                TextWrapping="Wrap"
                                                Opacity="0.72" />
                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <Button Content="Refresh Snapshot"
-                                                AutomationProperties.HelpText="Refresh permission diagnostics from the supervisor."
+                                        <Button AutomationProperties.HelpText="Refresh permission diagnostics from the supervisor."
                                                 ToolTipService.ToolTip="Refresh permission diagnostics"
-                                                Command="{x:Bind ViewModel.RefreshCommand}" />
-                                        <Button Content="Restart as Admin"
-                                                AutomationProperties.HelpText="Restart the supervisor with administrator rights."
+                                                Command="{x:Bind ViewModel.RefreshCommand}">
+                                            <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                                        </Button>
+                                        <Button AutomationProperties.HelpText="Restart the supervisor with administrator rights."
                                                 ToolTipService.ToolTip="Restart supervisor as administrator"
-                                                Command="{x:Bind ViewModel.RestartSupervisorElevatedCommand}" />
+                                                Command="{x:Bind ViewModel.RestartSupervisorElevatedCommand}">
+                                            <controls:IconLabel Glyph="{StaticResource FaAdminGlyph}" Text="Admin" />
+                                        </Button>
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
@@ -423,14 +442,16 @@
                                                TextWrapping="Wrap"
                                                Opacity="0.72" />
                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <Button Content="Generate Local SSL"
-                                                AutomationProperties.HelpText="Generate the Locora local CA and project certificates."
+                                        <Button AutomationProperties.HelpText="Generate the Locora local CA and project certificates."
                                                 ToolTipService.ToolTip="Generate local SSL certificates"
-                                                Command="{x:Bind ViewModel.GenerateLocalSslCommand}" />
-                                        <Button Content="Repair Local SSL"
-                                                AutomationProperties.HelpText="Repair missing, expired, invalid, or stale local SSL certificates."
+                                                Command="{x:Bind ViewModel.GenerateLocalSslCommand}">
+                                            <controls:IconLabel Glyph="{StaticResource FaCertificateGlyph}" Text="Generate SSL" />
+                                        </Button>
+                                        <Button AutomationProperties.HelpText="Repair missing, expired, invalid, or stale local SSL certificates."
                                                 ToolTipService.ToolTip="Repair local SSL certificates"
-                                                Command="{x:Bind ViewModel.RepairLocalSslCommand}" />
+                                                Command="{x:Bind ViewModel.RepairLocalSslCommand}">
+                                            <controls:IconLabel Glyph="{StaticResource FaShieldGlyph}" Text="Repair SSL" />
+                                        </Button>
                                     </StackPanel>
                                 </StackPanel>
                             </Border>

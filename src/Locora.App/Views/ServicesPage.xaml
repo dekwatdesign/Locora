@@ -2,6 +2,7 @@
 <Page
     x:Class="Locora.App.Views.ServicesPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:controls="using:Locora.App.Controls"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:models="using:Locora.App.Models">
     <ScrollViewer>
@@ -26,16 +27,18 @@
             <TextBlock Text="Manage configured services one by one. The supervisor starts processes from usr/config/services.json, streams logs, and reports executable/port health."
                        TextWrapping="Wrap" />
             <StackPanel x:Name="ServicesHeaderActions" Orientation="Vertical" Spacing="8">
-                <Button Content="Repair Runtime Configs"
-                        AccessKey="R"
+                <Button AccessKey="R"
                         AutomationProperties.HelpText="Regenerate service runtime configuration from bundled defaults."
                         ToolTipService.ToolTip="Repair service runtime configuration"
-                        Command="{x:Bind ViewModel.RepairRuntimeCommand}" />
-                <Button Content="Refresh"
-                        AccessKey="F"
+                        Command="{x:Bind ViewModel.RepairRuntimeCommand}">
+                    <controls:IconLabel Glyph="{StaticResource FaRepairGlyph}" Text="Repair Configs" />
+                </Button>
+                <Button AccessKey="F"
                         AutomationProperties.HelpText="Refresh services and diagnostics from the supervisor."
                         ToolTipService.ToolTip="Refresh service snapshot"
-                        Command="{x:Bind ViewModel.RefreshCommand}" />
+                        Command="{x:Bind ViewModel.RefreshCommand}">
+                    <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                </Button>
             </StackPanel>
 
             <Border Visibility="{x:Bind ViewModel.HasServicePresets, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
@@ -74,18 +77,20 @@
                                                 <TextBlock Text="{x:Bind State}" />
                                             </Border>
                                             <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-                                                <Button Content="Start"
-                                                        AutomationProperties.Name="{x:Bind StartAutomationName}"
+                                                <Button AutomationProperties.Name="{x:Bind StartAutomationName}"
                                                         AutomationProperties.HelpText="Start every service in this preset."
                                                         ToolTipService.ToolTip="Start service preset"
                                                         IsEnabled="{x:Bind CanRun, Mode=OneWay}"
-                                                        Click="OnStartServicePresetClicked" />
-                                                <Button Content="Stop"
-                                                        AutomationProperties.Name="{x:Bind StopAutomationName}"
+                                                        Click="OnStartServicePresetClicked">
+                                                    <controls:IconLabel Glyph="{StaticResource FaPlayGlyph}" Text="Start" />
+                                                </Button>
+                                                <Button AutomationProperties.Name="{x:Bind StopAutomationName}"
                                                         AutomationProperties.HelpText="Stop every service in this preset in reverse order."
                                                         ToolTipService.ToolTip="Stop service preset"
                                                         IsEnabled="{x:Bind CanRun, Mode=OneWay}"
-                                                        Click="OnStopServicePresetClicked" />
+                                                        Click="OnStopServicePresetClicked">
+                                                    <controls:IconLabel Glyph="{StaticResource FaStopGlyph}" Text="Stop" />
+                                                </Button>
                                             </StackPanel>
                                         </StackPanel>
                                     </Grid>
@@ -135,18 +140,21 @@
                     </Grid>
 
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button Content="Open Inbox"
-                                AutomationProperties.HelpText="Open the Mailpit inbox in the default browser."
+                        <Button AutomationProperties.HelpText="Open the Mailpit inbox in the default browser."
                                 ToolTipService.ToolTip="Open Mailpit inbox"
-                                Command="{x:Bind ViewModel.OpenMailpitInboxCommand}" />
-                        <Button Content="Copy SMTP Config"
-                                AutomationProperties.HelpText="Copy Mailpit SMTP connection settings to the clipboard."
+                                Command="{x:Bind ViewModel.OpenMailpitInboxCommand}">
+                            <controls:IconLabel Glyph="{StaticResource FaInboxGlyph}" Text="Inbox" />
+                        </Button>
+                        <Button AutomationProperties.HelpText="Copy Mailpit SMTP connection settings to the clipboard."
                                 ToolTipService.ToolTip="Copy Mailpit SMTP settings"
-                                Command="{x:Bind ViewModel.CopyMailpitSmtpConfigCommand}" />
-                        <Button Content="Open Details"
-                                AutomationProperties.HelpText="Open the generated Mailpit connection details file."
+                                Command="{x:Bind ViewModel.CopyMailpitSmtpConfigCommand}">
+                            <controls:IconLabel Glyph="{StaticResource FaCopyGlyph}" Text="SMTP" />
+                        </Button>
+                        <Button AutomationProperties.HelpText="Open the generated Mailpit connection details file."
                                 ToolTipService.ToolTip="Open Mailpit connection details"
-                                Command="{x:Bind ViewModel.OpenMailpitConnectionDetailsCommand}" />
+                                Command="{x:Bind ViewModel.OpenMailpitConnectionDetailsCommand}">
+                            <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" Text="Details" />
+                        </Button>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -161,18 +169,21 @@
                                TextWrapping="Wrap"
                                Opacity="0.72" />
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button Content="Refresh Snapshot"
-                                AutomationProperties.HelpText="Refresh services from the supervisor."
+                        <Button AutomationProperties.HelpText="Refresh services from the supervisor."
                                 ToolTipService.ToolTip="Refresh service snapshot"
-                                Command="{x:Bind ViewModel.RefreshCommand}" />
-                        <Button Content="Repair Runtime Configs"
-                                AutomationProperties.HelpText="Regenerate service runtime configuration from bundled defaults."
+                                Command="{x:Bind ViewModel.RefreshCommand}">
+                            <controls:IconLabel Glyph="{StaticResource FaRefreshGlyph}" Text="Refresh" />
+                        </Button>
+                        <Button AutomationProperties.HelpText="Regenerate service runtime configuration from bundled defaults."
                                 ToolTipService.ToolTip="Repair service runtime configuration"
-                                Command="{x:Bind ViewModel.RepairRuntimeCommand}" />
-                        <Button Content="Open Portable Root"
-                                AutomationProperties.HelpText="Open the portable root folder in File Explorer."
+                                Command="{x:Bind ViewModel.RepairRuntimeCommand}">
+                            <controls:IconLabel Glyph="{StaticResource FaRepairGlyph}" Text="Repair" />
+                        </Button>
+                        <Button AutomationProperties.HelpText="Open the portable root folder in File Explorer."
                                 ToolTipService.ToolTip="Open portable root folder"
-                                Command="{x:Bind ViewModel.OpenEnvironmentRootCommand}" />
+                                Command="{x:Bind ViewModel.OpenEnvironmentRootCommand}">
+                            <controls:IconLabel Glyph="{StaticResource FaFolderOpenGlyph}" Text="Root" />
+                        </Button>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -218,58 +229,71 @@
                                                 Orientation="Horizontal"
                                                 Spacing="8"
                                                 HorizontalAlignment="Right">
-                                        <Button Content="Open Inbox"
+                                        <Button Style="{StaticResource CompactIconButtonStyle}"
                                                 AutomationProperties.Name="{x:Bind OpenMailpitInboxAutomationName}"
                                                 AutomationProperties.HelpText="Open the Mailpit inbox in the default browser."
                                                 ToolTipService.ToolTip="Open Mailpit inbox"
-                                                Click="OnOpenMailpitInboxClicked" />
-                                        <Button Content="Copy SMTP"
+                                                Click="OnOpenMailpitInboxClicked">
+                                            <controls:IconLabel Glyph="{StaticResource FaInboxGlyph}" />
+                                        </Button>
+                                        <Button Style="{StaticResource CompactIconButtonStyle}"
                                                 AutomationProperties.Name="{x:Bind CopyMailpitSmtpAutomationName}"
                                                 AutomationProperties.HelpText="Copy Mailpit SMTP settings to the clipboard."
                                                 ToolTipService.ToolTip="Copy Mailpit SMTP settings"
-                                                Click="OnCopyMailpitSmtpClicked" />
+                                                Click="OnCopyMailpitSmtpClicked">
+                                            <controls:IconLabel Glyph="{StaticResource FaCopyGlyph}" />
+                                        </Button>
                                     </StackPanel>
 
                                     <StackPanel Visibility="{x:Bind SupportsDatabaseAdminTool, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                                                 Orientation="Horizontal"
                                                 Spacing="8"
                                                 HorizontalAlignment="Right">
-                                        <Button Content="Open Admin"
+                                        <Button Style="{StaticResource CompactIconButtonStyle}"
                                                 AutomationProperties.Name="{x:Bind OpenDatabaseAdminAutomationName}"
                                                 AutomationProperties.HelpText="Launch a detected desktop database admin tool for this service."
                                                 ToolTipService.ToolTip="Open database admin tool"
-                                                Click="OnOpenDatabaseAdminClicked" />
-                                        <Button Content="Copy Connection"
+                                                Click="OnOpenDatabaseAdminClicked">
+                                            <controls:IconLabel Glyph="{StaticResource FaDatabaseGlyph}" />
+                                        </Button>
+                                        <Button Style="{StaticResource CompactIconButtonStyle}"
                                                 AutomationProperties.Name="{x:Bind CopyDatabaseConnectionAutomationName}"
                                                 AutomationProperties.HelpText="Copy database host, port, URL, and credential hints to the clipboard."
                                                 ToolTipService.ToolTip="Copy database connection settings"
-                                                Click="OnCopyDatabaseConnectionClicked" />
-                                        <Button Content="Open Details"
+                                                Click="OnCopyDatabaseConnectionClicked">
+                                            <controls:IconLabel Glyph="{StaticResource FaCopyGlyph}" />
+                                        </Button>
+                                        <Button Style="{StaticResource CompactIconButtonStyle}"
                                                 AutomationProperties.Name="{x:Bind OpenDatabaseDetailsAutomationName}"
                                                 AutomationProperties.HelpText="Open the generated database connection details file or config folder."
                                                 ToolTipService.ToolTip="Open database connection details"
-                                                Click="OnOpenDatabaseDetailsClicked" />
+                                                Click="OnOpenDatabaseDetailsClicked">
+                                            <controls:IconLabel Glyph="{StaticResource FaFileCodeGlyph}" />
+                                        </Button>
                                     </StackPanel>
 
                                     <StackPanel Orientation="Horizontal"
                                                 Spacing="8"
                                                 HorizontalAlignment="Right">
-                                        <Button Content="Repair"
-                                                AutomationProperties.Name="{x:Bind RepairAutomationName}"
+                                        <Button AutomationProperties.Name="{x:Bind RepairAutomationName}"
                                                 AutomationProperties.HelpText="Regenerate service-specific configuration and refresh diagnostics."
                                                 ToolTipService.ToolTip="Repair this service configuration"
                                                 IsEnabled="{x:Bind SupportsRepair, Mode=OneWay}"
-                                                Click="OnRepairServiceClicked" />
-                                        <Button Content="Start"
-                                                AutomationProperties.Name="{x:Bind StartAutomationName}"
+                                                Click="OnRepairServiceClicked">
+                                            <controls:IconLabel Glyph="{StaticResource FaRepairGlyph}" Text="Repair" />
+                                        </Button>
+                                        <Button AutomationProperties.Name="{x:Bind StartAutomationName}"
                                                 AutomationProperties.HelpText="Start this managed service."
                                                 ToolTipService.ToolTip="Start this service"
-                                                Click="OnStartServiceClicked" />
-                                        <Button Content="Stop"
-                                                AutomationProperties.Name="{x:Bind StopAutomationName}"
+                                                Click="OnStartServiceClicked">
+                                            <controls:IconLabel Glyph="{StaticResource FaPlayGlyph}" Text="Start" />
+                                        </Button>
+                                        <Button AutomationProperties.Name="{x:Bind StopAutomationName}"
                                                 AutomationProperties.HelpText="Stop this managed service."
                                                 ToolTipService.ToolTip="Stop this service"
-                                                Click="OnStopServiceClicked" />
+                                                Click="OnStopServiceClicked">
+                                            <controls:IconLabel Glyph="{StaticResource FaStopGlyph}" Text="Stop" />
+                                        </Button>
                                     </StackPanel>
                                 </StackPanel>
                             </Grid>
