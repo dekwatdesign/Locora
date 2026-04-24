@@ -35,7 +35,7 @@ jobs:
       - name: Test solution
         run: dotnet test Locora.sln -c Release -p:Platform=x64 -p:AllowUnsafeBlocks=true
 
-      - name: Package portable distribution
+      - name: Package Windows release
         run: |
           $version = if ($env:GITHUB_REF_TYPE -eq 'tag' -and -not [string]::IsNullOrWhiteSpace($env:GITHUB_REF_NAME)) {
             $env:GITHUB_REF_NAME.TrimStart('v')
@@ -48,9 +48,10 @@ jobs:
       - name: Upload release artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: locora-portable-win-x64
+          name: locora-windows-release-win-x64
           if-no-files-found: error
           path: |
+            artifacts/dist/*.exe
             artifacts/dist/*.zip
             artifacts/dist/checksums.txt
             artifacts/dist/release-manifest.json

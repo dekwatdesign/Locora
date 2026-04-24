@@ -64,3 +64,7 @@ Laragon-like Windows local development manager built around `Microsoft.UI.Xaml` 
 2. Open `Locora.sln`.
 3. Start `Locora.Supervisor`, then `Locora.App`.
 4. Set `LOCORA_ROOT` in your debug profile if you want the portable root to point to this repo folder while debugging.
+
+## Install From Release
+
+Use `Locora-<version>-win-x64-setup.exe` from the GitHub Release on Windows 11. The installer performs a per-user install and includes the .NET / Windows App SDK dependencies required to launch the app. The portable ZIP remains available when you want to extract Locora manually into a writable folder.

@@ -64,3 +64,7 @@
 2. เปิดไฟล์ `Locora.sln`
 3. รัน `Locora.Supervisor` ก่อน แล้วจึงรัน `Locora.App`
 4. ตั้งค่า `LOCORA_ROOT` ใน debug profile หากต้องการให้ portable root ชี้มาที่โฟลเดอร์รีโปนี้ระหว่างการดีบัก
+
+## การติดตั้งจาก Release
+
+แนะนำให้ใช้ไฟล์ `Locora-<version>-win-x64-setup.exe` จากหน้า GitHub Release สำหรับ Windows 11 เพราะ installer จะติดตั้ง Locora แบบ per-user และมาพร้อม .NET / Windows App SDK dependencies ที่จำเป็นต่อการเปิดแอป ส่วนไฟล์ portable ZIP ยังมีให้ใช้เมื่ออยากแตกไฟล์เองในโฟลเดอร์ที่เขียนได้
