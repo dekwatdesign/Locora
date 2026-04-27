@@ -1,7 +1,24 @@
-bin/
-obj/
+# Build outputs
+[Bb]in/
+[Oo]bj/
+artifacts/dist/
+artifacts/publish/
+TestResults/
+
+# Packages and build logs
+*.nupkg
+*.snupkg
+*.binlog
+
+# IDE and user-specific files
 .vs/
 *.user
 *.suo
-*.nupkg
-TestResults/
+*.userosscache
+*.sln.docstates
+
+# Local environment and logs
+.env
+.env.*
+!.env.example
+*.log
