@@ -1,3 +1,5 @@
+using Locora.App.Contracts;
+using Locora.App.Services;
 using Locora.App.ViewModels;
 using Locora.App.Views;
 using Microsoft.UI.Xaml;
@@ -9,15 +11,13 @@ namespace Locora.App;
 
 public sealed partial class MainWindow : Window
 {
-    private readonly Dictionary<string, Type> _pages = new(StringComparer.OrdinalIgnoreCase)
+    private readonly Dictionary<LocoraShellDestination, Type> _pages = new()
     {
-        ["dashboard"] = typeof(DashboardPage),
-        ["services"] = typeof(ServicesPage),
-        ["domains"] = typeof(DomainsPage),
-        ["diagnostics"] = typeof(DiagnosticsPage),
-        ["terminal"] = typeof(TerminalPage),
-        ["logs"] = typeof(LogsPage),
-        ["settings"] = typeof(SettingsPage)
+        [LocoraShellDestination.Home] = typeof(HomePage),
+        [LocoraShellDestination.Workbench] = typeof(WorkbenchPage),
+        [LocoraShellDestination.Health] = typeof(HealthPage),
+        [LocoraShellDestination.Terminal] = typeof(TerminalPage),
+        [LocoraShellDestination.Advanced] = typeof(AdvancedPage)
     };
 
     public MainWindowViewModel ViewModel { get; }
@@ -29,15 +29,17 @@ public sealed partial class MainWindow : Window
         InitializeComponent();
         ShellNavigationView.DataContext = ViewModel;
         ViewModel.NavigationRequested += OnViewModelNavigationRequested;
+        ApplyLocalizedShellText(App.GetService<ILocoraStringResourceService>());
 
-        NavigateTo("dashboard");
+        NavigateTo("home");
 
         _ = ViewModel.InitializeAsync();
     }
 
     public void NavigateTo(string tag)
     {
-        if (!_pages.TryGetValue(tag, out var pageType))
+        var route = LocoraShellRoutes.Resolve(tag);
+        if (!_pages.TryGetValue(route.Destination, out var pageType))
         {
             return;
         }
@@ -47,14 +49,8 @@ public sealed partial class MainWindow : Window
             ContentFrame.Navigate(pageType);
         }
 
-        var selectedItem = ShellNavigationView.MenuItems
-            .OfType<NavigationViewItem>()
-            .FirstOrDefault(item => string.Equals(item.Tag as string, tag, StringComparison.OrdinalIgnoreCase));
-
-        if (selectedItem is not null && !ReferenceEquals(ShellNavigationView.SelectedItem, selectedItem))
-        {
-            ShellNavigationView.SelectedItem = selectedItem;
-        }
+        SelectNavigationItem(route.Destination);
+        ApplyRouteToCurrentPage(route);
     }
 
     private void OnSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
@@ -131,21 +127,17 @@ public sealed partial class MainWindow : Window
 
     private IEnumerable<CommandPaletteItem> CreateCommandPaletteItems()
     {
-        yield return new CommandPaletteItem("Go to Dashboard", "Open runtime overview and recent projects.", "dashboard home overview projects", () => NavigateAsync("dashboard"));
-        yield return new CommandPaletteItem("Go to Services", "Manage Nginx, Apache, databases, cache, and Mailpit.", "services start stop nginx apache database cache mailpit", () => NavigateAsync("services"));
-        yield return new CommandPaletteItem("Go to Domains & Hosts", "Manage local domains, hosts preview, vhosts, and SSL.", "domains hosts vhosts ssl certificates tld", () => NavigateAsync("domains"));
-        yield return new CommandPaletteItem("Go to Diagnostics", "Inspect health issues, permissions, ports, and repair actions.", "diagnostics health ports permissions repair report", () => NavigateAsync("diagnostics"));
-        yield return new CommandPaletteItem("Go to Terminal", "Open built-in project terminal sessions.", "terminal conpty shell project command", () => NavigateAsync("terminal"));
-        yield return new CommandPaletteItem("Go to Logs", "Open supervisor and service logs.", "logs stdout stderr service supervisor", () => NavigateAsync("logs"));
-        yield return new CommandPaletteItem("Go to Settings", "Open app paths, preferences, and diagnostic report actions.", "settings preferences paths report", () => NavigateAsync("settings"));
-        yield return new CommandPaletteItem("Go to Runtime Versions", "Open PHP, Node.js, Python, and Java runtime version switching.", "settings runtime versions switch php node python java", () => NavigateAsync("settings"));
-        yield return new CommandPaletteItem("Go to Stack Profiles", "Open active stack profile selection and package profile settings.", "settings stack profiles active services packages start all", () => NavigateAsync("settings"));
-        yield return new CommandPaletteItem("Go to Custom Tools", "Open custom tool menu settings.", "settings custom tools menu shortcuts launch", () => NavigateAsync("settings"));
-        yield return new CommandPaletteItem("Review Runtime Backup Guidance", "Open Settings to review runtime backup paths and restore order.", "settings runtime backup guidance data bin package cache restore", () => NavigateAsync("settings"));
-        yield return new CommandPaletteItem("Review PATH Environment Scripts", "Open Settings to inspect CurrentUser PATH and LOCORA variable scripts.", "settings path environment variables scripts current user", () => NavigateAsync("settings"));
-        yield return new CommandPaletteItem("Review App Updates", "Open Settings to inspect app update manifest configuration and cached update plans.", "settings app update release manifest version", () => NavigateAsync("settings"));
-        yield return new CommandPaletteItem("Review Portable Distribution", "Open Settings to inspect portable ZIP packaging automation.", "settings portable distribution packaging release zip installer", () => NavigateAsync("settings"));
-        yield return new CommandPaletteItem("Go to Local Tunnels", "Open external access and local tunnel profiles.", "domains local tunnels share external access public url", () => NavigateAsync("domains"));
+        foreach (var route in LocoraShellRoutes.CreateNavigationCommands())
+        {
+            yield return new CommandPaletteItem(route.Title, route.Description, route.SearchText, () => NavigateAsync(route.RouteTag));
+        }
+
+        yield return new CommandPaletteItem("Go to Custom Tools", "Open custom tool menu settings.", "settings custom tools menu shortcuts launch", () => NavigateAsync("advanced:settings"));
+        yield return new CommandPaletteItem("Review Runtime Backup Guidance", "Open Advanced to review runtime backup paths and restore order.", "settings runtime backup guidance data bin package cache restore", () => NavigateAsync("advanced:settings"));
+        yield return new CommandPaletteItem("Review PATH Environment Scripts", "Open Advanced to inspect CurrentUser PATH and LOCORA variable scripts.", "settings path environment variables scripts current user", () => NavigateAsync("advanced:settings"));
+        yield return new CommandPaletteItem("Review App Updates", "Open app update manifest configuration and cached update plans.", "settings app update release manifest version", () => NavigateAsync("advanced:updates"));
+        yield return new CommandPaletteItem("Review Portable Distribution", "Open portable ZIP packaging automation.", "settings portable distribution packaging release zip installer", () => NavigateAsync("advanced:settings"));
+        yield return new CommandPaletteItem("Go to Local Tunnels", "Open external access and local tunnel profiles.", "domains local tunnels share external access public url", () => NavigateAsync("health:tunnels"));
 
         yield return new CommandPaletteItem("Refresh Snapshot", "Reload services, projects, health, and diagnostics.", "refresh reload snapshot", () => ExecuteCommandAsync(ViewModel.RefreshCommand));
         yield return new CommandPaletteItem("Start All Services", "Start all enabled services through the supervisor.", "start all services run", () => ExecuteCommandAsync(ViewModel.StartAllCommand));
@@ -178,8 +170,8 @@ public sealed partial class MainWindow : Window
         yield return new CommandPaletteItem("Reload Custom Tools", "Reload custom menu tools from custom-tools.json.", "custom tools menu reload refresh", () => ExecuteCommandAsync(ViewModel.ReloadCustomToolsCommand));
         yield return new CommandPaletteItem("Open Local Tunnels", "Edit local tunnel profiles for external access commands.", "local tunnels share external access public url json open", () => ExecuteCommandAsync(ViewModel.OpenLocalTunnelsSettingsFileCommand));
         yield return new CommandPaletteItem("Reload Local Tunnels", "Reload local tunnel profiles from local-tunnels.json.", "local tunnels share reload refresh external access", () => ExecuteCommandAsync(ViewModel.ReloadLocalTunnelsCommand));
-        yield return new CommandPaletteItem("Review External Access Consent", "Open the tunnel consent warning before starting external sharing.", "local tunnels consent warning external access share required", () => NavigateAsync("domains"));
-        yield return new CommandPaletteItem("Review Firewall Guidance", "Open firewall and network guidance for LAN testing and public tunnel sharing.", "firewall network guidance ports lan tunnel inbound outbound", () => NavigateAsync("domains"));
+        yield return new CommandPaletteItem("Review External Access Consent", "Open the tunnel consent warning before starting external sharing.", "local tunnels consent warning external access share required", () => NavigateAsync("health:tunnels"));
+        yield return new CommandPaletteItem("Review Firewall Guidance", "Open firewall and network guidance for LAN testing and public tunnel sharing.", "firewall network guidance ports lan tunnel inbound outbound", () => NavigateAsync("health:tunnels"));
         yield return new CommandPaletteItem("Clear Stopped Share URLs", "Remove stopped share URL sessions from the lifecycle list.", "share url lifecycle clear stopped tunnels", () => ExecuteCommandAsync(ViewModel.ClearStoppedShareUrlsCommand));
         yield return new CommandPaletteItem("Open Aliases Folder", "Open the portable aliases folder that is added to terminal PATH.", "terminal aliases folder path scripts", () => ExecuteCommandAsync(ViewModel.OpenAliasesRootCommand));
         yield return new CommandPaletteItem("Open Portable Root in Editor", "Test the preferred editor integration against the portable root.", "editor integration open preferred root", () => ExecuteCommandAsync(ViewModel.OpenEnvironmentRootInEditorCommand));
@@ -303,6 +295,37 @@ public sealed partial class MainWindow : Window
     {
         NavigateTo(tag);
         return Task.CompletedTask;
+    }
+
+    private void SelectNavigationItem(LocoraShellDestination destination)
+    {
+        var tag = destination.ToString().ToLowerInvariant();
+        var selectedItem = ShellNavigationView.MenuItems
+            .OfType<NavigationViewItem>()
+            .FirstOrDefault(item => string.Equals(item.Tag as string, tag, StringComparison.OrdinalIgnoreCase));
+
+        if (selectedItem is not null && !ReferenceEquals(ShellNavigationView.SelectedItem, selectedItem))
+        {
+            ShellNavigationView.SelectedItem = selectedItem;
+        }
+    }
+
+    private void ApplyRouteToCurrentPage(LocoraShellRoute route)
+    {
+        if (ContentFrame.Content is IRouteAwarePage routeAwarePage)
+        {
+            routeAwarePage.ApplyRoute(route);
+        }
+    }
+
+    private void ApplyLocalizedShellText(ILocoraStringResourceService strings)
+    {
+        HomeNavigationItem.Content = strings.Get("Nav.Home");
+        WorkbenchNavigationItem.Content = strings.Get("Nav.Workbench");
+        HealthNavigationItem.Content = strings.Get("Nav.Health");
+        TerminalNavigationItem.Content = strings.Get("Nav.Terminal");
+        AdvancedNavigationItem.Content = strings.Get("Nav.Advanced");
+        CommandPaletteBox.PlaceholderText = strings.Get("CommandPalette.Placeholder");
     }
 
     private static Task ExecuteCommandAsync(ICommand command, object? parameter = null)

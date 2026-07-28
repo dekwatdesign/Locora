@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="Locora.App.Views.HealthPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:models="using:Locora.App.Models">
+    <Grid Padding="24" RowSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Spacing="5">
+            <TextBlock Text="Health" Style="{StaticResource PageTitleTextStyle}" />
+            <TextBlock Text="{x:Bind ViewModel.DiagnosticsSummary, Mode=OneWay}"
+                       TextWrapping="Wrap"
+                       Opacity="0.72" />
+        </StackPanel>
+
+        <Border Grid.Row="1" Style="{StaticResource LocoraSectionPanelStyle}">
+            <Grid ColumnSpacing="12" RowSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Spacing="4">
+                    <TextBlock Text="{x:Bind ViewModel.DiagnosticsHeadline, Mode=OneWay}" Style="{StaticResource CardTitleTextStyle}" />
+                    <TextBlock Text="{x:Bind ViewModel.LastRefreshLabel, Mode=OneWay}" Opacity="0.72" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Spacing="8">
+                    <Button Content="Refresh"
+                            Command="{x:Bind ViewModel.RefreshCommand}"
+                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                    <Button Content="Repair Hosts"
+                            Command="{x:Bind ViewModel.RepairDomainsCommand}"
+                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                    <Button Content="Export Report"
+                            Command="{x:Bind ViewModel.ExportDiagnosticReportCommand}"
+                            Style="{StaticResource LocoraPrimaryButtonStyle}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <TabView x:Name="HealthTabs"
+                 Grid.Row="2"
+                 IsAddTabButtonVisible="False"
+                 TabWidthMode="Equal">
+            <TabViewItem Header="Issues">
+                <ScrollViewer>
+                    <StackPanel Spacing="12" Padding="0,12,0,0">
+                        <Border Visibility="{x:Bind ViewModel.ShowHealthIssuesEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Style="{StaticResource LocoraSectionPanelStyle}">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="No health issues reported" Style="{StaticResource CardTitleTextStyle}" />
+                                <TextBlock Text="Refresh or export this clean baseline when you need support context." TextWrapping="Wrap" Opacity="0.72" />
+                            </StackPanel>
+                        </Border>
+                        <ItemsControl ItemsSource="{x:Bind ViewModel.HealthIssues, Mode=OneWay}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:HealthIssueCard">
+                                    <Border Style="{StaticResource LocoraSectionPanelStyle}" Margin="0,0,0,10">
+                                        <StackPanel Spacing="6">
+                                            <Border Background="{Binding Severity, Converter={StaticResource StatusBrushConverter}}"
+                                                    Style="{StaticResource LocoraPillBorderStyle}"
+                                                    HorizontalAlignment="Left">
+                                                <TextBlock Text="{x:Bind Severity}" />
+                                            </Border>
+                                            <TextBlock Text="{x:Bind Title}" Style="{StaticResource CardTitleTextStyle}" />
+                                            <TextBlock Text="{x:Bind Description}" TextWrapping="Wrap" />
+                                            <TextBlock Text="{x:Bind SuggestedAction}" TextWrapping="Wrap" Opacity="0.72" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock Text="Config validation" Style="{StaticResource SectionTitleTextStyle}" />
+                        <StackPanel Spacing="8">
+                            <Button Content="Validate Nginx"
+                                    Command="{x:Bind ViewModel.ValidateNginxConfigCommand}"
+                                    Style="{StaticResource LocoraPrimaryButtonStyle}" />
+                            <Button Content="Repair Runtime"
+                                    Command="{x:Bind ViewModel.RepairRuntimeCommand}"
+                                    Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                        </StackPanel>
+                        <ItemsControl ItemsSource="{x:Bind ViewModel.ValidationResults, Mode=OneWay}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:ValidationResultCard">
+                                    <Border Style="{StaticResource LocoraSectionPanelStyle}" Margin="0,0,0,10">
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="{x:Bind Name}" Style="{StaticResource CardTitleTextStyle}" />
+                                            <Border Background="{Binding State, Converter={StaticResource StatusBrushConverter}}"
+                                                    Style="{StaticResource LocoraPillBorderStyle}"
+                                                    HorizontalAlignment="Left">
+                                                <TextBlock Text="{x:Bind State}" />
+                                            </Border>
+                                            <TextBlock Text="{x:Bind Summary}" TextWrapping="Wrap" />
+                                            <TextBlock Text="{x:Bind Details}" TextWrapping="Wrap" Opacity="0.72" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabViewItem>
+
+            <TabViewItem Header="Domains &amp; SSL">
+                <ScrollViewer>
+                    <StackPanel Spacing="12" Padding="0,12,0,0">
+                        <InfoBar IsOpen="True"
+                                 Severity="Warning"
+                                 Title="Protected Windows files"
+                                 Message="Hosts writes require administrator rights. Locora applies only its managed block and keeps rollback backups." />
+                        <Border Style="{StaticResource LocoraSectionPanelStyle}">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="Generated domain defaults" Style="{StaticResource CardTitleTextStyle}" />
+                                <Grid ColumnSpacing="10" RowSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="180" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Header="Domain suffix"
+                                             Text="{x:Bind ViewModel.GeneratedDomainSuffix, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                    <ComboBox Grid.Column="1"
+                                              Header="Scheme"
+                                              ItemsSource="{x:Bind ViewModel.DomainSchemes, Mode=OneWay}"
+                                              SelectedItem="{x:Bind ViewModel.GeneratedDomainScheme, Mode=TwoWay}" />
+                                </Grid>
+                                <TextBlock Text="{x:Bind ViewModel.DomainSettingsPreview, Mode=OneWay}" TextWrapping="Wrap" />
+                                <StackPanel Spacing="8">
+                                    <Button Content="Save Defaults"
+                                            Command="{x:Bind ViewModel.SaveDomainSettingsCommand}"
+                                            Style="{StaticResource LocoraPrimaryButtonStyle}" />
+                                    <Button Content="Repair Hosts &amp; VHosts"
+                                            Command="{x:Bind ViewModel.RepairDomainsCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                    <Button Content="Apply Preview"
+                                            Command="{x:Bind ViewModel.ApplyHostsPreviewCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                    <Button Content="Rollback"
+                                            Command="{x:Bind ViewModel.RollbackHostsCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource LocoraSectionPanelStyle}">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Local SSL" Style="{StaticResource CardTitleTextStyle}" />
+                                <TextBlock Text="{x:Bind ViewModel.SslSummary, Mode=OneWay}" TextWrapping="Wrap" />
+                                <TextBlock Text="{x:Bind ViewModel.SslTrustLabel, Mode=OneWay}" Opacity="0.72" />
+                                <TextBlock Text="{x:Bind ViewModel.SslRepairLabel, Mode=OneWay}" TextWrapping="Wrap" Opacity="0.72" />
+                                <StackPanel Spacing="8">
+                                    <Button Content="Generate SSL"
+                                            Command="{x:Bind ViewModel.GenerateLocalSslCommand}"
+                                            Style="{StaticResource LocoraPrimaryButtonStyle}" />
+                                    <Button Content="Repair SSL"
+                                            Command="{x:Bind ViewModel.RepairLocalSslCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                    <Button Content="Trust CA"
+                                            Command="{x:Bind ViewModel.TrustLocalSslCaCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                    <Button Content="Remove Trust"
+                                            Command="{x:Bind ViewModel.RollbackLocalSslTrustCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <ItemsControl ItemsSource="{x:Bind ViewModel.SslCertificateDiagnostics, Mode=OneWay}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:SslCertificateDiagnosticCard">
+                                    <Border Style="{StaticResource LocoraSectionPanelStyle}" Margin="0,0,0,10">
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="{x:Bind ProjectName}" Style="{StaticResource CardTitleTextStyle}" />
+                                            <TextBlock Text="{x:Bind Host}" Opacity="0.72" />
+                                            <TextBlock Text="{x:Bind Summary}" TextWrapping="Wrap" />
+                                            <TextBlock Text="{x:Bind SuggestedAction}" TextWrapping="Wrap" Opacity="0.72" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabViewItem>
+
+            <TabViewItem Header="Ports &amp; Permissions">
+                <ScrollViewer>
+                    <Grid ColumnSpacing="16" RowSpacing="16" Padding="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="{x:Bind ViewModel.PortDiagnosticsSummary, Mode=OneWay}" Style="{StaticResource SectionTitleTextStyle}" TextWrapping="Wrap" />
+                            <ItemsControl ItemsSource="{x:Bind ViewModel.PortDiagnostics, Mode=OneWay}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="models:PortDiagnosticCard">
+                                        <Border Style="{StaticResource LocoraSectionPanelStyle}" Margin="0,0,0,10">
+                                            <StackPanel Spacing="5">
+                                                <TextBlock Text="{x:Bind Name}" Style="{StaticResource CardTitleTextStyle}" />
+                                                <TextBlock Text="{x:Bind PortLabel}" />
+                                                <TextBlock Text="{x:Bind Summary}" TextWrapping="Wrap" />
+                                                <TextBlock Text="{x:Bind SuggestedAction}" TextWrapping="Wrap" Opacity="0.72" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="12">
+                            <TextBlock Text="{x:Bind ViewModel.PermissionDiagnosticsSummary, Mode=OneWay}" Style="{StaticResource SectionTitleTextStyle}" TextWrapping="Wrap" />
+                            <Button Content="Restart Supervisor as Admin"
+                                    Command="{x:Bind ViewModel.RestartSupervisorElevatedCommand}"
+                                    Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                            <ItemsControl ItemsSource="{x:Bind ViewModel.PermissionDiagnostics, Mode=OneWay}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="models:PermissionDiagnosticCard">
+                                        <Border Style="{StaticResource LocoraSectionPanelStyle}" Margin="0,0,0,10">
+                                            <StackPanel Spacing="5">
+                                                <TextBlock Text="{x:Bind Name}" Style="{StaticResource CardTitleTextStyle}" />
+                                                <TextBlock Text="{x:Bind StateLabel}" />
+                                                <TextBlock Text="{x:Bind Summary}" TextWrapping="Wrap" />
+                                                <TextBlock Text="{x:Bind SuggestedAction}" TextWrapping="Wrap" Opacity="0.72" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+            </TabViewItem>
+
+            <TabViewItem Header="Tunnels">
+                <ScrollViewer>
+                    <StackPanel Spacing="12" Padding="0,12,0,0">
+                        <InfoBar IsOpen="True"
+                                 Severity="Warning"
+                                 Title="External access"
+                                 Message="Starting a tunnel may expose the selected local project until the terminal session is stopped." />
+                        <ToggleSwitch Header="I understand this can expose a local project through a public URL."
+                                      OffContent="Not confirmed"
+                                      OnContent="Confirmed"
+                                      IsOn="{x:Bind ViewModel.ExternalAccessConsentAccepted, Mode=TwoWay}" />
+                        <TextBlock Text="{x:Bind ViewModel.ShareUrlLifecycleSummary, Mode=OneWay}" TextWrapping="Wrap" Opacity="0.72" />
+                        <StackPanel Spacing="8">
+                            <Button Content="Reload Tunnels"
+                                    Command="{x:Bind ViewModel.ReloadLocalTunnelsCommand}"
+                                    Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                            <Button Content="Clear Stopped Shares"
+                                    Command="{x:Bind ViewModel.ClearStoppedShareUrlsCommand}"
+                                    Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                        </StackPanel>
+                        <ItemsControl ItemsSource="{x:Bind ViewModel.LocalTunnels, Mode=OneWay}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:LocalTunnelProfileCard">
+                                    <Border Style="{StaticResource LocoraSectionPanelStyle}" Margin="0,0,0,10">
+                                        <Grid ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Spacing="5">
+                                                <TextBlock Text="{x:Bind DisplayName}" Style="{StaticResource CardTitleTextStyle}" />
+                                                <TextBlock Text="{x:Bind Summary}" TextWrapping="Wrap" />
+                                                <TextBlock Text="{x:Bind TargetLabel}" Opacity="0.72" />
+                                            </StackPanel>
+                                            <Button Grid.Column="1"
+                                                    Content="Start"
+                                                    IsEnabled="{x:Bind CanStart, Mode=OneWay}"
+                                                    Command="{x:Bind StartCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource LocoraPrimaryButtonStyle}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabViewItem>
+
+            <TabViewItem Header="Report">
+                <ScrollViewer>
+                    <StackPanel Spacing="12" Padding="0,12,0,0">
+                        <Border Style="{StaticResource LocoraSectionPanelStyle}">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Diagnostic report" Style="{StaticResource CardTitleTextStyle}" />
+                                <TextBlock Text="Copy or export a support-ready Markdown report with services, diagnostics, projects, packages, and key paths." TextWrapping="Wrap" Opacity="0.72" />
+                                <StackPanel Spacing="8">
+                                    <Button Content="Copy Report"
+                                            Command="{x:Bind ViewModel.CopyDiagnosticReportCommand}"
+                                            Style="{StaticResource LocoraPrimaryButtonStyle}" />
+                                    <Button Content="Export Markdown"
+                                            Command="{x:Bind ViewModel.ExportDiagnosticReportCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                    <Button Content="Open Logs"
+                                            Command="{x:Bind ViewModel.OpenLogsRootCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                </StackPanel>
+                                <TextBox Header="Last exported report"
+                                         Text="{x:Bind ViewModel.DiagnosticReportPath, Mode=OneWay}"
+                                         IsReadOnly="True" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabViewItem>
+        </TabView>
+    </Grid>
+</Page>
+

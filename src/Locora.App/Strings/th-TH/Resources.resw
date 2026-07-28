@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="ShellNavigation.AutomationProperties.HelpText" xml:space="preserve">
+    <value>ใช้เมนูนี้เพื่อสลับระหว่างหน้าแรก พื้นที่ทำงาน สถานะระบบ เทอร์มินัล และขั้นสูง</value>
+  </data>
+  <data name="HomeNavigationItem.Content" xml:space="preserve">
+    <value>หน้าแรก</value>
+  </data>
+  <data name="WorkbenchNavigationItem.Content" xml:space="preserve">
+    <value>พื้นที่ทำงาน</value>
+  </data>
+  <data name="HealthNavigationItem.Content" xml:space="preserve">
+    <value>สถานะระบบ</value>
+  </data>
+  <data name="TerminalNavigationItem.Content" xml:space="preserve">
+    <value>เทอร์มินัล</value>
+  </data>
+  <data name="AdvancedNavigationItem.Content" xml:space="preserve">
+    <value>ขั้นสูง</value>
+  </data>
+  <data name="CommandPaletteBox.PlaceholderText" xml:space="preserve">
+    <value>ค้นหาหน้า คำสั่ง โปรเจกต์ (Ctrl+K)</value>
+  </data>
+  <data name="CommandPaletteButton.Label" xml:space="preserve">
+    <value>คำสั่ง</value>
+  </data>
+  <data name="RefreshButton.Label" xml:space="preserve">
+    <value>รีเฟรช</value>
+  </data>
+  <data name="StartAllButton.Label" xml:space="preserve">
+    <value>เริ่มทั้งหมด</value>
+  </data>
+  <data name="StopAllButton.Label" xml:space="preserve">
+    <value>หยุดทั้งหมด</value>
+  </data>
+</root>

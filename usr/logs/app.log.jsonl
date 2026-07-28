@@ -1,0 +1,4 @@
+{"timestamp":"2026-05-06T13:20:44.5466965+00:00","level":"Information","category":"Locora.Infrastructure.Services.AppDataBootstrapper","eventId":0,"message":"Portable workspace root prepared at D:\\Projects\\Locora","exception":null}
+{"timestamp":"2026-05-06T13:20:44.6062937+00:00","level":"Information","category":"Microsoft.Hosting.Lifetime","eventId":0,"message":"Application started. Press Ctrl\u002BC to shut down.","exception":null}
+{"timestamp":"2026-05-06T13:20:44.6077877+00:00","level":"Information","category":"Microsoft.Hosting.Lifetime","eventId":0,"message":"Hosting environment: Production","exception":null}
+{"timestamp":"2026-05-06T13:20:44.6079743+00:00","level":"Information","category":"Microsoft.Hosting.Lifetime","eventId":0,"message":"Content root path: D:\\Projects\\Locora","exception":null}

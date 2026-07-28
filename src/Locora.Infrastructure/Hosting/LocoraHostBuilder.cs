@@ -113,6 +113,7 @@ public static class LocoraHostBuilder
                   "ConnectTimeoutMs": 1500
                 },
                 "Experience": {
+                  "Language": "Auto",
                   "PreferredWebServer": "Nginx",
                   "PreferredDatabase": "MariaDB",
                   "PreferredShell": "PowerShell",

@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="Locora.App.Views.AdvancedPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:models="using:Locora.App.Models">
+    <Grid Padding="24" RowSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Spacing="5">
+            <TextBlock Text="Advanced" Style="{StaticResource PageTitleTextStyle}" />
+            <TextBlock Text="Packages, updates, migration, logs, integrations, and raw configuration access."
+                       TextWrapping="Wrap"
+                       Opacity="0.72" />
+        </StackPanel>
+
+        <TabView x:Name="AdvancedTabs"
+                 Grid.Row="1"
+                 IsAddTabButtonVisible="False"
+                 TabWidthMode="Equal">
+            <TabViewItem Header="Settings">
+                <ScrollViewer>
+                    <StackPanel Spacing="12" Padding="0,12,0,0">
+                        <Border Style="{StaticResource LocoraSectionPanelStyle}">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="Experience" Style="{StaticResource CardTitleTextStyle}" />
+                                <TextBlock Text="{x:Bind ViewModel.PreferredToolchainSummary, Mode=OneWay}" TextWrapping="Wrap" />
+                                <TextBlock Text="{x:Bind ViewModel.LanguagePreferenceLabel, Mode=OneWay}" Opacity="0.72" />
+                                <TextBlock Text="Language is read from Experience.Language in appsettings.json. Auto follows Windows; en-US and th-TH force a language." TextWrapping="Wrap" Opacity="0.72" />
+                                <StackPanel Spacing="8">
+                                    <Button Content="Open appsettings.json"
+                                            Command="{x:Bind ViewModel.OpenAppSettingsFileCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                    <Button Content="Open Config Folder"
+                                            Command="{x:Bind ViewModel.OpenConfigRootCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource LocoraSectionPanelStyle}">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="Portable paths" Style="{StaticResource CardTitleTextStyle}" />
+                                <TextBox Header="Portable root" Text="{x:Bind ViewModel.EnvironmentRoot, Mode=OneWay}" IsReadOnly="True" />
+                                <TextBox Header="Projects root" Text="{x:Bind ViewModel.ProjectRoot, Mode=OneWay}" IsReadOnly="True" />
+                                <StackPanel Spacing="8">
+                                    <Button Content="Open Portable Root"
+                                            Command="{x:Bind ViewModel.OpenEnvironmentRootCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                    <Button Content="Open Projects Root"
+                                            Command="{x:Bind ViewModel.OpenProjectRootCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                    <Button Content="Open Logs"
+                                            Command="{x:Bind ViewModel.OpenLogsRootCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource LocoraSectionPanelStyle}">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="Shell integrations" Style="{StaticResource CardTitleTextStyle}" />
+                                <TextBlock Text="{x:Bind ViewModel.ExplorerContextIntegrationSummary, Mode=OneWay}" TextWrapping="Wrap" Opacity="0.72" />
+                                <TextBlock Text="{x:Bind ViewModel.UserEnvironmentStatus, Mode=OneWay}" TextWrapping="Wrap" Opacity="0.72" />
+                                <StackPanel Spacing="8">
+                                    <Button Content="Refresh Context Files"
+                                            Command="{x:Bind ViewModel.RefreshShellContextMenuFilesCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                    <Button Content="Refresh Env Scripts"
+                                            Command="{x:Bind ViewModel.RefreshUserEnvironmentFilesCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                    <Button Content="Open Custom Tools"
+                                            Command="{x:Bind ViewModel.OpenCustomToolsSettingsFileCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabViewItem>
+
+            <TabViewItem Header="Packages">
+                <ScrollViewer>
+                    <StackPanel Spacing="12" Padding="0,12,0,0">
+                        <Border Style="{StaticResource LocoraSectionPanelStyle}">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="{x:Bind ViewModel.PackageDownloadSummaryText, Mode=OneWay}" Style="{StaticResource CardTitleTextStyle}" TextWrapping="Wrap" />
+                                <TextBlock Text="{x:Bind ViewModel.RuntimePackageStatusLabel, Mode=OneWay}" TextWrapping="Wrap" Opacity="0.72" />
+                                <TextBlock Text="{x:Bind ViewModel.ToolPackageStatusLabel, Mode=OneWay}" TextWrapping="Wrap" Opacity="0.72" />
+                                <StackPanel Spacing="8">
+                                    <Button Content="Install / Update Active"
+                                            Command="{x:Bind ViewModel.InstallOrUpdatePackagesCommand}"
+                                            Style="{StaticResource LocoraPrimaryButtonStyle}" />
+                                    <Button Content="Sync Downloads"
+                                            Command="{x:Bind ViewModel.SyncPackageDownloadsCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                    <Button Content="Extract Archives"
+                                            Command="{x:Bind ViewModel.ExtractPackageArchivesCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Text="Runtime versions" Style="{StaticResource SectionTitleTextStyle}" />
+                        <ItemsControl ItemsSource="{x:Bind ViewModel.RuntimePackages, Mode=OneWay}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:RuntimePackageCard">
+                                    <Border Style="{StaticResource LocoraSectionPanelStyle}" Margin="0,0,0,10">
+                                        <Grid ColumnSpacing="12" RowSpacing="8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="220" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Spacing="4">
+                                                <TextBlock Text="{x:Bind Name}" Style="{StaticResource CardTitleTextStyle}" />
+                                                <TextBlock Text="{x:Bind StateLabel}" />
+                                                <TextBlock Text="{x:Bind InstalledLabel}" TextWrapping="Wrap" Opacity="0.72" />
+                                                <TextBlock Text="{x:Bind Summary}" TextWrapping="Wrap" Opacity="0.72" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Spacing="8">
+                                                <ComboBox Header="Version"
+                                                          ItemsSource="{x:Bind AvailableVersions}"
+                                                          SelectedItem="{x:Bind SelectedVersion, Mode=TwoWay}" />
+                                                <Button Content="Switch"
+                                                        IsEnabled="{x:Bind CanSwitchVersion, Mode=OneWay}"
+                                                        Command="{x:Bind SwitchVersionCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock Text="Package cache" Style="{StaticResource SectionTitleTextStyle}" />
+                        <ItemsControl ItemsSource="{x:Bind ViewModel.PackageDownloads, Mode=OneWay}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:PackageDownloadCard">
+                                    <Border Style="{StaticResource LocoraSectionPanelStyle}" Margin="0,0,0,10">
+                                        <Grid ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Spacing="4">
+                                                <TextBlock Text="{x:Bind Name}" Style="{StaticResource CardTitleTextStyle}" />
+                                                <TextBlock Text="{x:Bind StateLabel}" />
+                                                <TextBlock Text="{x:Bind ChecksumLabel}" TextWrapping="Wrap" Opacity="0.72" />
+                                                <TextBlock Text="{x:Bind ExtractionLabel}" TextWrapping="Wrap" Opacity="0.72" />
+                                            </StackPanel>
+                                            <Button Grid.Column="1"
+                                                    Content="Remove"
+                                                    IsEnabled="{x:Bind CanRemoveInstall, Mode=OneWay}"
+                                                    Command="{x:Bind RemoveInstallCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabViewItem>
+
+            <TabViewItem Header="Updates">
+                <ScrollViewer>
+                    <StackPanel Spacing="12" Padding="0,12,0,0">
+                        <Border Style="{StaticResource LocoraSectionPanelStyle}">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="{x:Bind ViewModel.AppUpdateSummary, Mode=OneWay}" Style="{StaticResource CardTitleTextStyle}" TextWrapping="Wrap" />
+                                <TextBlock Text="{x:Bind ViewModel.AppUpdateDetails, Mode=OneWay}" TextWrapping="Wrap" Opacity="0.72" />
+                                <TextBlock Text="{x:Bind ViewModel.AppUpdateCheckPolicy, Mode=OneWay}" TextWrapping="Wrap" Opacity="0.72" />
+                                <StackPanel Spacing="8">
+                                    <Button Content="Check for Updates"
+                                            Command="{x:Bind ViewModel.CheckForAppUpdatesCommand}"
+                                            Style="{StaticResource LocoraPrimaryButtonStyle}" />
+                                    <Button Content="Open Release Page"
+                                            Command="{x:Bind ViewModel.OpenAppUpdateReleasePageCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                    <Button Content="Open Update Plan"
+                                            Command="{x:Bind ViewModel.OpenAppUpdatePlanCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                </StackPanel>
+                                <TextBox Header="Current version" Text="{x:Bind ViewModel.AppUpdateCurrentVersion, Mode=OneWay}" IsReadOnly="True" />
+                                <TextBox Header="Latest version" Text="{x:Bind ViewModel.AppUpdateLatestVersion, Mode=OneWay}" IsReadOnly="True" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource LocoraSectionPanelStyle}">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Portable distribution" Style="{StaticResource CardTitleTextStyle}" />
+                                <TextBlock Text="{x:Bind ViewModel.PortableDistributionModeLabel, Mode=OneWay}" TextWrapping="Wrap" />
+                                <TextBlock Text="{x:Bind ViewModel.PortableDistributionScopeLabel, Mode=OneWay}" TextWrapping="Wrap" Opacity="0.72" />
+                                <StackPanel Spacing="8">
+                                    <Button Content="Refresh Distribution Files"
+                                            Command="{x:Bind ViewModel.RefreshPortableDistributionFilesCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                    <Button Content="Open Build Script"
+                                            Command="{x:Bind ViewModel.OpenPortableDistributionScriptCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                    <Button Content="Open Artifacts"
+                                            Command="{x:Bind ViewModel.OpenPortableDistributionArtifactsRootCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabViewItem>
+
+            <TabViewItem Header="Migration">
+                <ScrollViewer>
+                    <StackPanel Spacing="12" Padding="0,12,0,0">
+                        <Border Style="{StaticResource LocoraSectionPanelStyle}">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Laragon migration" Style="{StaticResource CardTitleTextStyle}" />
+                                <TextBox Header="Laragon root"
+                                         Text="{x:Bind ViewModel.LaragonRootPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock Text="{x:Bind ViewModel.LaragonImportStatus, Mode=OneWay}" TextWrapping="Wrap" Opacity="0.72" />
+                                <StackPanel Spacing="8">
+                                    <Button Content="Preview Import"
+                                            Command="{x:Bind ViewModel.PreviewLaragonImportCommand}"
+                                            Style="{StaticResource LocoraPrimaryButtonStyle}" />
+                                    <Button Content="Import Projects"
+                                            Command="{x:Bind ViewModel.ImportLaragonProjectsCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                    <Button Content="Open Laragon Root"
+                                            Command="{x:Bind ViewModel.OpenLaragonRootCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        <ItemsControl ItemsSource="{x:Bind ViewModel.LaragonImportProjects, Mode=OneWay}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:LaragonImportProjectCard">
+                                    <Border Style="{StaticResource LocoraSectionPanelStyle}" Margin="0,0,0,10">
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Text="{x:Bind Name}" Style="{StaticResource CardTitleTextStyle}" />
+                                            <TextBlock Text="{x:Bind Status}" />
+                                            <TextBlock Text="{x:Bind DomainLabel}" Opacity="0.72" />
+                                            <TextBlock Text="{x:Bind SourcePath}" TextTrimming="CharacterEllipsis" Opacity="0.72" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabViewItem>
+
+            <TabViewItem Header="Logs">
+                <ScrollViewer>
+                    <StackPanel Spacing="12" Padding="0,12,0,0">
+                        <Border Style="{StaticResource LocoraSectionPanelStyle}">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Activity" Style="{StaticResource CardTitleTextStyle}" />
+                                <TextBlock Text="{x:Bind ViewModel.LogsRoot, Mode=OneWay}" TextTrimming="CharacterEllipsis" Opacity="0.72" />
+                                <StackPanel Spacing="8">
+                                    <Button Content="Refresh"
+                                            Command="{x:Bind ViewModel.RefreshCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                    <Button Content="Open Logs Folder"
+                                            Command="{x:Bind ViewModel.OpenLogsRootCommand}"
+                                            Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        <ItemsControl ItemsSource="{x:Bind ViewModel.RecentActivity, Mode=OneWay}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:TimelineEntry">
+                                    <Border Style="{StaticResource LocoraSectionPanelStyle}" Margin="0,0,0,10">
+                                        <Grid ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{x:Bind Timestamp}" />
+                                            <TextBlock Grid.Column="1" Text="{x:Bind Level}" Opacity="0.72" />
+                                            <TextBlock Grid.Column="2" Text="{x:Bind Message}" TextWrapping="Wrap" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabViewItem>
+        </TabView>
+    </Grid>
+</Page>
+

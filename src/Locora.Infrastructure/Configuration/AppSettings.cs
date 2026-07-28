@@ -37,6 +37,8 @@ public sealed class SupervisorConnectionSettings
 
 public sealed class ExperienceSettings
 {
+    public string Language { get; init; } = "Auto";
+
     public string PreferredWebServer { get; init; } = "Nginx";
 
     public string PreferredDatabase { get; init; } = "MariaDB";

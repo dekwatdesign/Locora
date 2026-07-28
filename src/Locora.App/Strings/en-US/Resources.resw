@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="ShellNavigation.AutomationProperties.HelpText" xml:space="preserve">
+    <value>Use this navigation menu to switch between Home, Workbench, Health, Terminal, and Advanced.</value>
+  </data>
+  <data name="HomeNavigationItem.Content" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="WorkbenchNavigationItem.Content" xml:space="preserve">
+    <value>Workbench</value>
+  </data>
+  <data name="HealthNavigationItem.Content" xml:space="preserve">
+    <value>Health</value>
+  </data>
+  <data name="TerminalNavigationItem.Content" xml:space="preserve">
+    <value>Terminal</value>
+  </data>
+  <data name="AdvancedNavigationItem.Content" xml:space="preserve">
+    <value>Advanced</value>
+  </data>
+  <data name="CommandPaletteBox.PlaceholderText" xml:space="preserve">
+    <value>Search pages, commands, projects (Ctrl+K)</value>
+  </data>
+  <data name="CommandPaletteButton.Label" xml:space="preserve">
+    <value>Command</value>
+  </data>
+  <data name="RefreshButton.Label" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="StartAllButton.Label" xml:space="preserve">
+    <value>Start All</value>
+  </data>
+  <data name="StopAllButton.Label" xml:space="preserve">
+    <value>Stop All</value>
+  </data>
+</root>

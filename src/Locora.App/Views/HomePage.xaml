@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="Locora.App.Views.HomePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:models="using:Locora.App.Models">
+    <ScrollViewer>
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup>
+                <VisualState x:Name="NarrowHome" />
+                <VisualState x:Name="WideHome">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="980" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="HeroContentColumn.Width" Value="2*" />
+                        <Setter Target="HeroActionsColumn.Width" Value="*" />
+                        <Setter Target="HeroActionsPanel.(Grid.Row)" Value="0" />
+                        <Setter Target="HeroActionsPanel.(Grid.Column)" Value="1" />
+                        <Setter Target="MetricColumn2.Width" Value="*" />
+                        <Setter Target="MetricColumn3.Width" Value="*" />
+                        <Setter Target="ProjectsMetric.(Grid.Row)" Value="0" />
+                        <Setter Target="ProjectsMetric.(Grid.Column)" Value="1" />
+                        <Setter Target="IssuesMetric.(Grid.Row)" Value="0" />
+                        <Setter Target="IssuesMetric.(Grid.Column)" Value="2" />
+                        <Setter Target="HomeSideColumn.Width" Value="*" />
+                        <Setter Target="HomeSidePanel.(Grid.Row)" Value="0" />
+                        <Setter Target="HomeSidePanel.(Grid.Column)" Value="1" />
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+
+        <StackPanel Padding="24" Spacing="18">
+            <InfoBar IsOpen="{x:Bind ViewModel.ShowSupervisorWarning, Mode=OneWay}"
+                     Severity="Warning"
+                     Title="Supervisor not connected"
+                     Message="Locora is showing the latest available state until the supervisor responds." />
+
+            <Border Style="{StaticResource LocoraPagePanelStyle}">
+                <Grid RowSpacing="16" ColumnSpacing="18">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition x:Name="HeroContentColumn" Width="*" />
+                        <ColumnDefinition x:Name="HeroActionsColumn" Width="0" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Home" Style="{StaticResource PageTitleTextStyle}" />
+                        <TextBlock Text="{x:Bind ViewModel.ConnectionStatus, Mode=OneWay}"
+                                   Style="{StaticResource CardTitleTextStyle}"
+                                   TextWrapping="Wrap" />
+                        <TextBlock Text="{x:Bind ViewModel.PreferredToolchainSummary, Mode=OneWay}"
+                                   TextWrapping="Wrap"
+                                   Opacity="0.72" />
+                        <TextBlock Text="{x:Bind ViewModel.LastRefreshLabel, Mode=OneWay}"
+                                   Opacity="0.72" />
+                    </StackPanel>
+
+                    <StackPanel x:Name="HeroActionsPanel"
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                Spacing="8">
+                        <Button Content="Start All"
+                                Command="{x:Bind ViewModel.StartAllCommand}"
+                                Style="{StaticResource LocoraPrimaryButtonStyle}" />
+                        <Button Content="Stop All"
+                                Command="{x:Bind ViewModel.StopAllCommand}"
+                                Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                        <Button Content="Refresh"
+                                Command="{x:Bind ViewModel.RefreshCommand}"
+                                Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Grid ColumnSpacing="12" RowSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition x:Name="MetricColumn2" Width="0" />
+                    <ColumnDefinition x:Name="MetricColumn3" Width="0" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Border Style="{StaticResource LocoraSectionPanelStyle}">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Running services" Style="{StaticResource CardTitleTextStyle}" />
+                        <TextBlock Text="{x:Bind ViewModel.RunningServicesCount, Mode=OneWay}" Style="{StaticResource MetricValueTextStyle}" />
+                        <TextBlock Text="{x:Bind ViewModel.TotalServicesCount, Mode=OneWay}" Opacity="0.72" />
+                    </StackPanel>
+                </Border>
+
+                <Border x:Name="ProjectsMetric"
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        Style="{StaticResource LocoraSectionPanelStyle}">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Projects" Style="{StaticResource CardTitleTextStyle}" />
+                        <TextBlock Text="{x:Bind ViewModel.Projects.Count, Mode=OneWay}" Style="{StaticResource MetricValueTextStyle}" />
+                        <TextBlock Text="{x:Bind ViewModel.ProjectRoot, Mode=OneWay}" TextTrimming="CharacterEllipsis" Opacity="0.72" />
+                    </StackPanel>
+                </Border>
+
+                <Border x:Name="IssuesMetric"
+                        Grid.Row="2"
+                        Grid.Column="0"
+                        Style="{StaticResource LocoraSectionPanelStyle}">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Attention" Style="{StaticResource CardTitleTextStyle}" />
+                        <TextBlock Text="{x:Bind ViewModel.HealthIssueCount, Mode=OneWay}" Style="{StaticResource MetricValueTextStyle}" />
+                        <TextBlock Text="{x:Bind ViewModel.DiagnosticsHeadline, Mode=OneWay}" TextWrapping="Wrap" Opacity="0.72" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <Grid ColumnSpacing="18" RowSpacing="18">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition x:Name="HomeSideColumn" Width="0" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Pinned projects" Style="{StaticResource SectionTitleTextStyle}" />
+                    <Border Visibility="{x:Bind ViewModel.ShowPinnedProjectsEmptyState, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Style="{StaticResource LocoraSectionPanelStyle}">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="No pinned projects yet" Style="{StaticResource CardTitleTextStyle}" />
+                            <TextBlock Text="Open a project from Workbench and pin it to keep it on Home." TextWrapping="Wrap" Opacity="0.72" />
+                            <Button Content="Open Projects Root"
+                                    Command="{x:Bind ViewModel.OpenProjectRootCommand}"
+                                    Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                        </StackPanel>
+                    </Border>
+                    <ItemsControl ItemsSource="{x:Bind ViewModel.PinnedProjects, Mode=OneWay}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="models:ProjectCard">
+                                <Border Style="{StaticResource LocoraSectionPanelStyle}" Margin="0,0,0,10">
+                                    <Grid ColumnSpacing="12" RowSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Spacing="3">
+                                            <TextBlock Text="{x:Bind Name}" Style="{StaticResource CardTitleTextStyle}" />
+                                            <TextBlock Text="{x:Bind Url}" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{x:Bind Runtime}" Opacity="0.72" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Spacing="8">
+                                            <Button Content="Open"
+                                                    Command="{x:Bind OpenUrlCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource LocoraPrimaryButtonStyle}" />
+                                            <Button Content="Terminal"
+                                                    Command="{x:Bind OpenTerminalCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <StackPanel x:Name="HomeSidePanel"
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            Spacing="12">
+                    <TextBlock Text="Next actions" Style="{StaticResource SectionTitleTextStyle}" />
+                    <Border Visibility="{x:Bind ViewModel.ShowFirstRunOnboarding, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Style="{StaticResource LocoraSectionPanelStyle}">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="First-run checklist" Style="{StaticResource CardTitleTextStyle}" />
+                            <TextBlock Text="{x:Bind ViewModel.FirstRunProgressLabel, Mode=OneWay}" Opacity="0.72" />
+                            <TextBlock Text="{x:Bind ViewModel.FirstRunSupervisorStepLabel, Mode=OneWay}" TextWrapping="Wrap" />
+                            <TextBlock Text="{x:Bind ViewModel.FirstRunServicesStepLabel, Mode=OneWay}" TextWrapping="Wrap" />
+                            <TextBlock Text="{x:Bind ViewModel.FirstRunProjectsStepLabel, Mode=OneWay}" TextWrapping="Wrap" />
+                            <StackPanel Spacing="8">
+                                <Button Content="Repair"
+                                        Command="{x:Bind ViewModel.RepairRuntimeCommand}"
+                                        Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                                <Button Content="Hide"
+                                        Command="{x:Bind ViewModel.DismissFirstRunOnboardingCommand}"
+                                        Style="{StaticResource LocoraSecondaryButtonStyle}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                    <ItemsControl ItemsSource="{x:Bind ViewModel.CriticalHealthIssues, Mode=OneWay}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="models:HealthIssueCard">
+                                <Border Style="{StaticResource LocoraSectionPanelStyle}" Margin="0,0,0,10">
+                                    <StackPanel Spacing="5">
+                                        <TextBlock Text="{x:Bind Title}" Style="{StaticResource CardTitleTextStyle}" />
+                                        <TextBlock Text="{x:Bind Severity}" Opacity="0.72" />
+                                        <TextBlock Text="{x:Bind SuggestedAction}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</Page>
+

@@ -82,6 +82,8 @@ public partial class App : Microsoft.UI.Xaml.Application
                 services.AddSingleton<Services.IAppUpdateService, Services.AppUpdateService>();
                 services.AddSingleton<Services.IPortableDistributionService, Services.PortableDistributionService>();
                 services.AddSingleton<Services.IUserConfirmationService, Services.ContentDialogUserConfirmationService>();
+                services.AddSingleton<Services.ILocoraStringResourceService, Services.LocoraStringResourceService>();
+                services.AddSingleton<Services.LocoraLanguageService>();
                 services.AddSingleton<ISupervisorClient, NamedPipeSupervisorClient>();
                 services.AddSingleton<IWorkbenchService, WorkbenchService>();
                 services.AddSingleton<MainWindowViewModel>();
@@ -89,6 +91,8 @@ public partial class App : Microsoft.UI.Xaml.Application
             });
 
         await _host.StartAsync();
+
+        GetService<Services.LocoraLanguageService>().ApplyConfiguredLanguage();
 
         _mainWindow = GetService<MainWindow>();
         _mainWindow.Activated += OnMainWindowActivated;

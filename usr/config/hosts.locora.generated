@@ -1,0 +1,4 @@
+# Locora generated hosts preview
+# Copy these entries into the Windows hosts file only after reviewing them.
+# Future privileged hosts automation should use this output as its safe preview.
+127.0.0.1 welcome.locora.test

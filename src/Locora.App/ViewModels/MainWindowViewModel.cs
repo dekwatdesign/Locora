@@ -176,6 +176,7 @@ public sealed class MainWindowViewModel : ObservableObject
     private string _portableDistributionPlanPath = string.Empty;
     private string _portableDistributionReadmePath = string.Empty;
     private string _portableDistributionManifestTemplatePath = string.Empty;
+    private string _workbenchSearchText = string.Empty;
 
     public MainWindowViewModel(
         IWorkbenchService workbenchService,
@@ -696,6 +697,8 @@ public sealed class MainWindowViewModel : ObservableObject
 
     public string PreferredToolchainSummary { get; }
 
+    public string LanguagePreferenceLabel => Locora.App.Contracts.LocoraLanguagePreference.Normalize(_settings.Experience.Language);
+
     public string PreferredEditorLabel => string.IsNullOrWhiteSpace(_settings.Experience.PreferredEditor)
         ? "VS Code"
         : _settings.Experience.PreferredEditor;
@@ -1156,6 +1159,51 @@ public sealed class MainWindowViewModel : ObservableObject
     public bool HasServices => Services.Count > 0;
 
     public bool ShowServicesEmptyState => !HasServices;
+
+    public string WorkbenchSearchText
+    {
+        get => _workbenchSearchText;
+        set
+        {
+            if (SetProperty(ref _workbenchSearchText, value))
+            {
+                NotifyWorkbenchFilterProperties();
+            }
+        }
+    }
+
+    public IEnumerable<ProjectCard> PinnedProjects => Projects.Where(project => project.IsPinned).Take(4);
+
+    public IEnumerable<ProjectCard> RecentProjects => Projects.Take(6);
+
+    public IEnumerable<ProjectCard> FilteredProjects => FilterCards(Projects, project =>
+        $"{project.Name} {project.Url} {project.Runtime} {project.Description} {project.TagsLabel} {project.OverrideSummary} {project.Folder}");
+
+    public IEnumerable<ServiceStatusCard> FilteredServices => FilterCards(Services, service =>
+        $"{service.Name} {service.Key} {service.Version} {service.Port} {service.StateLabel} {service.Note}");
+
+    public IEnumerable<StackProfileCard> FilteredStackProfiles => FilterCards(StackProfiles, profile =>
+        $"{profile.DisplayName} {profile.Key} {profile.State} {profile.ServicesLabel} {profile.PackagesLabel} {profile.TagsLabel} {profile.Summary}");
+
+    public IEnumerable<HealthIssueCard> CriticalHealthIssues => HealthIssues.Take(3);
+
+    public IEnumerable<TimelineEntry> RecentActivity => Activity.Take(12);
+
+    public bool HasPinnedProjects => PinnedProjects.Any();
+
+    public bool ShowPinnedProjectsEmptyState => !HasPinnedProjects;
+
+    public bool HasFilteredProjects => FilteredProjects.Any();
+
+    public bool ShowFilteredProjectsEmptyState => !HasFilteredProjects;
+
+    public bool HasFilteredServices => FilteredServices.Any();
+
+    public bool ShowFilteredServicesEmptyState => !HasFilteredServices;
+
+    public bool HasFilteredStackProfiles => FilteredStackProfiles.Any();
+
+    public bool ShowFilteredStackProfilesEmptyState => !HasFilteredStackProfiles;
 
     public bool HasServicePresets => ServicePresets.Count > 0;
 
@@ -4390,6 +4438,7 @@ public sealed class MainWindowViewModel : ObservableObject
         ReplaceCollection(Projects, CreateProjectCards(projects));
         OnPropertyChanged(nameof(HasProjects));
         OnPropertyChanged(nameof(ShowProjectsEmptyState));
+        NotifyWorkbenchFilterProperties();
         StartLocalTunnelCommand.NotifyCanExecuteChanged();
         NotifyFirstRunOnboardingProperties();
     }
@@ -5311,6 +5360,7 @@ public sealed class MainWindowViewModel : ObservableObject
 
         OnPropertyChanged(nameof(HasActivity));
         OnPropertyChanged(nameof(ShowActivityEmptyState));
+        OnPropertyChanged(nameof(RecentActivity));
         NotifyFirstRunOnboardingProperties();
 
         if (ShouldShowGlobalNotification(level, message))
@@ -5323,6 +5373,11 @@ public sealed class MainWindowViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(HasServices));
         OnPropertyChanged(nameof(ShowServicesEmptyState));
+        OnPropertyChanged(nameof(RunningServicesCount));
+        OnPropertyChanged(nameof(TotalServicesCount));
+        OnPropertyChanged(nameof(HealthIssueCount));
+        OnPropertyChanged(nameof(DiagnosticsHeadline));
+        OnPropertyChanged(nameof(DiagnosticsSummary));
         OnPropertyChanged(nameof(HasServicePresets));
         OnPropertyChanged(nameof(ShowServicePresetsEmptyState));
         OnPropertyChanged(nameof(HasProjects));
@@ -5351,6 +5406,47 @@ public sealed class MainWindowViewModel : ObservableObject
         NotifySelectedTerminalProperties();
         OnPropertyChanged(nameof(HasActivity));
         OnPropertyChanged(nameof(ShowActivityEmptyState));
+        OnPropertyChanged(nameof(RecentActivity));
+        NotifyWorkbenchFilterProperties();
+    }
+
+    private void NotifyWorkbenchFilterProperties()
+    {
+        OnPropertyChanged(nameof(PinnedProjects));
+        OnPropertyChanged(nameof(RecentProjects));
+        OnPropertyChanged(nameof(FilteredProjects));
+        OnPropertyChanged(nameof(FilteredServices));
+        OnPropertyChanged(nameof(FilteredStackProfiles));
+        OnPropertyChanged(nameof(CriticalHealthIssues));
+        OnPropertyChanged(nameof(HasPinnedProjects));
+        OnPropertyChanged(nameof(ShowPinnedProjectsEmptyState));
+        OnPropertyChanged(nameof(HasFilteredProjects));
+        OnPropertyChanged(nameof(ShowFilteredProjectsEmptyState));
+        OnPropertyChanged(nameof(HasFilteredServices));
+        OnPropertyChanged(nameof(ShowFilteredServicesEmptyState));
+        OnPropertyChanged(nameof(HasFilteredStackProfiles));
+        OnPropertyChanged(nameof(ShowFilteredStackProfilesEmptyState));
+    }
+
+    private IEnumerable<T> FilterCards<T>(IEnumerable<T> source, Func<T, string> searchTextFactory)
+    {
+        var query = (WorkbenchSearchText ?? string.Empty)
+            .Split(' ', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var item in source)
+        {
+            if (query.Length == 0)
+            {
+                yield return item;
+                continue;
+            }
+
+            var searchText = searchTextFactory(item);
+            if (query.All(term => searchText.Contains(term, StringComparison.OrdinalIgnoreCase)))
+            {
+                yield return item;
+            }
+        }
     }
 
     private void NotifyFirstRunOnboardingProperties()

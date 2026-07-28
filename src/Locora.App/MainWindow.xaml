@@ -5,31 +5,39 @@
     xmlns:controls="using:Locora.App.Controls"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <NavigationView x:Name="ShellNavigationView"
+                    x:Uid="ShellNavigation"
                     AutomationProperties.Name="Locora navigation"
-                    AutomationProperties.HelpText="Use this navigation menu to switch between Dashboard, Services, Domains and Hosts, Diagnostics, Terminal, Logs, and Settings."
+                    AutomationProperties.HelpText="Use this navigation menu to switch between Home, Workbench, Health, Terminal, and Advanced."
                     PaneDisplayMode="Left"
                     IsBackButtonVisible="Collapsed"
                     IsSettingsVisible="False"
                     SelectionChanged="OnSelectionChanged">
         <NavigationView.MenuItems>
-            <NavigationViewItem Tag="dashboard"
-                                Content="Dashboard"
-                                AutomationProperties.HelpText="Open the runtime overview, first-run guide, service summary, and projects.">
+            <NavigationViewItem x:Name="HomeNavigationItem"
+                                x:Uid="HomeNavigationItem"
+                                Tag="home"
+                                Content="Home"
+                                AutomationProperties.HelpText="Open the simple overview, pinned projects, first-run checklist, and primary service actions.">
                 <NavigationViewItem.Icon>
                     <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaDashboardGlyph}" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Tag="services"
-                                Content="Services"
-                                AutomationProperties.HelpText="Manage configured services and Mailpit integration.">
+            <NavigationViewItem x:Name="WorkbenchNavigationItem"
+                                x:Uid="WorkbenchNavigationItem"
+                                Tag="workbench"
+                                Content="Workbench"
+                                AutomationProperties.HelpText="Open projects, services, and stack profiles.">
                 <NavigationViewItem.Icon>
                     <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaWrenchGlyph}" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Tag="domains"
-                                Content="Domains &amp; Hosts"
-                                AutomationProperties.HelpText="Manage generated domains, hosts preview, vhosts, and local SSL.">
+            <NavigationViewItem x:Name="HealthNavigationItem"
+                                x:Uid="HealthNavigationItem"
+                                Tag="health"
+                                Content="Health"
+                                AutomationProperties.HelpText="Inspect issues, ports, permissions, domains, SSL, tunnels, and recovery actions.">
                 <NavigationViewItem.Icon>
+<<<<<<< Updated upstream
                     <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaGlobeGlyph}" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
@@ -41,12 +49,21 @@
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
             <NavigationViewItem Tag="terminal"
+=======
+                    <SymbolIcon Symbol="Repair" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem x:Name="TerminalNavigationItem"
+                                x:Uid="TerminalNavigationItem"
+                                Tag="terminal"
+>>>>>>> Stashed changes
                                 Content="Terminal"
                                 AutomationProperties.HelpText="Open built-in project terminal sessions.">
                 <NavigationViewItem.Icon>
                     <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaTerminalGlyph}" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
+<<<<<<< Updated upstream
             <NavigationViewItem Tag="logs"
                                 Content="Logs"
                                 AutomationProperties.HelpText="Open recent Locora shell activity.">
@@ -57,6 +74,13 @@
             <NavigationViewItem Tag="settings"
                                 Content="Settings"
                                 AutomationProperties.HelpText="Open advanced settings, portable paths, config files, and diagnostics export actions.">
+=======
+            <NavigationViewItem x:Name="AdvancedNavigationItem"
+                                x:Uid="AdvancedNavigationItem"
+                                Tag="advanced"
+                                Content="Advanced"
+                                AutomationProperties.HelpText="Open packages, updates, migration, logs, integrations, and raw settings.">
+>>>>>>> Stashed changes
                 <NavigationViewItem.Icon>
                     <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaSettingsGlyph}" />
                 </NavigationViewItem.Icon>
@@ -97,6 +121,7 @@
                 </VisualStateManager.VisualStateGroups>
 
                 <AutoSuggestBox x:Name="CommandPaletteBox"
+                                x:Uid="CommandPaletteBox"
                                 MinWidth="220"
                                 MaxWidth="560"
                                 HorizontalAlignment="Stretch"
@@ -122,7 +147,12 @@
                             Grid.Column="0"
                             HorizontalAlignment="Left"
                             DefaultLabelPosition="Right">
+<<<<<<< Updated upstream
                     <AppBarButton Label="Search"
+=======
+                    <AppBarButton x:Uid="CommandPaletteButton"
+                                  Label="Command"
+>>>>>>> Stashed changes
                                   AccessKey="K"
                                   Click="OnCommandPaletteButtonClick"
                                   AutomationProperties.HelpText="Open the command palette. Shortcut: Control K."
@@ -131,7 +161,8 @@
                             <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaCommandGlyph}" />
                         </AppBarButton.Icon>
                     </AppBarButton>
-                    <AppBarButton Label="Refresh"
+                    <AppBarButton x:Uid="RefreshButton"
+                                  Label="Refresh"
                                   AccessKey="R"
                                   AutomationProperties.HelpText="Refresh the environment snapshot."
                                   ToolTipService.ToolTip="Refresh the environment snapshot"
@@ -140,7 +171,12 @@
                             <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaRefreshGlyph}" />
                         </AppBarButton.Icon>
                     </AppBarButton>
+<<<<<<< Updated upstream
                     <AppBarButton Label="Start"
+=======
+                    <AppBarButton x:Uid="StartAllButton"
+                                  Label="Start All"
+>>>>>>> Stashed changes
                                   AccessKey="S"
                                   AutomationProperties.HelpText="Start all enabled services."
                                   ToolTipService.ToolTip="Start all enabled services"
@@ -149,7 +185,12 @@
                             <FontIcon FontFamily="{StaticResource FontAwesomeSolidFontFamily}" Glyph="{StaticResource FaPlayGlyph}" />
                         </AppBarButton.Icon>
                     </AppBarButton>
+<<<<<<< Updated upstream
                     <AppBarButton Label="Stop"
+=======
+                    <AppBarButton x:Uid="StopAllButton"
+                                  Label="Stop All"
+>>>>>>> Stashed changes
                                   AccessKey="T"
                                   AutomationProperties.HelpText="Stop all managed services."
                                   ToolTipService.ToolTip="Stop all managed services"

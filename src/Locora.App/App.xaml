@@ -10,6 +10,7 @@
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
             <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+<<<<<<< Updated upstream
             <FontFamily x:Key="FontAwesomeSolidFontFamily">ms-appx:///Assets/Fonts/Font Awesome 7 Free-Solid-900.otf#Font Awesome 7 Free Solid</FontFamily>
             <FontFamily x:Key="FontAwesomeRegularFontFamily">ms-appx:///Assets/Fonts/Font Awesome 7 Free-Regular-400.otf#Font Awesome 7 Free</FontFamily>
             <FontFamily x:Key="FontAwesomeBrandsFontFamily">ms-appx:///Assets/Fonts/Font Awesome 7 Brands-Regular-400.otf#Font Awesome 7 Brands</FontFamily>
@@ -59,22 +60,35 @@
             <x:String x:Key="FaUploadGlyph">&#xF093;</x:String>
             <x:String x:Key="FaWarningGlyph">&#xF071;</x:String>
             <x:String x:Key="FaWrenchGlyph">&#xF0AD;</x:String>
+=======
+            <converters:StatusBrushConverter x:Key="StatusBrushConverter" />
+            <SolidColorBrush x:Key="LocoraAccentBrush" Color="#2563EB" />
+            <SolidColorBrush x:Key="LocoraAccentStrongBrush" Color="#1D4ED8" />
+            <SolidColorBrush x:Key="LocoraSurfaceBrush" Color="#F8FAFC" />
+            <SolidColorBrush x:Key="LocoraStatusAccentBrush" Color="#DBEAFE" />
+            <SolidColorBrush x:Key="LocoraStatusSuccessBrush" Color="#DCFCE7" />
+            <SolidColorBrush x:Key="LocoraStatusWarningBrush" Color="#FEF3C7" />
+            <SolidColorBrush x:Key="LocoraStatusDangerBrush" Color="#FEE2E2" />
+            <SolidColorBrush x:Key="LocoraStatusNeutralBrush" Color="#E2E8F0" />
+>>>>>>> Stashed changes
             <Style x:Key="PageTitleTextStyle" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="28" />
+                <Setter Property="FontSize" Value="32" />
                 <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="LineHeight" Value="40" />
             </Style>
             <Style x:Key="SectionTitleTextStyle" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="20" />
+                <Setter Property="FontSize" Value="19" />
                 <Setter Property="FontWeight" Value="SemiBold" />
             </Style>
             <Style x:Key="CardTitleTextStyle" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="17" />
+                <Setter Property="FontSize" Value="16" />
                 <Setter Property="FontWeight" Value="SemiBold" />
             </Style>
             <Style x:Key="MetricValueTextStyle" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="38" />
+                <Setter Property="FontSize" Value="36" />
                 <Setter Property="FontWeight" Value="SemiBold" />
             </Style>
+<<<<<<< Updated upstream
             <Style x:Key="CompactIconButtonStyle" TargetType="Button">
                 <Setter Property="Width" Value="36" />
                 <Setter Property="Height" Value="36" />
@@ -84,6 +98,39 @@
             <Style x:Key="CompactActionButtonStyle" TargetType="Button">
                 <Setter Property="MinHeight" Value="36" />
                 <Setter Property="Padding" Value="12,6" />
+=======
+            <Style x:Key="LocoraPagePanelStyle" TargetType="Border">
+                <Setter Property="Padding" Value="18" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+            </Style>
+            <Style x:Key="LocoraSectionPanelStyle" TargetType="Border">
+                <Setter Property="Padding" Value="16" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorSecondaryBrush}" />
+            </Style>
+            <Style x:Key="LocoraInnerPanelStyle" TargetType="Border">
+                <Setter Property="Padding" Value="12" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorTertiaryBrush}" />
+            </Style>
+            <Style x:Key="LocoraPillBorderStyle" TargetType="Border">
+                <Setter Property="Padding" Value="10,5" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="Background" Value="{StaticResource LocoraStatusNeutralBrush}" />
+            </Style>
+            <Style x:Key="LocoraPrimaryButtonStyle" TargetType="Button">
+                <Setter Property="MinHeight" Value="44" />
+                <Setter Property="Padding" Value="16,8" />
+                <Setter Property="Background" Value="{StaticResource LocoraAccentBrush}" />
+                <Setter Property="Foreground" Value="White" />
+            </Style>
+            <Style x:Key="LocoraSecondaryButtonStyle" TargetType="Button">
+                <Setter Property="MinHeight" Value="44" />
+                <Setter Property="Padding" Value="14,8" />
+>>>>>>> Stashed changes
             </Style>
             <Style x:Key="SettingsCardBorderStyle" TargetType="Border">
                 <Setter Property="Padding" Value="16" />
